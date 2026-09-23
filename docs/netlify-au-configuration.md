@@ -15,7 +15,7 @@ features. Values are intentionally omitted.
 | `NETLIFY_DATABASE_URL` | Dedicated AU Netlify Database connection |
 | `EMAIL_API_KEY` | Dedicated AU Resend credential for transactional mail |
 | `ADMIN_PASSWORD` | AU administration login secret |
-| `ADMIN_APP_ORIGIN` | Allowed browser origin for administration requests |
+| `ADMIN_APP_ORIGIN` | Optional exact browser-origin override; the intended AU value is `https://navrik.com.au`, which is also the same-origin code default |
 | `MONTHLY_REPORT_RECIPIENTS` | Exact allowlist: `accounts@labronix.co.za,info@navrik.com.au` |
 | `REPORTING_TIME_ZONE` | IANA time zone used for scheduled operations reports |
 | `SITE_ID` | AU Netlify site identifier used for cache invalidation |
@@ -55,10 +55,10 @@ from another deployment.
 5. Confirm the deployed canonical tag, Open Graph URL, sitemap, robots file, and
    Search Console property all resolve to the apex AU domain.
 
-Netlify schedules run at minute 0 and minute 30 of every hour because the report
-functions enforce 06:00 in `REPORTING_TIME_ZONE` themselves. The two trigger
-minutes cover Australian whole-hour and half-hour zones while keeping local
-scheduling correct across daylight-saving changes.
+Netlify schedules run at minutes 0, 15, 30, and 45 of every hour because the
+report functions enforce 06:00 in `REPORTING_TIME_ZONE` themselves. Quarter-hour
+triggers cover Australian whole-hour, half-hour, and 45-minute zones while
+keeping local scheduling correct across daylight-saving changes.
 
 ## Pre-launch checks
 

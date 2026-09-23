@@ -38,14 +38,14 @@
     X-Robots-Tag = "noindex, nofollow, noarchive"
 
 [functions."internal-report-scheduled"]
-  # Run on both whole and half hours so every Australian IANA time zone can
-  # reach 06:00 local time, including zones with a 30-minute offset.
-  schedule = "0,30 * * * *"
+  # Run every quarter hour so every Australian IANA time zone can reach 06:00
+  # local time, including zones with 30-minute and 45-minute offsets.
+  schedule = "0,15,30,45 * * * *"
 
 [functions."monthly-business-report-scheduled"]
-  # Run on both whole and half hours so every Australian IANA time zone can
-  # reach 06:00 local time. The handler sends only on the first local day.
-  schedule = "0,30 * * * *"
+  # Run every quarter hour so every Australian IANA time zone can reach 06:00
+  # local time. The handler sends only on the first local day.
+  schedule = "0,15,30,45 * * * *"
 
 # 1. API REDIRECTS (Highest Priority)
 [[redirects]]

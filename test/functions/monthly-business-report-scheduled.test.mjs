@@ -3,11 +3,11 @@ import test from 'node:test';
 
 import { createHandler } from '../../netlify/functions/monthly-business-report-scheduled.js';
 
-test('scheduled monthly report targets the completed prior month in an Australian half-hour time zone', async () => {
+test('scheduled monthly report targets the completed prior month in an Australian quarter-hour time zone', async () => {
   let received;
   const handler = createHandler({
-    env: { REPORTING_TIME_ZONE: 'Australia/Adelaide' },
-    now: () => new Date('2026-08-31T20:30:00.000Z'),
+    env: { REPORTING_TIME_ZONE: 'Australia/Eucla' },
+    now: () => new Date('2026-08-31T21:15:00.000Z'),
     getSql: () => async () => [],
     deliverMonthlyReport: async (input) => { received = input; return { status: 'sent', period: input.period }; },
   });
