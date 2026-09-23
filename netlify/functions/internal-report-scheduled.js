@@ -12,10 +12,10 @@ function databaseUrl() {
   return url;
 }
 
-export function createHandler({ getSql = () => neon(databaseUrl()), now = () => new Date() } = {}) {
+export function createHandler({ getSql = () => neon(databaseUrl()), env = process.env, now = () => new Date() } = {}) {
   return async () => {
     try {
-      const result = await persistScheduledReport(getSql(), now());
+      const result = await persistScheduledReport(getSql(), now(), env.REPORTING_TIME_ZONE || 'UTC');
       if (result.status === 'persisted') log.info('internal report snapshot persisted');
       return { statusCode: 202, body: JSON.stringify({ status: result.status, ...(result.explanation ? { explanation: result.explanation } : {}) }) };
     } catch (error) {

@@ -45,7 +45,7 @@ test('generates a public-only sitemap and one coherent Navrik publisher graph', 
   assert.equal(business.url, 'https://navrik.com.au');
   assert.equal(business.email, 'info@navrik.com.au');
   assert.match(`${business.name} ${business.description}`, /canopies/i);
-  assert.doesNotMatch(`${business.name} ${business.description}`, /trays|accessories|south africa/i);
+  assert.doesNotMatch(`${business.name} ${business.description}`, /trays|accessories/i);
   assert.deepEqual(business.areaServed, { '@type': 'Country', name: 'Australia' });
   assert.equal(business.address.addressCountry, 'AU');
   assert.equal(business.logo, undefined, 'the static build must not publish a stale local logo');

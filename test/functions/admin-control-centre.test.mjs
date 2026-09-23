@@ -135,3 +135,15 @@ test('validateProfile rejects unknown profile fields instead of persisting clien
     { message: 'Unknown profile fields' },
   );
 });
+
+test('validateProfile accepts an Australian IANA reporting time zone and defaults to UTC', () => {
+  const australian = validateProfile({ companyName: 'Navrik Australia', preferences: { reportingTimezone: 'Australia/Sydney' } });
+  const defaulted = validateProfile({ companyName: 'Navrik Australia' });
+
+  assert.equal(australian.preferences.reportingTimezone, 'Australia/Sydney');
+  assert.equal(defaulted.preferences.reportingTimezone, 'UTC');
+  assert.throws(
+    () => validateProfile({ companyName: 'Navrik Australia', preferences: { reportingTimezone: 'Not/A-Timezone' } }),
+    { message: 'preferences.reportingTimezone must be a valid IANA time zone' },
+  );
+});

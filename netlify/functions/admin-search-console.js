@@ -11,9 +11,9 @@ const BASE_REQUIRED_CONFIGURATION = [
   'GSC_SITE_URL',
 ];
 const ALLOWED_REDIRECT_URIS = new Set([
-  'https://www.navrik.co.za/api/admin-search-console?action=callback',
+  'https://navrik.com.au/api/admin-search-console?action=callback',
 ]);
-const ALLOWED_SITE_URLS = new Set(['sc-domain:navrik.co.za']);
+const ALLOWED_SITE_URLS = new Set(['sc-domain:navrik.com.au']);
 const OAUTH_STATE_TTL_MS = 10 * 60 * 1000;
 const REFRESH_COOLDOWN_MS = 15 * 60 * 1000;
 const MAX_ACTIVE_OAUTH_STATES = 5;
@@ -39,7 +39,7 @@ const log = {
 
 function headersFor(event) {
   const headers = { 'Access-Control-Allow-Headers': 'Content-Type, Authorization', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Content-Type': 'application/json', 'Cache-Control': 'private, no-store', Pragma: 'no-cache', Vary: 'Origin' };
-  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://www.navrik.co.za';
+  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://navrik.com.au';
   if (event.headers?.origin === allowedOrigin) headers['Access-Control-Allow-Origin'] = allowedOrigin;
   return headers;
 }
@@ -132,7 +132,7 @@ export function validateOAuthStateRecord({ record, state, env, now = new Date() 
 }
 
 function pkceChallenge(verifier) { return crypto.createHash('sha256').update(verifier).digest('base64url'); }
-function dateString(date) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date); }
+function dateString(date) { return new Intl.DateTimeFormat('en-CA', { timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date); }
 function daysAgo(days) { return dateString(new Date(Date.now() - days * 24 * 60 * 60 * 1000)); }
 
 function authorizationUrl({ env, state, verifier }) {
@@ -432,7 +432,7 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
           ON CONFLICT (id) DO UPDATE SET refresh_token_ciphertext = EXCLUDED.refresh_token_ciphertext, updated_at = NOW()
         `;
         log.info('Google Search Console connected', { siteUrl: env.GSC_SITE_URL });
-        return { statusCode: 302, headers: { ...headers, Location: 'https://www.navrik.co.za/admin/search-visibility?google=connected' }, body: '' };
+        return { statusCode: 302, headers: { ...headers, Location: 'https://navrik.com.au/admin/search-visibility?google=connected' }, body: '' };
       }
 
       const authed = await authenticated(event, verify);

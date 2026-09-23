@@ -39,8 +39,8 @@ export class AdminSearchConsoleComponent {
     const comparison = this.model()?.data?.comparison;
     if (!comparison || typeof comparison !== 'object' || Array.isArray(comparison)) return '';
     const values = comparison as { clicks?: unknown; impressions?: unknown; ctr?: unknown; averagePosition?: unknown };
-    const clicks = typeof values.clicks === 'number' ? new Intl.NumberFormat('en-ZA').format(values.clicks) : null;
-    const impressions = typeof values.impressions === 'number' ? new Intl.NumberFormat('en-ZA').format(values.impressions) : null;
+    const clicks = typeof values.clicks === 'number' ? new Intl.NumberFormat('en-AU').format(values.clicks) : null;
+    const impressions = typeof values.impressions === 'number' ? new Intl.NumberFormat('en-AU').format(values.impressions) : null;
     if (!clicks && !impressions) return '';
     return `Previous comparable period: ${clicks ?? '—'} clicks and ${impressions ?? '—'} impressions.`;
   });

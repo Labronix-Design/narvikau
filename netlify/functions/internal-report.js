@@ -13,7 +13,7 @@ function headersFor(event) {
     'Content-Type': 'application/json',
     Vary: 'Origin',
   };
-  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://www.navrik.com.au';
+  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://navrik.com.au';
   if (event.headers?.origin === allowedOrigin) headers['Access-Control-Allow-Origin'] = allowedOrigin;
   return headers;
 }
@@ -26,15 +26,15 @@ function databaseUrl() {
   return url;
 }
 
-function localParts(date) {
+function localParts(date, timeZone) {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Africa/Johannesburg', weekday: 'short', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    timeZone, weekday: 'short', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).formatToParts(date);
   return Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
 }
 
-export function isScheduledReportTime(date) {
-  const parts = localParts(date);
+export function isScheduledReportTime(date, timeZone = 'UTC') {
+  const parts = localParts(date, timeZone);
   return (parts.weekday === 'Mon' || parts.weekday === 'Sat') && parts.hour === '06' && parts.minute === '00';
 }
 
@@ -83,8 +83,8 @@ async function currentReportData(sql) {
   return sections;
 }
 
-export async function persistScheduledReport(sql, scheduledFor) {
-  if (!isScheduledReportTime(scheduledFor)) return { status: 'ignored', explanation: 'Not a configured reporting time.' };
+export async function persistScheduledReport(sql, scheduledFor, timeZone = 'UTC') {
+  if (!isScheduledReportTime(scheduledFor, timeZone)) return { status: 'ignored', explanation: 'Not a configured reporting time.' };
   const report = buildReport(await currentReportData(sql));
   await sql`
     INSERT INTO internal_report_snapshots (report_type, scheduled_for, payload)

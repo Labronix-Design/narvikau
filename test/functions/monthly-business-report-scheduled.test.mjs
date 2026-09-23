@@ -3,10 +3,11 @@ import test from 'node:test';
 
 import { createHandler } from '../../netlify/functions/monthly-business-report-scheduled.js';
 
-test('scheduled monthly report targets the completed prior SAST calendar month', async () => {
+test('scheduled monthly report targets the completed prior Australian calendar month', async () => {
   let received;
   const handler = createHandler({
-    now: () => new Date('2026-09-01T04:00:00.000Z'),
+    env: { REPORTING_TIME_ZONE: 'Australia/Sydney' },
+    now: () => new Date('2026-08-31T20:00:00.000Z'),
     getSql: () => async () => [],
     deliverMonthlyReport: async (input) => { received = input; return { status: 'sent', period: input.period }; },
   });
@@ -22,7 +23,8 @@ test('scheduled monthly report targets the completed prior SAST calendar month',
 
 test('scheduled monthly report returns configuration failure without sending', async () => {
   const handler = createHandler({
-    now: () => new Date('2026-09-01T04:00:00.000Z'),
+    env: { REPORTING_TIME_ZONE: 'Australia/Sydney' },
+    now: () => new Date('2026-08-31T20:00:00.000Z'),
     getSql: () => async () => [],
     deliverMonthlyReport: async () => ({ status: 'setup_required' }),
   });
@@ -32,10 +34,11 @@ test('scheduled monthly report returns configuration failure without sending', a
   assert.deepEqual(JSON.parse(response.body), { error: 'Monthly internal report delivery is not configured' });
 });
 
-test('scheduled monthly report ignores direct invocations outside 06:00 SAST on the first day', async () => {
+test('scheduled monthly report ignores direct invocations outside 06:00 in the configured time zone on the first day', async () => {
   let calls = 0;
   const handler = createHandler({
-    now: () => new Date('2026-09-02T04:00:00.000Z'),
+    env: { REPORTING_TIME_ZONE: 'Australia/Sydney' },
+    now: () => new Date('2026-09-01T20:00:00.000Z'),
     getSql: () => async () => [],
     deliverMonthlyReport: async () => { calls += 1; return { status: 'sent' }; },
   });

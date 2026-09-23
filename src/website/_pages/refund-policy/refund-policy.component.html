@@ -20,12 +20,6 @@
       <h1 class="policy-title">{{ content().title_main }} <span class="highlight-orange">{{ content().title_highlight }}</span></h1>
       <p class="policy-intro">{{ content().intro }}</p>
 
-      <a href="assets/docs/navrik-warranty-and-return-policy.pdf"
-         download="Navrik Warranty and Return Policy.pdf"
-         class="download-btn">
-        <mat-icon svgIcon="download"></mat-icon>
-        Download Full Policy (PDF)
-      </a>
     </div>
 
     @for (section of content().sections; track section.title) {
@@ -77,12 +71,6 @@
 
     <!-- Footer Actions -->
     <div class="policy-footer">
-      <a href="assets/docs/navrik-warranty-and-return-policy.pdf"
-         download="Navrik Warranty and Return Policy.pdf"
-         class="download-btn">
-        <mat-icon svgIcon="download"></mat-icon>
-        Download Full Policy (PDF)
-      </a>
       <a routerLink="/products" class="back-link">
         <mat-icon svgIcon="arrow_back"></mat-icon>
         Back to Products

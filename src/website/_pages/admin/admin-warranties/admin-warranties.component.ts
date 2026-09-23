@@ -28,6 +28,6 @@ export class AdminWarrantiesComponent {
 
   date(value: string): string {
     const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime()) ? 'Not measured' : new Intl.DateTimeFormat('en-ZA', { dateStyle: 'medium' }).format(parsed);
+    return Number.isNaN(parsed.getTime()) ? 'Not measured' : new Intl.DateTimeFormat('en-AU', { dateStyle: 'medium' }).format(parsed);
   }
 }

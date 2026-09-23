@@ -1,18 +1,17 @@
 const fs = require('fs');
 const path = require('path');
 
-const BASE_URL = 'https://www.navrik.co.za';
+const BASE_URL = 'https://navrik.com.au';
 const DEFAULT_OUTPUT_DIRECTORY = path.resolve(__dirname, '../dist/navrik');
 
 const staticPages = [
   { path: '', priority: '1.0', changefreq: 'weekly' },
   { path: 'products', priority: '0.9', changefreq: 'weekly' },
-  { path: 'accessories', priority: '0.8', changefreq: 'weekly' },
-  { path: 'finance', priority: '0.6', changefreq: 'monthly' },
   { path: 'contact', priority: '0.6', changefreq: 'monthly' },
   { path: 'refund-policy', priority: '0.4', changefreq: 'yearly' },
   { path: 'privacy', priority: '0.3', changefreq: 'yearly' },
   { path: 'terms', priority: '0.3', changefreq: 'yearly' },
+  { path: 'register-warranty', priority: '0.3', changefreq: 'yearly' },
 ];
 
 function navrikSchema() {
@@ -22,19 +21,17 @@ function navrikSchema() {
       {
         '@type': 'LocalBusiness',
         '@id': `${BASE_URL}/#business`,
-        name: 'Navrik Trays, Canopies & Accessories',
+        name: 'Navrik Australia Canopies',
         url: BASE_URL,
-        email: 'info@navrik.co.za',
-        description: 'Premium aluminium bakkie trays, canopies, and accessories for South African vehicles.',
+        email: 'info@navrik.com.au',
+        description: 'Aluminium canopies for Australian vehicles, backed by product guidance and tailored quotes.',
         areaServed: {
           '@type': 'Country',
-          name: 'South Africa',
+          name: 'Australia',
         },
         address: {
           '@type': 'PostalAddress',
-          addressLocality: 'Johannesburg South',
-          addressRegion: 'Gauteng',
-          addressCountry: 'ZA',
+          addressCountry: 'AU',
         },
       },
       {
@@ -42,7 +39,7 @@ function navrikSchema() {
         '@id': `${BASE_URL}/#website`,
         url: BASE_URL,
         name: 'Navrik',
-        inLanguage: 'en-ZA',
+        inLanguage: 'en-AU',
         publisher: { '@id': `${BASE_URL}/#business` },
       },
     ],

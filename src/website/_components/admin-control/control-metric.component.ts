@@ -4,7 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 
-export type ControlMetricFormat = 'number' | 'currency' | 'percent' | 'text';
+export type ControlMetricFormat = 'number' | 'percent' | 'text';
 export type ControlMetricTone = 'default' | 'accent' | 'success' | 'warning';
 
 @Component({
@@ -34,15 +34,13 @@ export class ControlMetricComponent {
     if (value === null || value === undefined || value === '') return 'Not measured yet';
     if (typeof value === 'string') return value;
     if (typeof value !== 'number' || !Number.isFinite(value)) return 'Not measured yet';
-    if (this.format() === 'text') return new Intl.NumberFormat('en-ZA').format(value);
+    if (this.format() === 'text') return new Intl.NumberFormat('en-AU').format(value);
 
     switch (this.format()) {
-      case 'currency':
-        return new Intl.NumberFormat('en-ZA', { style: 'currency', currency: 'ZAR' }).format(value / 100);
       case 'percent':
-        return `${new Intl.NumberFormat('en-ZA', { maximumFractionDigits: 1 }).format(value)}%`;
+        return `${new Intl.NumberFormat('en-AU', { maximumFractionDigits: 1 }).format(value)}%`;
       default:
-        return new Intl.NumberFormat('en-ZA').format(value);
+        return new Intl.NumberFormat('en-AU').format(value);
     }
   });
 

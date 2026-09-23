@@ -12,9 +12,9 @@ function databaseUrl() {
   return url;
 }
 
-export function isMonthlyReportScheduleTime(date) {
+export function isMonthlyReportScheduleTime(date, timeZone = 'UTC') {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Africa/Johannesburg', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    timeZone, day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
   }).formatToParts(date).filter((part) => part.type !== 'literal');
   const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return values.day === '1' && values.hour === '06' && values.minute === '00';
@@ -23,9 +23,10 @@ export function isMonthlyReportScheduleTime(date) {
 export function createHandler({ getSql = () => neon(databaseUrl()), env = process.env, now = () => new Date(), deliverMonthlyReport: deliver = deliverMonthlyReport } = {}) {
   return async () => {
     try {
-      if (!isMonthlyReportScheduleTime(now())) return { statusCode: 202, body: JSON.stringify({ status: 'ignored' }) };
+      const timeZone = env.REPORTING_TIME_ZONE || 'UTC';
+      if (!isMonthlyReportScheduleTime(now(), timeZone)) return { statusCode: 202, body: JSON.stringify({ status: 'ignored' }) };
       const scheduledFor = now();
-      const result = await deliver({ sql: getSql(), period: monthlyPeriodFor(scheduledFor, 'previous'), env });
+      const result = await deliver({ sql: getSql(), period: monthlyPeriodFor(scheduledFor, 'previous', timeZone), env });
       if (result.status === 'setup_required') return { statusCode: 503, body: JSON.stringify({ error: 'Monthly internal report delivery is not configured' }) };
       log.info('monthly internal report delivery completed', { status: result.status, periodStart: result.period.startDate, periodEnd: result.period.endDate });
       return { statusCode: 202, body: JSON.stringify({ status: result.status }) };

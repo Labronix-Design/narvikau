@@ -65,8 +65,8 @@ test('monthly Search Console snapshot reuses its exact server-side period cache 
     period: { startDate: '2026-08-01', endDate: '2026-08-31' },
     env: {
       GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret',
-      GSC_OAUTH_REDIRECT_URI: 'https://www.navrik.co.za/api/admin-search-console?action=callback',
-      GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.co.za',
+      GSC_OAUTH_REDIRECT_URI: 'https://navrik.com.au/api/admin-search-console?action=callback',
+      GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.com.au',
     },
     fetchImpl: async () => { fetchCalls += 1; throw new Error('should not fetch'); },
   });
@@ -100,8 +100,8 @@ test('monthly Search Console snapshot queries the exact server-side calendar per
     period: { startDate: '2026-08-01', endDate: '2026-08-31' },
     env: {
       GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret',
-      GSC_OAUTH_REDIRECT_URI: 'https://www.navrik.co.za/api/admin-search-console?action=callback',
-      GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: key.toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.co.za',
+      GSC_OAUTH_REDIRECT_URI: 'https://navrik.com.au/api/admin-search-console?action=callback',
+      GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: key.toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.com.au',
     },
     fetchImpl,
   });
@@ -130,8 +130,8 @@ test('a configured GA4 property is refreshed into the same admin-only server cac
     },
     env: {
       GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret',
-      GSC_OAUTH_REDIRECT_URI: 'https://www.navrik.co.za/api/admin-search-console?action=callback',
-      GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: key.toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.co.za',
+      GSC_OAUTH_REDIRECT_URI: 'https://navrik.com.au/api/admin-search-console?action=callback',
+      GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: key.toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.com.au',
       GA4_PROPERTY_ID: '123456789',
     },
     fetchImpl: async (url, options) => {
@@ -169,7 +169,7 @@ test('a recent server cache prevents repeated admin refreshes from exhausting Go
       throw new Error(`unexpected query: ${query}`);
     },
     now: () => new Date('2026-08-24T04:05:00.000Z'),
-    env: { GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret', GSC_OAUTH_REDIRECT_URI: 'https://www.navrik.co.za/api/admin-search-console?action=callback', GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.co.za' },
+    env: { GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret', GSC_OAUTH_REDIRECT_URI: 'https://navrik.com.au/api/admin-search-console?action=callback', GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.com.au' },
     fetchImpl: async () => { throw new Error('Google must not be called during cooldown'); },
   });
 
@@ -198,7 +198,7 @@ test('a GET during an active refresh lease retains the last measured payload wit
       throw new Error(`unexpected query: ${query}`);
     },
     now: () => new Date('2026-08-24T04:04:00.000Z'),
-    env: { GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret', GSC_OAUTH_REDIRECT_URI: 'https://www.navrik.co.za/api/admin-search-console?action=callback', GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.co.za' },
+    env: { GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret', GSC_OAUTH_REDIRECT_URI: 'https://navrik.com.au/api/admin-search-console?action=callback', GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.com.au' },
   });
 
   const response = await handler(event('GET'));
@@ -228,7 +228,7 @@ test('an overlapping admin refresh observes the database-backed lease and does n
       throw new Error(`unexpected query: ${query}`);
     },
     now: () => new Date('2026-08-24T04:05:00.000Z'),
-    env: { GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret', GSC_OAUTH_REDIRECT_URI: 'https://www.navrik.co.za/api/admin-search-console?action=callback', GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.co.za' },
+    env: { GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret', GSC_OAUTH_REDIRECT_URI: 'https://navrik.com.au/api/admin-search-console?action=callback', GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: Buffer.alloc(32).toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.com.au' },
     fetchImpl: async () => { googleCalls += 1; throw new Error('Google must not be called when another refresh owns the lease'); },
   });
 
@@ -261,8 +261,8 @@ test('an invalid Google refresh grant is cleared and returns a reconnection stat
     },
     env: {
       GSC_OAUTH_CLIENT_ID: 'client', GSC_OAUTH_CLIENT_SECRET: 'secret',
-      GSC_OAUTH_REDIRECT_URI: 'https://www.navrik.co.za/api/admin-search-console?action=callback',
-      GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: key.toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.co.za',
+      GSC_OAUTH_REDIRECT_URI: 'https://navrik.com.au/api/admin-search-console?action=callback',
+      GSC_OAUTH_STATE_SECRET: 'state', GSC_TOKEN_ENCRYPTION_KEY: key.toString('base64'), GSC_SITE_URL: 'sc-domain:navrik.com.au',
     },
     fetchImpl: async () => ({ ok: false, json: async () => ({ error: 'invalid_grant' }) }),
   });

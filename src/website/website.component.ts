@@ -23,7 +23,7 @@ interface PublicPageMetadata {
   description: string;
 }
 
-const SITE_ORIGIN = 'https://www.navrik.co.za';
+const SITE_ORIGIN = 'https://navrik.com.au';
 const CONFIGURED_FAVICON_SELECTOR = 'link[data-navrik-configured-favicon]';
 const CONFIGURED_ORGANIZATION_SCHEMA_SELECTOR = 'script[data-navrik-configured-organization]';
 
@@ -89,6 +89,10 @@ const PUBLIC_PAGE_METADATA: Readonly<Record<string, PublicPageMetadata>> = {
   '/terms': {
     title: 'Terms of Service | Navrik',
     description: 'Read the terms governing use of the Navrik website and product enquiries.',
+  },
+  '/register-warranty': {
+    title: 'Register a Canopy Warranty | Navrik Australia',
+    description: 'Register your Navrik aluminium canopy warranty with the Australian support team.',
   },
 };
 

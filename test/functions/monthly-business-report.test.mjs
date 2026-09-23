@@ -54,20 +54,22 @@ test('monthly operations report preserves the secure Search Console setup explan
   });
 });
 
-test('monthly period uses the current SAST month through today for an initial report', () => {
-  assert.deepEqual(monthlyPeriodFor(new Date('2026-08-24T04:00:00.000Z'), 'current'), {
+test('monthly period uses the configured Australian calendar month through today for an initial report', () => {
+  assert.deepEqual(monthlyPeriodFor(new Date('2026-08-23T20:00:00.000Z'), 'current', 'Australia/Sydney'), {
     startDate: '2026-08-01', endDate: '2026-08-24', complete: false, label: 'August 2026',
   });
 });
 
-test('monthly period maps SAST month edges to start-inclusive, end-exclusive UTC instants', () => {
-  assert.deepEqual(monthlyPeriodTimestampBounds({ startDate: '2026-08-01', endDate: '2026-08-31' }), {
-    start: '2026-07-31T22:00:00.000Z',
-    endExclusive: '2026-08-31T22:00:00.000Z',
+test('monthly period maps Australian month edges to start-inclusive, end-exclusive UTC instants', () => {
+  assert.deepEqual(monthlyPeriodTimestampBounds(
+    { startDate: '2026-08-01', endDate: '2026-08-31' },
+    'Australia/Sydney',
+  ), {
+    start: '2026-07-31T14:00:00.000Z',
+    endExclusive: '2026-08-31T14:00:00.000Z',
   });
-  // 21:59:59Z is still July SAST, while 22:00:00Z is the first August record.
-  assert.equal(new Date('2026-07-31T21:59:59.999Z') < new Date('2026-07-31T22:00:00.000Z'), true);
-  assert.equal(new Date('2026-08-31T22:00:00.000Z') < new Date('2026-08-31T22:00:00.000Z'), false);
+  assert.equal(new Date('2026-07-31T13:59:59.999Z') < new Date('2026-07-31T14:00:00.000Z'), true);
+  assert.equal(new Date('2026-08-31T14:00:00.000Z') < new Date('2026-08-31T14:00:00.000Z'), false);
 });
 
 test('monthly operations report email escapes business-controlled content', () => {

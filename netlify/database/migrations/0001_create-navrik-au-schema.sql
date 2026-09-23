@@ -1,6 +1,6 @@
 -- Navrik Australia initial schema.
 -- This migration targets a new Netlify Database and deliberately has no
--- dependency on the South African migration history.
+-- dependency on another deployment's migration history.
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -321,4 +321,4 @@ CREATE INDEX idx_search_console_monthly_snapshots_updated
 
 -- Rollback for this fresh-database initial migration is to discard the AU
 -- database branch/site database and recreate it before any production data is
--- accepted. No South African schema or data is migrated by this file.
+-- accepted. No schema or data from another deployment is migrated by this file.

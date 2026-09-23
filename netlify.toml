@@ -38,13 +38,14 @@
     X-Robots-Tag = "noindex, nofollow, noarchive"
 
 [functions."internal-report-scheduled"]
-  # 06:00 SAST is 04:00 UTC. This function only persists internal snapshots.
-  schedule = "0 4 * * 1,6"
+  # Run hourly so the function can honour REPORTING_TIME_ZONE and daylight
+  # saving while persisting snapshots only at 06:00 on configured weekdays.
+  schedule = "0 * * * *"
 
 [functions."monthly-business-report-scheduled"]
-  # 06:00 SAST on the first day of every month. Sends the completed prior
-  # calendar-month operations report only.
-  schedule = "0 4 1 * *"
+  # Run hourly so the function can honour REPORTING_TIME_ZONE and daylight
+  # saving. It sends only at 06:00 on the first local day of the month.
+  schedule = "0 * * * *"
 
 # 1. API REDIRECTS (Highest Priority)
 [[redirects]]

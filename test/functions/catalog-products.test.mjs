@@ -11,7 +11,7 @@ test('catalog products returns the cached product read model on GET', async () =
     category: 'canopy',
     gallery_urls: [],
     base_price_cents: 125000,
-    purchase_mode: 'online_checkout',
+    purchase_mode: 'retired_purchase_mode',
   }, {
     id: 8,
     slug: 'navrik-standard-tray',

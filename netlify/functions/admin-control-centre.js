@@ -23,7 +23,7 @@ function headersFor(event) {
     Pragma: 'no-cache',
     Vary: 'Origin',
   };
-  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://www.navrik.com.au';
+  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://navrik.com.au';
   if (event.headers?.origin === allowedOrigin) headers['Access-Control-Allow-Origin'] = allowedOrigin;
   return headers;
 }
@@ -60,6 +60,15 @@ function rejectUnknownFields(value, allowed, errorMessage) {
   if (unknown.length) throw new Error(errorMessage);
 }
 
+function isValidTimeZone(value) {
+  try {
+    new Intl.DateTimeFormat('en-AU', { timeZone: value }).format(new Date(0));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function validateProfile(value) {
   const profile = asObject(value);
   if (!profile) throw new Error('profile must be an object');
@@ -76,7 +85,7 @@ export function validateProfile(value) {
   const email = asString(contacts.email, 'contacts.email', { maxLength: 254 });
   if (email && !EMAIL_RE.test(email)) throw new Error('contacts.email must be a valid email address');
   const timezone = asString(preferences.reportingTimezone, 'preferences.reportingTimezone', { maxLength: 64 });
-  if (timezone && timezone !== 'Africa/Johannesburg') throw new Error('preferences.reportingTimezone must be Africa/Johannesburg');
+  if (timezone && !isValidTimeZone(timezone)) throw new Error('preferences.reportingTimezone must be a valid IANA time zone');
 
   return {
     companyName: asString(profile.companyName, 'companyName', { required: true, maxLength: 160 }),
@@ -88,7 +97,7 @@ export function validateProfile(value) {
       phone: asString(contacts.phone, 'contacts.phone', { maxLength: 50 }),
       address: asString(contacts.address, 'contacts.address', { maxLength: 500 }),
     },
-    preferences: { reportingTimezone: timezone || 'Africa/Johannesburg' },
+    preferences: { reportingTimezone: timezone || 'UTC' },
   };
 }
 

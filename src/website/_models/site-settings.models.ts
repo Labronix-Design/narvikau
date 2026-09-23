@@ -40,10 +40,10 @@ export interface SiteSettings {
 }
 
 export const DEFAULT_CONTACT_INFO: ContactInfo = {
-  email: 'info@navrik.co.za',
+  email: 'info@navrik.com.au',
   phone: '',
   whatsapp: '',
-  location: 'Johannesburg South, Gauteng',
+  location: 'Australia',
   business_hours: [
     { label: 'Monday – Friday', hours: '08:00 – 17:00', closed: false },
     { label: 'Saturday',        hours: '09:00 – 13:00', closed: false },

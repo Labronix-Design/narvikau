@@ -7,10 +7,10 @@ const encryptionKey = Buffer.alloc(32, 7).toString('base64');
 const configuredEnv = {
   GSC_OAUTH_CLIENT_ID: 'client-id',
   GSC_OAUTH_CLIENT_SECRET: 'super-secret-client-secret',
-  GSC_OAUTH_REDIRECT_URI: 'https://www.navrik.co.za/api/admin-search-console?action=callback',
+  GSC_OAUTH_REDIRECT_URI: 'https://navrik.com.au/api/admin-search-console?action=callback',
   GSC_OAUTH_STATE_SECRET: 'super-secret-state-key',
   GSC_TOKEN_ENCRYPTION_KEY: encryptionKey,
-  GSC_SITE_URL: 'sc-domain:navrik.co.za',
+  GSC_SITE_URL: 'sc-domain:navrik.com.au',
 };
 
 test('OAuth state validation rejects an expired server-side state record', () => {

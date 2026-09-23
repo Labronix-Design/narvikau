@@ -3,7 +3,7 @@ import { getStore } from '@netlify/blobs';
 export function localUploadFallbackUrl(requestUrl, key) {
   const url = new URL(requestUrl);
   if (!['localhost', '127.0.0.1', '::1'].includes(url.hostname)) return null;
-  return `https://www.navrik.co.za/uploads/${encodeURIComponent(key)}`;
+  return `https://navrik.com.au/uploads/${encodeURIComponent(key)}`;
 }
 
 export default async (req) => {

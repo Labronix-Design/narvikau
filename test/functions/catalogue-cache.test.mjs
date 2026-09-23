@@ -49,7 +49,7 @@ test('catalogue rebuild rejects retired or unknown snapshot sections', async () 
 test('a cached public product payload is allowlisted and limited to canopies', async () => {
   const sql = async () => [{
     payload: [
-      { ...adventure, base_price_cents: 199900, purchaseMode: 'online_checkout' },
+      { ...adventure, base_price_cents: 199900, purchaseMode: 'retired_purchase_mode' },
       { ...adventure, id: 2, slug: 'navrik-standard-tray', category: 'tray' },
       { ...adventure, id: 3, slug: 'navrik-canopy-expedition', name: 'Navrik Canopy — Expedition' },
     ],

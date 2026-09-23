@@ -20,7 +20,7 @@ function headersFor(event) {
     Expires: '0',
     Vary: 'Origin',
   };
-  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://www.navrik.com.au';
+  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://navrik.com.au';
   if (event.headers?.origin === allowedOrigin) headers['Access-Control-Allow-Origin'] = allowedOrigin;
   return headers;
 }
@@ -33,22 +33,22 @@ function databaseUrl() {
   return url;
 }
 
-function localDateParts(date) {
-  const values = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Johannesburg', year: 'numeric', month: '2-digit', day: '2-digit' })
+function localDateParts(date, timeZone) {
+  const values = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
     .formatToParts(date)
     .filter((part) => part.type !== 'literal');
   return Object.fromEntries(values.map((part) => [part.type, part.value]));
 }
 
-function formatLabel(year, month) {
-  return new Intl.DateTimeFormat('en-ZA', { timeZone: 'Africa/Johannesburg', month: 'long', year: 'numeric' })
-    .format(new Date(Date.UTC(year, month - 1, 1)));
+function formatLabel(year, month, timeZone) {
+  return new Intl.DateTimeFormat('en-AU', { timeZone, month: 'long', year: 'numeric' })
+    .format(new Date(Date.UTC(year, month - 1, 15, 12)));
 }
 
 function dateValue(year, month, day) { return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`; }
 
-export function monthlyPeriodFor(date, kind) {
-  const parts = localDateParts(date);
+export function monthlyPeriodFor(date, kind, timeZone = 'UTC') {
+  const parts = localDateParts(date, timeZone);
   let year = Number(parts.year);
   let month = Number(parts.month);
   if (kind === 'previous') {
@@ -61,7 +61,7 @@ export function monthlyPeriodFor(date, kind) {
     startDate: dateValue(year, month, 1),
     endDate: dateValue(year, month, complete ? lastDay : Number(parts.day)),
     complete,
-    label: formatLabel(year, month),
+    label: formatLabel(year, month, timeZone),
   };
 }
 
@@ -71,12 +71,29 @@ function nextDate(dateValue) {
   return date.toISOString().slice(0, 10);
 }
 
-export function monthlyPeriodTimestampBounds(period) {
-  const [startYear, startMonth, startDay] = period.startDate.split('-').map(Number);
-  const [endYear, endMonth, endDay] = nextDate(period.endDate).split('-').map(Number);
+function zonedMidnight(dateValue, timeZone) {
+  const [year, month, day] = dateValue.split('-').map(Number);
+  const intendedUtc = Date.UTC(year, month - 1, day);
+  let candidate = new Date(intendedUtc);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+    }).formatToParts(candidate);
+    const values = Object.fromEntries(parts.filter((part) => part.type !== 'literal').map((part) => [part.type, part.value]));
+    const displayedAsUtc = Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day), Number(values.hour), Number(values.minute), Number(values.second));
+    const corrected = new Date(candidate.getTime() + intendedUtc - displayedAsUtc);
+    if (corrected.getTime() === candidate.getTime()) return corrected;
+    candidate = corrected;
+  }
+  return candidate;
+}
+
+export function monthlyPeriodTimestampBounds(period, timeZone = 'UTC') {
   return {
-    start: new Date(Date.UTC(startYear, startMonth - 1, startDay, -2)).toISOString(),
-    endExclusive: new Date(Date.UTC(endYear, endMonth - 1, endDay, -2)).toISOString(),
+    start: zonedMidnight(period.startDate, timeZone).toISOString(),
+    endExclusive: zonedMidnight(nextDate(period.endDate), timeZone).toISOString(),
   };
 }
 
@@ -194,13 +211,13 @@ export function approvedRecipients(env) {
     : null;
 }
 
-async function loadReportInput(sql, period) {
+async function loadReportInput(sql, period, timeZone) {
   const endExclusiveDate = nextDate(period.endDate);
   const [leads] = await sql`
     SELECT COUNT(*)::INTEGER AS lead_count, COUNT(*) FILTER (WHERE status = 'converted')::INTEGER AS converted_lead_count
     FROM leads
-    WHERE created_at >= (${period.startDate}::timestamp AT TIME ZONE 'Africa/Johannesburg')
-      AND created_at < (${endExclusiveDate}::timestamp AT TIME ZONE 'Africa/Johannesburg')
+    WHERE created_at >= (${period.startDate}::timestamp AT TIME ZONE ${timeZone})
+      AND created_at < (${endExclusiveDate}::timestamp AT TIME ZONE ${timeZone})
   `;
   const [searchSnapshot] = await sql`
     SELECT payload FROM search_console_monthly_snapshots
@@ -292,7 +309,7 @@ export async function deliverMonthlyReport({ sql, period, env = process.env, sen
   if (missing.length) return { status: 'setup_required', missingConfiguration: missing };
   const recipients = approvedRecipients(env);
   const searchRefresh = await refreshMonthlySearchConsoleSnapshot({ sql, period, env });
-  const input = await loadReportInput(sql, period);
+  const input = await loadReportInput(sql, period, env.REPORTING_TIME_ZONE || 'UTC');
   if (!input.searchCache && searchRefresh.status !== 'ready') input.searchCache = searchRefresh;
   const report = buildMonthlyReport(input);
   const deliveries = [];
@@ -316,9 +333,10 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
       // last completed calendar month so Search Console's normal processing
       // delay can never make the report look unconfigured on the first days
       // of a new month.
-      const period = monthlyPeriodFor(now(), 'previous');
+      const timeZone = env.REPORTING_TIME_ZONE || 'UTC';
+      const period = monthlyPeriodFor(now(), 'previous', timeZone);
       if (event.httpMethod === 'GET') {
-        const input = await loadReportInput(sql, period);
+        const input = await loadReportInput(sql, period, timeZone);
         const recipients = approvedRecipients(env);
         const deliveries = recipients ? await Promise.all(recipients.map((recipient) => readDelivery(sql, { period, recipient }))) : [];
         const allSent = deliveries.length === APPROVED_MONTHLY_RECIPIENTS.length && deliveries.every((delivery) => delivery?.send_state === 'sent');

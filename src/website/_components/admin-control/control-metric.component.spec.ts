@@ -19,13 +19,12 @@ describe('ControlMetricComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Conversion tracking has not been connected.');
   });
 
-  it('formats cent amounts as South African Rand', () => {
-    fixture.componentRef.setInput('label', 'Revenue');
+  it('formats measured counts using the Australian locale', () => {
+    fixture.componentRef.setInput('label', 'Enquiries');
     fixture.componentRef.setInput('value', 123456);
-    fixture.componentRef.setInput('format', 'currency');
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('R1,234.56');
+    expect(fixture.nativeElement.textContent).toContain('123,456');
   });
 
   it('does not render an unexpected object as dashboard text', () => {

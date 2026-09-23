@@ -9,7 +9,11 @@ test('scheduled report runner persists a snapshot without exposing a web endpoin
     queries.push(strings.join(''));
     return [];
   };
-  const handler = createHandler({ getSql: () => sql, now: () => new Date('2026-08-24T04:00:00.000Z') });
+  const handler = createHandler({
+    getSql: () => sql,
+    env: { REPORTING_TIME_ZONE: 'Australia/Sydney' },
+    now: () => new Date('2026-08-23T20:00:00.000Z'),
+  });
 
   const response = await handler({});
 

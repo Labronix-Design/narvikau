@@ -59,7 +59,7 @@ export interface CacheMetadata {
 export interface ControlMetricData {
   label: string;
   value: number | string | null;
-  format?: 'number' | 'currency' | 'percent' | 'text';
+  format?: 'number' | 'percent' | 'text';
   context?: string;
   trend?: string;
   unavailableReason?: string;
@@ -72,7 +72,7 @@ export interface BusinessProfile {
   domains?: string[];
   serviceInformation: string;
   contacts: { email: string; phone: string; address: string };
-  preferences: { reportingTimezone: 'Africa/Johannesburg' };
+  preferences: { reportingTimezone: string };
 }
 
 export interface ControlCentreSection {

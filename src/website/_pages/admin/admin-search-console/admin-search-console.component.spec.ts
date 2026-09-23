@@ -15,7 +15,7 @@ describe('AdminSearchConsoleComponent', () => {
             status: 'setup_required',
             explanation: 'Google Search Console is not connected yet.',
             missingConfiguration: [],
-            integration: { property: 'sc-domain:navrik.co.za' },
+            integration: { property: 'sc-domain:navrik.com.au' },
           }),
           getSearchConsoleConnectionUrl: () => Promise.resolve({ authorizationUrl: 'https://accounts.google.com/example' }),
           refreshSearchConsole: () => Promise.resolve({ status: 'ready', data: {} }),

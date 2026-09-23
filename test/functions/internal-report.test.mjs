@@ -3,11 +3,11 @@ import test from 'node:test';
 
 import { buildReport, createHandler, isScheduledReportTime, persistScheduledReport } from '../../netlify/functions/internal-report.js';
 
-test('internal reports run at 06:00 SAST on Saturdays and Mondays only', () => {
-  assert.equal(isScheduledReportTime(new Date('2026-08-24T04:00:00.000Z')), true); // Monday 06:00 SAST
-  assert.equal(isScheduledReportTime(new Date('2026-08-29T04:00:00.000Z')), true); // Saturday 06:00 SAST
-  assert.equal(isScheduledReportTime(new Date('2026-08-25T04:00:00.000Z')), false);
-  assert.equal(isScheduledReportTime(new Date('2026-08-24T03:00:00.000Z')), false);
+test('internal reports run at 06:00 in the configured Australian time zone on Saturdays and Mondays only', () => {
+  assert.equal(isScheduledReportTime(new Date('2026-08-23T20:00:00.000Z'), 'Australia/Sydney'), true);
+  assert.equal(isScheduledReportTime(new Date('2026-08-28T20:00:00.000Z'), 'Australia/Sydney'), true);
+  assert.equal(isScheduledReportTime(new Date('2026-08-24T20:00:00.000Z'), 'Australia/Sydney'), false);
+  assert.equal(isScheduledReportTime(new Date('2026-08-23T19:00:00.000Z'), 'Australia/Sydney'), false);
 });
 
 test('internal operations report includes enquiry data but no payment, delivery instruction, or email recipient', () => {
@@ -42,7 +42,7 @@ test('a refreshed enquiry snapshot is persisted in the scheduled operations repo
     return [];
   };
 
-  const result = await persistScheduledReport(sql, new Date('2026-08-24T04:00:00.000Z'));
+  const result = await persistScheduledReport(sql, new Date('2026-08-23T20:00:00.000Z'), 'Australia/Sydney');
 
   assert.deepEqual(result, { status: 'persisted' });
   assert.equal(writes.length, 1);
