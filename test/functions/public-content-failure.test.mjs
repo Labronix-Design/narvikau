@@ -23,7 +23,6 @@ const endpoints = [
       brand_logos: [],
       contact: {},
       trust_bar: [],
-      compat_note: '',
     }],
     expectedEmptyBody: {
       logo_url: null,
@@ -33,7 +32,6 @@ const endpoints = [
       brand_logos: [],
       contact: {},
       trust_bar: [],
-      compat_note: '',
     },
   },
   {

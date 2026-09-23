@@ -30,7 +30,6 @@ const DEFAULTS = {
   brand_logos: [],
   contact: {},
   trust_bar: [],
-  compat_note: '',
 };
 
 // Public, read-only site configuration — logo, theme font/color, hero
@@ -48,7 +47,7 @@ export function createSiteSettingsHandler({ getSql = defaultGetSql } = {}) {
 
     try {
       const sql = getSql();
-      const [row] = await sql`SELECT logo_url, font_family, primary_color, hero_slides, brand_logos, contact, trust_bar, compat_note FROM site_settings WHERE id = 1`;
+      const [row] = await sql`SELECT logo_url, font_family, primary_color, hero_slides, brand_logos, contact, trust_bar FROM site_settings WHERE id = 1`;
       return { statusCode: 200, headers, body: JSON.stringify(row || DEFAULTS) };
     } catch (err) {
       log.error('Database read failed', { error: err?.name || 'Error', code: err?.code });

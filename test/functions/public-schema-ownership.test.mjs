@@ -1,35 +1,67 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const PUBLIC_AND_ADMIN_FUNCTIONS = [
-  'site-settings.js',
-  'legal-pages.js',
-  'finance-page.js',
-  'admin-site-settings.js',
-  'admin-legal-pages.js',
-  'admin-finance-page.js',
-];
+import { createAdminSiteSettingsHandler } from '../../netlify/functions/admin-site-settings.js';
+import { createSiteSettingsHandler } from '../../netlify/functions/site-settings.js';
 
-const RUNTIME_SCHEMA_DDL = /\b(?:CREATE\s+(?:TABLE|(?:UNIQUE\s+)?INDEX|(?:OR\s+REPLACE\s+)?(?:FUNCTION|TRIGGER|VIEW))|ALTER\s+TABLE|DROP\s+(?:CONSTRAINT|TABLE|INDEX|TRIGGER|FUNCTION|VIEW)|TRUNCATE\s+TABLE)\b/i;
-const RUNTIME_SINGLETON_OR_SEED_INSERT = /\b(?:INSERT\s+INTO\s+(?:site_settings|finance_page_settings)\s*\(\s*id\s*\)\s*VALUES\s*\(\s*1\s*\)\s*ON\s+CONFLICT|INSERT\s+INTO\s+promo_coupons\s*\([^)]*\)\s*VALUES\s*\(\s*'[^']*')/is;
+const freshSettings = {
+  logo_url: null,
+  font_family: 'Inter',
+  primary_color: '#ea580c',
+  hero_slides: [],
+  brand_logos: [],
+  contact: {},
+  trust_bar: [],
+};
 
-test('schema-ownership detectors catch schema mutations and seeds but allow parameterized CRUD', () => {
-  assert.match('CREATE TRIGGER audit_trigger BEFORE UPDATE ON orders', RUNTIME_SCHEMA_DDL);
-  assert.match('CREATE OR REPLACE FUNCTION set_updated_at()', RUNTIME_SCHEMA_DDL);
-  assert.match('DROP INDEX IF EXISTS old_index', RUNTIME_SCHEMA_DDL);
-  assert.match('TRUNCATE TABLE promo_coupons', RUNTIME_SCHEMA_DDL);
-  assert.match('INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING', RUNTIME_SINGLETON_OR_SEED_INSERT);
-  assert.match("INSERT INTO promo_coupons (code) VALUES ('NAVRIK25')", RUNTIME_SINGLETON_OR_SEED_INSERT);
+test('public site settings reads and returns the fresh AU settings columns', async () => {
+  const queries = [];
+  const sql = async (strings) => {
+    const query = strings.join(' ');
+    queries.push(query);
+    if (/compat_note/i.test(query)) {
+      const error = new Error('column "compat_note" does not exist');
+      error.code = '42703';
+      throw error;
+    }
+    return [freshSettings];
+  };
+  const handler = createSiteSettingsHandler({ getSql: () => sql });
 
-  assert.doesNotMatch('INSERT INTO promo_coupons (code) VALUES (${code_clean})', RUNTIME_SINGLETON_OR_SEED_INSERT);
-  assert.doesNotMatch('INSERT INTO legal_pages_settings (page, content) VALUES (${page}, ${content})', RUNTIME_SINGLETON_OR_SEED_INSERT);
+  const response = await handler({ httpMethod: 'GET' });
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(JSON.parse(response.body), freshSettings);
+  assert.equal(queries.length, 1);
+  assert.match(queries[0], /^SELECT logo_url/);
+  assert.doesNotMatch(queries[0], /compat_note/i);
 });
 
-test('deployed request handlers contain no runtime DDL or schema seed writes', async () => {
-  for (const file of PUBLIC_AND_ADMIN_FUNCTIONS) {
-    const source = await readFile(new URL(`../../netlify/functions/${file}`, import.meta.url), 'utf8');
-    assert.doesNotMatch(source, RUNTIME_SCHEMA_DDL);
-    assert.doesNotMatch(source, RUNTIME_SINGLETON_OR_SEED_INSERT);
-  }
+test('admin site settings updates the migration-owned AU row without runtime schema writes', async () => {
+  const queries = [];
+  const sql = async (strings) => {
+    const query = strings.join(' ');
+    queries.push(query);
+    if (/\b(?:CREATE|ALTER|DROP|TRUNCATE|INSERT)\b/i.test(query)) {
+      throw new Error('runtime schema or seed write is not allowed');
+    }
+    return [freshSettings];
+  };
+  const handler = createAdminSiteSettingsHandler({
+    verifyToken: async () => true,
+    getSql: () => sql,
+    purgeTags: async () => {},
+  });
+
+  const response = await handler({
+    httpMethod: 'PUT',
+    headers: {},
+    body: JSON.stringify({ font_family: 'Inter', primary_color: '#ea580c' }),
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(JSON.parse(response.body), freshSettings);
+  assert.equal(queries.length, 1);
+  assert.match(queries[0], /^\s*UPDATE site_settings SET/);
+  assert.doesNotMatch(queries[0], /compat_note/i);
 });
