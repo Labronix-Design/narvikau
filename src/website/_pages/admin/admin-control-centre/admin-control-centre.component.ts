@@ -9,10 +9,9 @@ import { ControlHealthComponent, ControlHealthState } from '../../../_components
 
 interface RecommendedAction { title: string; detail: string; route?: string; priority?: 'high' | 'normal'; }
 interface PulseMetric extends ControlMetricData { icon: string; route: string | null; }
-interface IntegrationCard { id: 'business_overview' | 'search'; label: string; provider: string; icon: string; health: ControlHealthState; detail: string; route: string; action: string; }
+interface IntegrationCard { id: 'search'; label: string; provider: string; icon: string; health: ControlHealthState; detail: string; route: string; action: string; }
 
 const INTEGRATION_META = [
-  { id: 'business_overview' as const, label: 'Business overview data', provider: 'Business snapshots', icon: 'business', route: '/admin/orders', action: 'Review sales and orders' },
   { id: 'search' as const, label: 'Search and traffic data', provider: 'Google', icon: 'search', route: '/admin/search-visibility', action: 'Open search and traffic' },
 ];
 
@@ -44,16 +43,17 @@ export class AdminControlCentreComponent {
     if (!business) return [];
     const conversion = business.conversion.denominator > 0 ? (business.conversion.numerator / business.conversion.denominator) * 100 : null;
     return [
-      { label: 'Paid or confirmed revenue', icon: 'payments', value: business.revenueCents, format: 'currency', context: business.scope.revenue, tone: 'accent', route: '/admin/orders' },
-      { label: 'Recorded orders', icon: 'receipt_long', value: business.orderCount, context: business.scope.orders, route: '/admin/orders' },
       { label: 'New enquiries', icon: 'forum', value: business.newEnquiries, context: business.scope.enquiries, tone: 'warning', route: '/admin/queries' },
+      { label: 'Recorded enquiries', icon: 'summarize', value: business.enquiryCount, context: business.scope.enquiries, route: '/admin/queries' },
       { label: 'Enquiry conversion', icon: 'bar_chart', value: conversion, format: 'percent', context: 'Converted enquiries divided by recorded enquiries.', unavailableReason: 'Conversion needs recorded enquiries and converted enquiries.', tone: 'success', route: '/admin/queries' },
     ];
   });
-  readonly actions = computed<RecommendedAction[]>(() => this.businessSnapshot()?.actions.map(action => ({
+  readonly actions = computed<RecommendedAction[]>(() => this.businessSnapshot()?.actions
+    .filter(action => action.key === 'follow_up_new_enquiries')
+    .map(action => ({
     title: this.actionTitle(action.key),
     detail: action.explanation,
-    route: action.key === 'follow_up_new_enquiries' ? '/admin/queries' : action.key === 'review_production_orders' ? '/admin/orders' : undefined,
+    route: '/admin/queries',
     priority: action.key === 'follow_up_new_enquiries' ? 'high' : 'normal',
   })) ?? []);
   readonly integrationCards = computed<IntegrationCard[]>(() => INTEGRATION_META.map(meta => {
@@ -89,7 +89,6 @@ export class AdminControlCentreComponent {
 
   private actionTitle(key: string): string {
     if (key === 'follow_up_new_enquiries') return 'Follow up new enquiries';
-    if (key === 'review_production_orders') return 'Review production orders';
     return 'Keep measurement current';
   }
 

@@ -9,14 +9,14 @@
             @if (siteSettings.settings().logo_url; as logoUrl) {
               <img [src]="siteSettings.uploadVariantUrl(logoUrl, 384)"
                    [attr.srcset]="siteSettings.uploadVariantUrl(logoUrl, 384) + ' 1x, ' + siteSettings.uploadVariantUrl(logoUrl, 768) + ' 2x'"
-                   alt="Navrik — Trays & Accessories"
+                   alt="Navrik aluminium canopies"
                    class="brand-logo-img">
             } @else {
               <span class="brand-logo-fallback" aria-hidden="true">Navrik</span>
             }
           </a>
         </div>
-        <p class="brand-subline">Premium Trays, Canopies & Accessories for Bakkies. Partner with the exclusive fitment experts.</p>
+        <p class="brand-subline">Purpose-built aluminium canopies for Australian vehicles and conditions.</p>
         
         <div class="contact-block">
           <a [href]="'mailto:' + siteSettings.settings().contact.email" class="contact-link group">
@@ -33,18 +33,16 @@
       </div>
 
       <div class="footer-col links-col">
-        <h2 class="col-header">Products & Partners</h2>
+        <h2 class="col-header">Canopies</h2>
         <ul class="link-list">
-          <li><a routerLink="/products">Bakkie Trays</a></li>
-          <li><a routerLink="/accessories">Accessories</a></li>
-          <li><a routerLink="/contact">Partner enquiries</a></li>
+          <li><a routerLink="/products">View the range</a></li>
+          <li><a routerLink="/contact">Request a quote</a></li>
         </ul>
       </div>
 
       <div class="footer-col links-col">
         <h2 class="col-header">Information</h2>
         <ul class="link-list">
-          <li><a routerLink="/finance">Finance options</a></li>
           <li><a routerLink="/terms">Terms of Use</a></li>
           <li><a routerLink="/privacy">Privacy Policy</a></li>
           <li><a routerLink="/refund-policy">Refund &amp; Warranty</a></li>
@@ -57,7 +55,7 @@
     <div class="footer-divider"></div>
 
     <div class="footer-bottom">
-      <p class="copyright">&copy; {{ currentYear || '2026' }} <strong>NAVRIK TRAYS, CANOPIES & ACCESSORIES</strong>. All Rights Reserved.</p>
+      <p class="copyright">&copy; {{ currentYear || '2026' }} <strong>NAVRIK AUSTRALIA</strong>. All Rights Reserved.</p>
       
       <div class="legal-links">
         <a routerLink="/privacy">Privacy</a>

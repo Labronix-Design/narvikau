@@ -47,8 +47,4 @@ export class ProductService {
   byCategory(category: string): CatalogProduct[] {
     return this._products().filter(p => p.category === category);
   }
-
-  byTrayType(trayType: 'standard' | 'premium'): CatalogProduct[] {
-    return this._products().filter(p => p.tray_type === trayType);
-  }
 }

@@ -1,14 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { CatalogAccessory, CatalogCategory, CatalogProduct, CompatibilityRule } from '../_models/catalog.models';
+import { CatalogProduct } from '../_models/catalog.models';
 import { SiteSettings } from '../_models/site-settings.models';
 
 export interface StorefrontReadModel {
   products: CatalogProduct[];
-  accessories: CatalogAccessory[];
-  compatibility: CompatibilityRule[];
-  categories: CatalogCategory[];
   settings: SiteSettings;
 }
 

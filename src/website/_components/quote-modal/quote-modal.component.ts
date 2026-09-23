@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnDestroy, Output, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnDestroy, Output, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -7,13 +7,6 @@ import { ButtonComponent } from '../button/button.component';
 import { ToastService } from '../../_services/toast.service';
 import { FeatureFlagsService } from '../../_services/feature-flags.service';
 import { SiteSettingsService } from '../../_services/site-settings.service';
-
-export interface QuoteConfiguration {
-  variants: ReadonlyArray<{ label: string; value: string }>;
-  accessories: ReadonlyArray<string>;
-}
-
-const EMPTY_CONFIGURATION: QuoteConfiguration = { variants: [], accessories: [] };
 
 @Component({
   selector: 'website-quote-modal',
@@ -47,10 +40,6 @@ export class QuoteModalComponent implements OnDestroy {
     this.selectedProduct.set(val || '');
   }
 
-  @Input() set configuration(value: QuoteConfiguration | null | undefined) {
-    this.selectedConfiguration.set(value ?? EMPTY_CONFIGURATION);
-  }
-
   @Output() closeModal = new EventEmitter<void>();
 
   readonly flags = inject(FeatureFlagsService);
@@ -68,14 +57,6 @@ export class QuoteModalComponent implements OnDestroy {
   isLoading = false;
 
   readonly selectedProduct = signal('');
-  readonly selectedConfiguration = signal<QuoteConfiguration>(EMPTY_CONFIGURATION);
-  readonly configurationLines = computed(() => {
-    const configuration = this.selectedConfiguration();
-    return [
-      ...configuration.variants.map((variant) => `${variant.label}: ${variant.value}`),
-      ...(configuration.accessories.length ? [`Accessories: ${configuration.accessories.join(', ')}`] : []),
-    ];
-  });
 
   ngOnDestroy(): void {
     if (typeof document !== 'undefined') {
@@ -108,9 +89,8 @@ export class QuoteModalComponent implements OnDestroy {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...this.quoteForm.getRawValue(),
-          Type: 'Accessories Quote Request',
-          Product: this.selectedProduct() || 'Catalogue enquiry',
-          Message: this.messageForSubmission(),
+          Type: 'Canopy Quote Request',
+          Product: this.selectedProduct() || 'Canopy enquiry',
         })
       });
       if (response.ok) {
@@ -127,13 +107,6 @@ export class QuoteModalComponent implements OnDestroy {
       this.isLoading = false;
       this.toast.showToast({ message: `Send failed — email us at ${this.siteSettings.settings().contact.email}`, type: 'error' });
     }
-  }
-
-  private messageForSubmission(): string {
-    const message = this.quoteForm.controls.Message.value;
-    const configuration = this.configurationLines();
-    if (!configuration.length) return message;
-    return `Selected configuration:\n${configuration.join('\n')}\n\nCustomer notes:\n${message}`;
   }
 
   private restoreFocus(): void {

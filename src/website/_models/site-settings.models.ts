@@ -56,10 +56,10 @@ export const DEFAULT_CONTACT_INFO: ContactInfo = {
 // pre-populate the editable lists — so opening Site Settings for the first
 // time shows what's actually live, not a blank slate.
 export const DEFAULT_HERO_SLIDES: HeroSlide[] = [
-  { image_url: 'assets/canopies/canopy-isuzu-dmax-studio-side-roofrack.jpg', alt: 'Navrik bakkie tray — image 1' },
-  { image_url: 'assets/canopies/canopy-isuzu-dmax-studio-rear-3q-roofrack.jpg', alt: 'Navrik bakkie tray — image 2' },
-  { image_url: 'assets/carousel/PHOTO-2026-04-23-12-44-01%203.jpg', alt: 'Navrik bakkie tray — image 3' },
-  { image_url: 'assets/carousel/PHOTO-2026-04-23-12-44-02.jpg', alt: 'Navrik bakkie tray — image 4' },
+  { image_url: 'assets/canopies/canopy-isuzu-dmax-studio-side-roofrack.jpg', alt: 'Navrik aluminium canopy — side view' },
+  { image_url: 'assets/canopies/canopy-isuzu-dmax-studio-rear-3q-roofrack.jpg', alt: 'Navrik aluminium canopy — rear view' },
+  { image_url: 'assets/carousel/PHOTO-2026-04-23-12-44-01%203.jpg', alt: 'Navrik aluminium canopy in use' },
+  { image_url: 'assets/carousel/PHOTO-2026-04-23-12-44-02.jpg', alt: 'Navrik aluminium canopy detail' },
 ];
 
 export const DEFAULT_TRUST_BAR: TrustBarItem[] = [

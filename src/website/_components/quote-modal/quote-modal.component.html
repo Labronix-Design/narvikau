@@ -14,22 +14,13 @@
 
       @if (flags.emailsEnabled) {
         <div class="qm-body">
-          <p class="qm-subtitle">Tell us what you need and we'll come back with pricing and availability.</p>
+          <p class="qm-subtitle">Tell us about your vehicle and intended use, and our team will recommend the right canopy.</p>
 
           @if (selectedProduct()) {
             <div class="qm-field-group">
               <label class="qm-label">Product</label>
               <p class="qm-selected-product">{{ selectedProduct() }}</p>
             </div>
-          }
-
-          @if (configurationLines().length) {
-            <section class="qm-field-group qm-configuration" aria-label="Selected configuration">
-              <span class="qm-label">Selected configuration</span>
-              <ul>
-                @for (line of configurationLines(); track line) { <li>{{ line }}</li> }
-              </ul>
-            </section>
           }
 
           <form [formGroup]="quoteForm" (ngSubmit)="onSubmit()">
@@ -44,7 +35,7 @@
               </div>
               <div class="qm-field">
                 <label class="qm-label" for="q-phone">Phone Number *</label>
-                <input id="q-phone" formControlName="Phone" placeholder="071 234 5678" autocomplete="tel"
+                <input id="q-phone" formControlName="Phone" placeholder="0412 345 678" autocomplete="tel"
                        [class.has-error]="submitted && quoteForm.get('Phone')?.invalid">
                 @if (submitted && quoteForm.get('Phone')?.invalid) {
                   <span class="qm-error">Required</span>
@@ -65,7 +56,7 @@
             <div class="qm-field">
               <label class="qm-label" for="q-msg">What do you need? *</label>
               <textarea id="q-msg" formControlName="Message" rows="4"
-                        placeholder="Describe what you're looking for — dimensions, cab size, quantity, preferred finish, any specific requirements..."
+                        placeholder="Tell us your vehicle make, model, year and how you plan to use the canopy..."
                         [class.has-error]="submitted && quoteForm.get('Message')?.invalid"></textarea>
               @if (submitted && quoteForm.get('Message')?.invalid) {
                 <span class="qm-error">Please describe what you need</span>

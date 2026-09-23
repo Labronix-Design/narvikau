@@ -8,7 +8,6 @@ export interface ProductVariant {
   variant_type: string;
   variant_value: string;
   label: string;
-  price_delta: number;
   is_active: boolean;
   sort_order: number;
 }
@@ -17,12 +16,9 @@ export interface CatalogProduct {
   id?: number;
   slug: string;
   name: string;
-  category: string;
-  tray_type: 'standard' | 'premium' | null;
+  category: 'canopy';
   size: string | null;
   color: string;
-  base_price: number;
-  coating_cost: number;
   description: string | null;
   image_url: string | null;
   is_active: boolean;
@@ -34,42 +30,6 @@ export interface CatalogProduct {
   side_door: string | null;
   rear_door: string | null;
   vehicle_fit: string | null;
-}
-
-export interface CatalogAccessory {
-  id?: number;
-  slug: string;
-  name: string;
-  category: string;
-  price: number;
-  description: string | null;
-  image_url: string | null;
-  is_active: boolean;
-  sort_order: number;
-}
-
-
-export interface CompatibilityRule {
-  id?: number;
-  accessory_id: number;
-  accessory_name?: string;
-  accessory_category?: string;
-  tray_type: 'standard' | 'premium' | null;
-  product_id: number | null;
-  vehicle_make: string | null;
-  vehicle_model: string | null;
-  notes: string | null;
-}
-
-export interface OrderSummary {
-  total: string;
-  pending: string;
-  deposit_paid: string;
-  in_production: string;
-  completed: string;
-  promo_orders: string;
-  total_value: string;
-  completed_value: string;
 }
 
 export interface WarrantyRegistrationRecord {
@@ -89,32 +49,6 @@ export interface WarrantyRegistrationRecord {
   fitment_date: string;
   consent_at: string;
   registered_at: string;
-}
-
-export interface CatalogCategory {
-  id?: number;
-  slug: string;
-  name: string;
-  type: 'product' | 'accessory';
-  eyebrow: string | null;
-  icon: string | null;
-  description: string | null;
-  sort_order: number;
-  is_active: boolean;
-}
-
-export interface PromoCoupon {
-  id: number;
-  code: string;
-  description: string | null;
-  discount_type: 'percent' | 'fixed';
-  discount_value: number;
-  min_order_zar: number | null;
-  max_uses: number | null;
-  current_uses: number;
-  is_active: boolean;
-  expires_at: string | null;
-  created_at: string;
 }
 
 export interface CacheMetadata {
@@ -249,13 +183,6 @@ export interface ControlCentreRefreshResponse {
   invalidatedSections?: string[];
 }
 
-export interface SalesPerformanceResponse {
-  status: BusinessSnapshotStatus;
-  explanation?: string;
-  data: SalesPerformanceSnapshot | null;
-  cache?: CacheMetadata;
-}
-
 export interface SearchConsoleResponse {
   status: 'ready' | 'setup' | 'unavailable' | string;
   explanation?: string;
@@ -385,63 +312,11 @@ export class AdminService {
     return firstValueFrom(this.http.delete('/api/admin-products', { headers: this.authHeaders, body: { variant: true, id } }));
   }
 
-  // ── Accessories ─────────────────────────────────────────────
-  getAccessories(): Promise<CatalogAccessory[]> {
-    return firstValueFrom(this.http.get<CatalogAccessory[]>('/api/admin-accessories', { headers: this.authHeaders }));
-  }
-
-  createAccessory(a: CatalogAccessory): Promise<CatalogAccessory> {
-    return firstValueFrom(this.http.post<CatalogAccessory>('/api/admin-accessories', a, { headers: this.authHeaders }));
-  }
-
-  updateAccessory(a: CatalogAccessory): Promise<CatalogAccessory> {
-    return firstValueFrom(this.http.put<CatalogAccessory>('/api/admin-accessories', a, { headers: this.authHeaders }));
-  }
-
-  deleteAccessory(id: number): Promise<any> {
-    return firstValueFrom(this.http.delete('/api/admin-accessories', { headers: this.authHeaders, body: { id } }));
-  }
-
-  // ── Compatibility ────────────────────────────────────────────
-  getCompatibility(): Promise<CompatibilityRule[]> {
-    return firstValueFrom(this.http.get<CompatibilityRule[]>('/api/admin-compatibility', { headers: this.authHeaders }));
-  }
-
-  addCompatibilityRule(rule: Omit<CompatibilityRule, 'id'>): Promise<CompatibilityRule> {
-    return firstValueFrom(this.http.post<CompatibilityRule>('/api/admin-compatibility', rule, { headers: this.authHeaders }));
-  }
-
-  deleteCompatibilityRule(id: number): Promise<any> {
-    return firstValueFrom(this.http.delete('/api/admin-compatibility', { headers: this.authHeaders, body: { id } }));
-  }
-
-  // ── Orders ──────────────────────────────────────────────────
-  getOrderSummary(): Promise<OrderSummary> {
-    return firstValueFrom(this.http.get<OrderSummary>('/api/admin-orders?summary=1', { headers: this.authHeaders }));
-  }
-
-  getOrders(params?: { limit?: number; offset?: number; status?: string }): Promise<any[]> {
-    const qs = new URLSearchParams();
-    if (params?.limit)  qs.set('limit',  String(params.limit));
-    if (params?.offset) qs.set('offset', String(params.offset));
-    if (params?.status) qs.set('status', params.status);
-    return firstValueFrom(this.http.get<any[]>(`/api/admin-orders?${qs}`, { headers: this.authHeaders }));
-  }
-
-  updateOrderStatus(id: number, status: string, notes?: string): Promise<any> {
-    return firstValueFrom(this.http.put('/api/admin-orders', { id, status, notes }, { headers: this.authHeaders }));
-  }
-
   getWarrantyRegistrations(params?: { limit?: number; offset?: number }): Promise<{ items: WarrantyRegistrationRecord[] }> {
     const qs = new URLSearchParams();
     if (params?.limit) qs.set('limit', String(params.limit));
     if (params?.offset) qs.set('offset', String(params.offset));
     return firstValueFrom(this.http.get<{ items: WarrantyRegistrationRecord[] }>(`/api/admin-warranties?${qs}`, { headers: this.authHeaders }));
-  }
-
-  // ── Sales performance (cached server snapshot) ──────────────
-  getSalesPerformance(): Promise<SalesPerformanceResponse> {
-    return firstValueFrom(this.http.get<SalesPerformanceResponse>('/api/admin-analytics?type=sales_performance', { headers: this.authHeaders }));
   }
 
   // ── Business control centre (server-side cached read models) ──
@@ -481,40 +356,6 @@ export class AdminService {
     return firstValueFrom(this.http.post<MonthlyBusinessReportSendResponse>('/api/monthly-business-report', { action: 'send_current' }, { headers: this.authHeaders }));
   }
 
-  // ── Coupons ─────────────────────────────────────────────────
-  getCoupons(): Promise<PromoCoupon[]> {
-    return firstValueFrom(this.http.get<PromoCoupon[]>('/api/admin-coupons', { headers: this.authHeaders }));
-  }
-
-  createCoupon(payload: Omit<PromoCoupon, 'id' | 'current_uses' | 'created_at'>): Promise<PromoCoupon> {
-    return firstValueFrom(this.http.post<PromoCoupon>('/api/admin-coupons', payload, { headers: this.authHeaders }));
-  }
-
-  updateCoupon(payload: { id: number } & Partial<PromoCoupon>): Promise<PromoCoupon> {
-    return firstValueFrom(this.http.put<PromoCoupon>('/api/admin-coupons', payload, { headers: this.authHeaders }));
-  }
-
-  deleteCoupon(id: number): Promise<any> {
-    return firstValueFrom(this.http.delete('/api/admin-coupons', { headers: this.authHeaders, body: { id } }));
-  }
-
-  // ── Categories ──────────────────────────────────────────────
-  getCategories(): Promise<CatalogCategory[]> {
-    return firstValueFrom(this.http.get<CatalogCategory[]>('/api/admin-categories', { headers: this.authHeaders }));
-  }
-
-  createCategory(cat: CatalogCategory): Promise<CatalogCategory> {
-    return firstValueFrom(this.http.post<CatalogCategory>('/api/admin-categories', cat, { headers: this.authHeaders }));
-  }
-
-  updateCategory(cat: CatalogCategory): Promise<CatalogCategory> {
-    return firstValueFrom(this.http.put<CatalogCategory>('/api/admin-categories', cat, { headers: this.authHeaders }));
-  }
-
-  deleteCategory(id: number): Promise<any> {
-    return firstValueFrom(this.http.delete('/api/admin-categories', { headers: this.authHeaders, body: { id } }));
-  }
-
   // ── Queries (contact leads) ──────────────────────────────────
   getQueries(params?: { status?: string; limit?: number; offset?: number }): Promise<any> {
     const qs = new URLSearchParams();
@@ -535,30 +376,6 @@ export class AdminService {
 
   updateSiteSettings(payload: import('../_models/site-settings.models').SiteSettings): Promise<any> {
     return firstValueFrom(this.http.put<any>('/api/admin-site-settings', payload, { headers: this.authHeaders }));
-  }
-
-  // ── Promo Config (launch promo) ─────────────────────────────
-  getPromoConfig(): Promise<any> {
-    return firstValueFrom(this.http.get<any>('/api/admin-promo-config', { headers: this.authHeaders }));
-  }
-
-  updatePromoConfig(payload: {
-    is_active: boolean;
-    max_promo_slots: number;
-    discount_percent: number;
-    standard_installation_cost_zar: number;
-    deposit_percent: number;
-  }): Promise<any> {
-    return firstValueFrom(this.http.put<any>('/api/admin-promo-config', payload, { headers: this.authHeaders }));
-  }
-
-  // ── Finance Page ─────────────────────────────────────────────
-  getFinancePageContent(): Promise<Partial<import('../_models/finance-page.models').FinancePageContent>> {
-    return firstValueFrom(this.http.get<any>('/api/admin-finance-page', { headers: this.authHeaders }));
-  }
-
-  updateFinancePageContent(payload: import('../_models/finance-page.models').FinancePageContent): Promise<any> {
-    return firstValueFrom(this.http.put<any>('/api/admin-finance-page', payload, { headers: this.authHeaders }));
   }
 
   // ── Legal Pages (Refund Policy, Terms of Service) ────────────

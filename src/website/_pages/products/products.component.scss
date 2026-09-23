@@ -94,53 +94,6 @@
   &.active { border-color: var(--nv-orange); color: var(--nv-orange); background: rgba(var(--nv-orange-rgb, 234, 88, 12),0.06); }
 }
 
-/* ── Accessories CTA strip ────────────────────────────────── */
-.accessories-cta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  padding: 24px 28px;
-  background: rgba(var(--nv-orange-rgb, 234, 88, 12),0.04);
-  border: 1px solid rgba(var(--nv-orange-rgb, 234, 88, 12),0.15);
-  border-radius: 3px;
-  margin-top: 48px;
-  flex-wrap: wrap;
-}
-
-.cta-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  mat-icon { font-size: 32px; width: 32px; height: 32px; color: var(--nv-orange); flex-shrink: 0; }
-  h3 { font-size: 0.95rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: #fff; margin: 0 0 4px; }
-  p  { font-size: 0.82rem; color: #666; margin: 0; line-height: 1.5; }
-}
-
-.cta-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  background: var(--nv-orange);
-  color: #000;
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-radius: 2px;
-  white-space: nowrap;
-  transition: background 0.2s;
-  mat-icon { font-size: 15px; width: 15px; height: 15px; }
-  &:hover { background: var(--nv-orange-hover, #c2410c); }
-}
-
-/* ── Card badges ──────────────────────────────────────────── */
-.badge-standard { background: color-mix(in srgb, var(--nv-alloy) 12%, transparent); color: var(--nv-alloy); border: 1px solid color-mix(in srgb, var(--nv-alloy) 26%, transparent); }
-.badge-premium  { background: rgba(251,146,60,0.15);  color: #fb923c; border: 1px solid rgba(251,146,60,0.25); }
-.badge-alt      { background: rgba(34,197,94,0.1);   color: #22c55e; border: 1px solid rgba(34,197,94,0.2); }
-
 /* ── Content body ─────────────────────────────────────────── */
 .listing-body {
   padding-top: 48px;
@@ -192,8 +145,6 @@
   flex-direction: column;
   overflow: hidden;
   cursor: default;
-
-  &.premium-card { border-color: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.35); }
 }
 
 .card-img-wrap {
@@ -233,8 +184,6 @@
   padding: 4px 10px;
   border-radius: 2px;
 
-  &.standard-badge { background: var(--nv-metal); color: var(--nv-aluminum-light); }
-  &.premium-badge  { background: var(--nv-orange); color: #000; }
   &.canopy-badge   { background: color-mix(in srgb, var(--nv-alloy) 14%, var(--nv-carbon)); color: var(--nv-aluminum-light); border: 1px solid color-mix(in srgb, var(--nv-alloy) 30%, transparent); }
 }
 
@@ -293,28 +242,6 @@
   }
 }
 
-.card-price {
-  display: flex;
-  flex-direction: column;
-
-  .price-from {
-    font-size: 0.7rem;
-    color: var(--nv-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    line-height: 1;
-  }
-
-  .price-amount {
-    font-size: 1.2rem;
-    font-weight: 900;
-    color: var(--nv-text-main);
-    line-height: 1.2;
-
-    &.orange { color: var(--nv-orange); }
-  }
-}
-
 .configure-btn {
   display: inline-flex;
   align-items: center;
@@ -360,13 +287,6 @@
     }
   }
 
-  &.configure-btn--premium {
-    background: var(--nv-orange);
-    color: #000;
-    font-weight: 800;
-
-    &:hover { background: var(--nv-orange-hover); color: #fff; }
-  }
 }
 
 /* ── Skeleton loading ─────────────────────────────────────── */

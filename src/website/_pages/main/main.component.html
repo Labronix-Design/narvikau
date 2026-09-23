@@ -28,18 +28,11 @@
 
       <div class="hero-body hero-copy-panel">
         <div class="hero-copy-inner">
-          @if (promo()?.active) {
-            <span class="hero-eyebrow">
-              <mat-icon svgIcon="local_fire_department"></mat-icon>
-              <span class="hero-eyebrow-text">Free Install + {{ promo()!.discountPercent }}% Off — {{ promo()!.slotsRemaining }} Slots Left</span>
-            </span>
-          }
-
           <h1 class="hero-h1">
-            Aluminium built<br>
-            <span class="hero-accent">for the work ahead.</span>
+            Aluminium canopies<br>
+            <span class="hero-accent">built for the road ahead.</span>
           </h1>
-          <p class="hero-lead">Precision-engineered canopies, trays and accessories for South African bakkies.</p>
+          <p class="hero-lead">Purpose-built aluminium canopies for Australian vehicles and conditions.</p>
 
           <div class="hero-actions" aria-label="Product actions">
             <button type="button" class="hero-cta-btn" (click)="openGeneralQuote()">
@@ -95,7 +88,7 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════
-       CATALOGUE PREVIEW — one live representative per category
+       CANOPY CATALOGUE PREVIEW
        ═══════════════════════════════════════════════════════════ -->
   @if (catalogueUnavailable()) {
   <section id="catalogue" class="catalogue-section pw-section" aria-label="Current product catalogue">
@@ -113,8 +106,8 @@
   <section id="catalogue" class="catalogue-section pw-section" aria-label="Current product catalogue">
     <div class="pw-container">
       <div class="section-header scroll-reveal" #revealEl>
-        <h2 class="section-title">Build your <span class="highlight-orange">perfect setup.</span></h2>
-        <p class="section-subtitle">Start with the category that fits the way you work. Each preview is drawn from the current catalogue.</p>
+        <h2 class="section-title">Choose your <span class="highlight-orange">Navrik canopy.</span></h2>
+        <p class="section-subtitle">Explore the live canopy catalogue, then request a tailored recommendation for your vehicle.</p>
       </div>
 
       <div class="category-lanes">
@@ -126,7 +119,7 @@
                 <h3 [id]="'category-' + category.key" class="category-title">{{ category.label }}</h3>
               </div>
               <p class="category-meta">
-                {{ category.count }} {{ category.count === 1 ? 'item' : 'items' }} in the current catalogue
+                {{ category.count }} {{ category.count === 1 ? 'canopy' : 'canopies' }} in the current catalogue
               </p>
             </div>
 
@@ -144,24 +137,16 @@
                 </div>
               </a>
               <div class="cat-actions">
-                @if (category.featured.purchaseMode === 'quote_only') {
-                  <button type="button"
-                          class="cat-quote-btn"
-                          [attr.data-quote-product]="category.featured.slug"
-                          [attr.aria-label]="'Request a quote for ' + category.featured.name"
-                          (click)="openQuoteModal(category.featured)">
-                    <mat-icon svgIcon="forum"></mat-icon>
-                    Request a quote
-                  </button>
-                } @else {
-                  <a [routerLink]="category.featured.detailRoute" class="cat-detail-link">
-                    {{ category.featured.isAccessory ? 'Browse accessories' : 'View details' }} <mat-icon svgIcon="arrow_forward"></mat-icon>
-                  </a>
-                }
-                <a [routerLink]="category.browseRoute"
-                   [queryParams]="category.browseQueryParams"
-                   class="category-browse-link">
-                  Browse all {{ category.label | lowercase }} <mat-icon svgIcon="arrow_forward"></mat-icon>
+                <button type="button"
+                        class="cat-quote-btn"
+                        [attr.data-quote-product]="category.featured.slug"
+                        [attr.aria-label]="'Request a quote for ' + category.featured.name"
+                        (click)="openQuoteModal(category.featured)">
+                  <mat-icon svgIcon="forum"></mat-icon>
+                  Request a quote
+                </button>
+                <a [routerLink]="category.browseRoute" class="category-browse-link">
+                  Browse all canopies <mat-icon svgIcon="arrow_forward"></mat-icon>
                 </a>
               </div>
             </article>
@@ -171,22 +156,19 @@
 
       <div class="catalogue-all-action">
         <a routerLink="/products" class="catalogue-all-link">
-          View the full product range <mat-icon svgIcon="arrow_forward"></mat-icon>
-        </a>
-        <a routerLink="/accessories" class="catalogue-all-link catalogue-all-link--secondary">
-          Browse accessories <mat-icon svgIcon="inventory_2"></mat-icon>
+          View the full canopy range <mat-icon svgIcon="arrow_forward"></mat-icon>
         </a>
       </div>
     </div>
   </section>
-  } @else if (!productService.loading() && !accessoryService.loading()) {
+  } @else if (!productService.loading()) {
   <section id="catalogue" class="catalogue-section pw-section" aria-label="Current product catalogue">
     <div class="pw-container">
       <div class="catalogue-empty panel-machined">
         <mat-icon svgIcon="inventory_2"></mat-icon>
         <div>
-          <h2>Products are being prepared</h2>
-          <p>The current catalogue does not have published items to show yet. Request a quote and we will help you find the right setup.</p>
+          <h2>Canopies are being prepared</h2>
+          <p>The current catalogue does not have a published canopy to show yet. Request a quote and we will help you find the right fit.</p>
         </div>
         <button type="button" class="cat-quote-btn" (click)="openGeneralQuote()">
           <mat-icon svgIcon="forum"></mat-icon>
@@ -203,8 +185,8 @@
   <section id="about" class="pw-section texture-sand section-block" aria-label="Compatible vehicles">
     <div class="pw-container">
       <div class="section-header scroll-reveal" #revealEl>
-        <h2 class="section-title">Universal <span class="highlight-orange">Compatibility.</span></h2>
-        <p class="section-subtitle">Engineered to fit all major South African bakkie models with minimal modifications.</p>
+        <h2 class="section-title">Vehicle <span class="highlight-orange">Compatibility.</span></h2>
+        <p class="section-subtitle">Talk to our team about the right canopy for your Australian ute or touring vehicle.</p>
       </div>
 
       <div class="brand-logo-grid scroll-reveal" #revealEl>
@@ -243,8 +225,8 @@
     <div class="pw-container">
       <div class="order-box panel-machined">
         <div class="order-text texture-sand">
-          <h2 class="section-title">Become A <span class="highlight-orange">Partner.</span></h2>
-          <p>Register as an official Navrik Reseller or Fitment Partner to access exclusive wholesale pricing and support.</p>
+          <h2 class="section-title">Canopy <span class="highlight-orange">Enquiries.</span></h2>
+          <p>Tell us about your vehicle and intended use, and our team will help you choose the right Navrik canopy.</p>
           <div class="contact-direct">
             <mat-icon svgIcon="email"></mat-icon>
             <a [href]="'mailto:' + siteSettings.settings().contact.email">{{ siteSettings.settings().contact.email }}</a>
@@ -255,14 +237,14 @@
             <form [formGroup]="SubmitForm" (ngSubmit)="onSubmit()" novalidate>
               <div class="form-row">
                 <website-text-input label="Full Name"       formControlName="Name"    [submitted]="submitted"></website-text-input>
-                <website-text-input label="Dealership Name" formControlName="Surname" [submitted]="submitted"></website-text-input>
+                <website-text-input label="Surname" formControlName="Surname" [submitted]="submitted"></website-text-input>
               </div>
               <div class="form-row">
                 <website-text-input label="Contact Number"  formControlName="Phone"   [submitted]="submitted"></website-text-input>
                 <website-text-input label="Email Address"   formControlName="Email"   [submitted]="submitted"></website-text-input>
               </div>
               <div class="form-row single">
-                <website-text-input label="Fitment request or dealer inquiry" formControlName="Message" [submitted]="submitted"></website-text-input>
+                <website-text-input label="Vehicle and canopy requirements" formControlName="Message" [submitted]="submitted"></website-text-input>
               </div>
               <website-button type="submit" [disabled]="isLoading" class="full-width">
                 <mat-icon svgIcon="send"></mat-icon>
@@ -287,7 +269,7 @@
 
   @if (showCatalogueFloat()) {
     <button type="button" class="catalogue-browse-float" aria-label="Scroll to the Navrik product catalogue" (click)="scrollTo('catalogue')">
-      <span>View products</span>
+      <span>View canopies</span>
       <mat-icon svgIcon="arrow_forward"></mat-icon>
     </button>
   }

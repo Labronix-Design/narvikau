@@ -37,21 +37,16 @@ export class AdminShellComponent {
       id: 'operations',
       label: 'Operations',
       items: [
-        { label: 'Sales & orders', icon: 'receipt_long', path: '/admin/orders'  },
         { label: 'Warranty registrations', icon: 'verified_user', path: '/admin/warranties' },
         { label: 'Customer enquiries', icon: 'forum', path: '/admin/queries' },
-        { label: 'Vouchers', icon: 'confirmation_number',  path: '/admin/coupons' },
-        { label: 'Sales performance', icon: 'bar_chart', path: '/admin/analytics' },
+        { label: 'Analytics', icon: 'bar_chart', path: '/admin/analytics' },
       ],
     },
     {
       id: 'catalog',
-      label: 'Catalog',
+      label: 'Canopy catalogue',
       items: [
-        { label: 'Products',      icon: 'inventory_2', path: '/admin/products'      },
-        { label: 'Accessories',   icon: 'extension',    path: '/admin/accessories'   },
-        { label: 'Compatibility', icon: 'hub',           path: '/admin/compatibility' },
-        { label: 'Categories',    icon: 'category',      path: '/admin/categories'   },
+        { label: 'Canopies', icon: 'inventory_2', path: '/admin/products' },
       ],
     },
     {
@@ -59,7 +54,6 @@ export class AdminShellComponent {
       label: 'Content',
       items: [
         { label: 'Site Settings', icon: 'tune',            path: '/admin/settings'        },
-        { label: 'Finance Page',  icon: 'account_balance',  path: '/admin/finance-content' },
         { label: 'Legal Pages',   icon: 'gavel',            path: '/admin/legal-pages'     },
       ],
     },

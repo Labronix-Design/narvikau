@@ -24,22 +24,18 @@ describe('QuoteModalComponent', () => {
     fixture.detectChanges();
   });
 
-  it('includes the selected configuration in the submitted quote message', async () => {
-    component.preSelectedProduct = 'Quote product';
-    component.configuration = {
-      variants: [{ label: 'Finish', value: 'Black powder coat' }],
-      accessories: ['Rear guard'],
-    };
-    component.quoteForm.setValue({ Name: 'Alex', Phone: '0712345678', Email: 'alex@example.test', Message: 'Please include fitment.' });
+  it('submits the exact selected canopy as a canopy quote request', async () => {
+    component.preSelectedProduct = 'Navrik Canopy — Adventure';
+    component.quoteForm.setValue({ Name: 'Alex', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
     const fetchSpy = spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 200 }));
 
     await component.onSubmit();
 
     const [, init] = fetchSpy.calls.mostRecent().args;
     const payload = JSON.parse(init?.body as string);
-    expect(payload.Message).toContain('Finish: Black powder coat');
-    expect(payload.Message).toContain('Accessories: Rear guard');
-    expect(payload.Message).toContain('Please include fitment.');
+    expect(payload.Type).toBe('Canopy Quote Request');
+    expect(payload.Product).toBe('Navrik Canopy — Adventure');
+    expect(payload.Message).toBe('Please confirm fitment.');
   });
 
   it('focuses within the dialog and restores the triggering focus after Escape', async () => {

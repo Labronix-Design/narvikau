@@ -4,7 +4,7 @@ import { adminAuthGuard } from './_guards/admin-auth.guard';
 export const websiteRoutes: Routes = [
   {
     path: '',
-    title: 'Navrik | Trays, Canopies & Accessories',
+    title: 'Navrik Australia | Aluminium Canopies',
     loadComponent: () => import('./_pages/main/main.component').then(m => m.MainPage)
   },
   {
@@ -19,17 +19,17 @@ export const websiteRoutes: Routes = [
   },
   {
     path: 'products',
-    title: 'Products | Navrik Bakkie Trays',
+    title: 'Canopies | Navrik Australia',
     loadComponent: () => import('./_pages/products/products.component').then(m => m.ProductsPage)
   },
   {
     path: 'accessories',
-    title: 'Accessories | Navrik',
-    loadComponent: () => import('./_pages/accessories/accessories.component').then(m => m.AccessoriesPage)
+    redirectTo: 'products',
+    pathMatch: 'full',
   },
   {
     path: 'products/:slug',
-    title: 'Product | Navrik Bakkie Trays',
+    title: 'Canopy | Navrik Australia',
     loadComponent: () => import('./_pages/products/product-detail/product-detail.component').then(m => m.ProductDetailPage)
   },
   {
@@ -44,8 +44,8 @@ export const websiteRoutes: Routes = [
   },
   {
     path: 'finance',
-    title: 'Finance with ABSA | Navrik',
-    loadComponent: () => import('./_pages/finance/finance.component').then(m => m.FinancePage)
+    redirectTo: 'products',
+    pathMatch: 'full',
   },
   {
     path: 'contact',
@@ -80,11 +80,6 @@ export const websiteRoutes: Routes = [
         loadComponent: () => import('./_pages/admin/admin-reporting/admin-reporting.component').then(m => m.AdminReportingComponent)
       },
       {
-        path: 'orders',
-        title: 'Orders | Navrik Admin',
-        loadComponent: () => import('./_pages/admin/admin-dashboard/admin-dashboard.component').then(m => m.AdminDashboardComponent)
-      },
-      {
         path: 'warranties',
         title: 'Warranty registrations | Navrik Admin',
         loadComponent: () => import('./_pages/admin/admin-warranties/admin-warranties.component').then(m => m.AdminWarrantiesComponent)
@@ -95,29 +90,9 @@ export const websiteRoutes: Routes = [
         loadComponent: () => import('./_pages/admin/admin-products/admin-products.component').then(m => m.AdminProductsComponent)
       },
       {
-        path: 'accessories',
-        title: 'Accessories | Navrik Admin',
-        loadComponent: () => import('./_pages/admin/admin-accessories/admin-accessories.component').then(m => m.AdminAccessoriesComponent)
-      },
-      {
-        path: 'compatibility',
-        title: 'Compatibility | Navrik Admin',
-        loadComponent: () => import('./_pages/admin/admin-compatibility/admin-compatibility.component').then(m => m.AdminCompatibilityComponent)
-      },
-      {
-        path: 'categories',
-        title: 'Categories | Navrik Admin',
-        loadComponent: () => import('./_pages/admin/admin-categories/admin-categories.component').then(m => m.AdminCategoriesComponent)
-      },
-      {
         path: 'analytics',
         title: 'Analytics | Navrik Admin',
         loadComponent: () => import('./_pages/admin/admin-analytics/admin-analytics.component').then(m => m.AdminAnalyticsComponent)
-      },
-      {
-        path: 'coupons',
-        title: 'Coupons | Navrik Admin',
-        loadComponent: () => import('./_pages/admin/admin-coupons/admin-coupons.component').then(m => m.AdminCouponsComponent)
       },
       {
         path: 'queries',
@@ -128,11 +103,6 @@ export const websiteRoutes: Routes = [
         path: 'settings',
         title: 'Site Settings | Navrik Admin',
         loadComponent: () => import('./_pages/admin/admin-site-settings/admin-site-settings.component').then(m => m.AdminSiteSettingsComponent)
-      },
-      {
-        path: 'finance-content',
-        title: 'Finance Page | Navrik Admin',
-        loadComponent: () => import('./_pages/admin/admin-finance-content/admin-finance-content.component').then(m => m.AdminFinanceContentComponent)
       },
       {
         path: 'legal-pages',

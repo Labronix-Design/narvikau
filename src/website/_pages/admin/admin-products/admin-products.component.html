@@ -1,328 +1,123 @@
 <div class="adm-page">
   <div class="adm-header">
-    <h1 class="adm-title">Products</h1>
-    <p class="adm-sub">Manage active bakkie tray and canopy catalogue records. Secure checkout validates the current product and option amounts from this server-side catalogue.</p>
+    <h1 class="adm-title">Canopies</h1>
+    <p class="adm-sub">Manage the four supported Australian canopy records and their descriptive options.</p>
   </div>
 
-  @if (error()) {
-    <div class="adm-error"><mat-icon svgIcon="error"></mat-icon> {{ error() }}</div>
-  }
+  @if (error()) { <div class="adm-error"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
 
   @if (showForm()) {
     <div class="adm-form-wrap">
-      <h3>{{ editingId() ? 'Edit Product' : 'New Product' }}</h3>
+      <h2>{{ editingId() ? 'Edit Canopy' : 'New Canopy' }}</h2>
       <form [formGroup]="form">
         <div class="adm-form-grid">
           <div class="adm-field">
-            <label>Name *</label>
-            <input formControlName="name" (blur)="autoSlug()">
-          </div>
-          <div class="adm-field">
-            <label>Slug *</label>
-            <input formControlName="slug">
-          </div>
-          <div class="adm-field">
-            <label>Category *</label>
-            <select formControlName="category">
-              <option value="" disabled>Select category…</option>
-              <option value="tray">Tray</option>
-              <option value="canopy">Canopy</option>
-              <option value="custom-made-tray-and-canopy-combo">Custom Made Tray and Canopy Combo</option>
+            <label for="canopy-model">Canopy model *</label>
+            <select id="canopy-model" formControlName="slug" (change)="applyModel(form.controls.slug.value)">
+              @for (model of canopyModels; track model.slug) { <option [value]="model.slug">{{ model.name }}</option> }
             </select>
           </div>
-          @if (form.value.category === 'tray') {
-            <div class="adm-field">
-              <label>Tray Type</label>
-              <select formControlName="tray_type">
-                <option [ngValue]="null" disabled>Select type…</option>
-                <option value="standard">Standard</option>
-                <option value="premium">Premium</option>
-              </select>
-            </div>
-            <div class="adm-field">
-              <label>Size</label>
-              <select formControlName="size">
-                <option value="" disabled>Select size…</option>
-                @for (s of sizes; track s) { <option [value]="s">{{ s }}</option> }
-              </select>
-            </div>
-          } @else if (form.value.category === 'canopy') {
-            <div class="adm-field">
-              <label>Model / Size</label>
-              <input formControlName="size" placeholder="Enter the catalogue model or size">
-            </div>
-          }
-          <div class="adm-field">
-            <label>Color *</label>
-            <select formControlName="color">
-              <option value="" disabled>Select colour…</option>
-              @for (c of colors; track c) { <option [value]="c">{{ c }}</option> }
-            </select>
-          </div>
-          <div class="adm-field">
-            <label>Base Price (ZAR)</label>
-            <input type="number" formControlName="base_price" min="0" step="50">
-          </div>
-          <div class="adm-field">
-            <label>Coating Cost (ZAR)</label>
-            <input type="number" formControlName="coating_cost" min="0" step="50">
-          </div>
-          <div class="adm-field">
-            <label>Sort Order</label>
-            <input type="number" formControlName="sort_order" min="0">
-          </div>
-          <div class="adm-field">
-            <label>Is Active</label>
-            <div class="toggle-row">
-              <input type="checkbox" formControlName="is_active">
-              <span>Visible in catalog</span>
-            </div>
-          </div>
+          <div class="adm-field"><label for="canopy-name">Name *</label><input id="canopy-name" formControlName="name"></div>
+          <div class="adm-field"><label for="canopy-size">Model / Size</label><input id="canopy-size" formControlName="size"></div>
+          <div class="adm-field"><label for="canopy-colour">Colour *</label><input id="canopy-colour" formControlName="color"></div>
+          <div class="adm-field"><label for="canopy-sort">Sort Order</label><input id="canopy-sort" type="number" formControlName="sort_order" min="0"></div>
+          <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible in catalogue</label></div>
           <div class="adm-field span-full">
-            <label>Product Image</label>
-            <website-image-upload
-              [url]="form.value.image_url"
-              (urlChange)="form.patchValue({ image_url: $event })"
-            ></website-image-upload>
+            <label>Canopy Image</label>
+            <website-image-upload [url]="form.controls.image_url.value" (urlChange)="form.controls.image_url.setValue($event)"></website-image-upload>
           </div>
+          <div class="adm-field span-full"><label for="canopy-description">Description</label><textarea id="canopy-description" formControlName="description"></textarea></div>
+          <div class="adm-field"><label for="canopy-material">Material</label><input id="canopy-material" formControlName="material"></div>
+          <div class="adm-field"><label for="canopy-thickness">Thickness</label><input id="canopy-thickness" formControlName="thickness"></div>
+          <div class="adm-field"><label for="canopy-front">Front Door / Window</label><input id="canopy-front" formControlName="front_door_window"></div>
+          <div class="adm-field"><label for="canopy-side">Side Door</label><input id="canopy-side" formControlName="side_door"></div>
+          <div class="adm-field"><label for="canopy-rear">Rear Door</label><input id="canopy-rear" formControlName="rear_door"></div>
+          <div class="adm-field span-full"><label for="canopy-fit">Vehicle Fit</label><input id="canopy-fit" formControlName="vehicle_fit"></div>
           <div class="adm-field span-full">
-            <label>Description</label>
-            <textarea formControlName="description"></textarea>
+            <label>Gallery Images</label>
+            <div class="gallery-list">
+              @for (url of form.controls.gallery_urls.value; track $index) {
+                <div class="gallery-item">
+                  <website-image-upload [compact]="true" [url]="url" (urlChange)="updateGalleryImage($index, $event)"></website-image-upload>
+                  <button type="button" class="adm-btn danger small" (click)="removeGalleryImage($index)"><mat-icon svgIcon="delete"></mat-icon>Remove</button>
+                </div>
+              }
+            </div>
+            <button type="button" class="adm-btn ghost small" (click)="addGalleryImage()"><mat-icon svgIcon="add"></mat-icon>Add Gallery Image</button>
           </div>
-
-          @if (form.value.category === 'canopy') {
-            <div class="adm-field">
-              <label>Material</label>
-              <input formControlName="material">
-            </div>
-            <div class="adm-field">
-              <label>Thickness</label>
-              <input formControlName="thickness">
-            </div>
-            <div class="adm-field">
-              <label>Front Door / Window</label>
-              <input formControlName="front_door_window">
-            </div>
-            <div class="adm-field">
-              <label>Side Door</label>
-              <input formControlName="side_door">
-            </div>
-            <div class="adm-field">
-              <label>Rear Door</label>
-              <input formControlName="rear_door">
-            </div>
-            <div class="adm-field span-full">
-              <label>Vehicle Fit</label>
-              <input formControlName="vehicle_fit">
-            </div>
-            <div class="adm-field span-full">
-              <label>Gallery Images</label>
-              <div class="gallery-list">
-                @for (url of form.value.gallery_urls; track $index) {
-                  <div class="gallery-item">
-                    <website-image-upload
-                      [compact]="true"
-                      [url]="url"
-                      (urlChange)="updateGalleryImage($index, $event)"
-                    ></website-image-upload>
-                    <button type="button" class="adm-btn danger small" (click)="removeGalleryImage($index)">
-                      <mat-icon svgIcon="delete"></mat-icon> Remove
-                    </button>
-                  </div>
-                }
-              </div>
-              <button type="button" class="adm-btn ghost small" (click)="addGalleryImage()">
-                <mat-icon svgIcon="add"></mat-icon> Add Gallery Image
-              </button>
-            </div>
-          }
         </div>
         <div class="adm-form-actions">
-          <button type="button" class="adm-btn primary" (click)="save()" [disabled]="saving()">
-            <mat-icon svgIcon="save"></mat-icon> {{ saving() ? 'Saving…' : 'Save Product' }}
-          </button>
-          <button type="button" class="adm-btn ghost" (click)="cancelForm()">
-            <mat-icon svgIcon="close"></mat-icon> Cancel
-          </button>
+          <button type="button" class="adm-btn primary" (click)="save()" [disabled]="saving()"><mat-icon svgIcon="save"></mat-icon>{{ saving() ? 'Saving…' : 'Save Canopy' }}</button>
+          <button type="button" class="adm-btn ghost" (click)="cancelForm()"><mat-icon svgIcon="close"></mat-icon>Cancel</button>
         </div>
       </form>
     </div>
   }
 
   @if (loading()) {
-    <div class="adm-loading">
-      <div class="spin"></div>
-      <span class="spin-label">Loading Products…</span>
-    </div>
+    <div class="adm-loading"><div class="spin"></div><span class="spin-label">Loading Canopies…</span></div>
   } @else {
-
     <div class="section-actions">
-      <h2 class="adm-section-title">{{ products().length }} Products</h2>
-      @if (!showForm()) {
-        <button class="adm-btn primary" (click)="openCreate()">
-          <mat-icon svgIcon="add"></mat-icon> Add Product
-        </button>
-      }
+      <h2 class="adm-section-title">{{ products().length }} Canopies</h2>
+      @if (!showForm()) { <button class="adm-btn primary" (click)="openCreate()"><mat-icon svgIcon="add"></mat-icon>Add Canopy</button> }
     </div>
 
     @if (products().length === 0) {
-      <div class="adm-empty">
-        <mat-icon class="empty-icon" svgIcon="inventory_2"></mat-icon>
-        <p class="empty-title">No products yet</p>
-        <p class="empty-desc">Click "Add Product" to create your first catalog entry.</p>
-      </div>
+      <div class="adm-empty"><mat-icon class="empty-icon" svgIcon="inventory_2"></mat-icon><p class="empty-title">No canopies yet</p></div>
     } @else {
       <div class="adm-table-wrap">
         <table class="adm-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th class="hide-mobile">Size</th>
-              <th class="hide-mobile">Color</th>
-              <th>Base Price</th>
-              <th>Active</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
+          <thead><tr><th>#</th><th>Name</th><th>Model</th><th class="hide-mobile">Colour</th><th>Active</th><th>Actions</th></tr></thead>
           <tbody>
-            @for (p of products(); track p.id) {
-              <tr [class.row-expanded]="expandedProductId() === p.id">
-                <td class="mono">{{ p.id }}</td>
-                <td>
-                  <div class="product-name-cell">
-                    <span>{{ p.name }}</span>
-                    <span class="slug-tag">{{ p.slug }}</span>
-                  </div>
-                </td>
-                <td><span class="type-badge" [class]="p.tray_type || 'canopy'">{{ p.tray_type || p.category }}</span></td>
-                <td class="hide-mobile">{{ p.size || '—' }}</td>
-                <td class="hide-mobile">{{ p.color }}</td>
-                <td class="mono">
-                  @if (+p.base_price > 0) {
-                    R {{ p.base_price | number:'1.0-0' }}
-                  } @else {
-                    <span class="quote-only">Quote only</span>
-                  }
-                </td>
-                <td>
-                  <span class="bool-dot" [class.on]="p.is_active"></span>
-                </td>
-                <td>
-                  <div class="row-actions">
-                    <button class="adm-btn ghost small" (click)="openEdit(p)">
-                      <mat-icon svgIcon="edit"></mat-icon> Edit
-                    </button>
-                    <button class="adm-btn ghost small" (click)="toggleVariants(p)"
-                            [class.active-variants-btn]="expandedProductId() === p.id">
-                      <mat-icon svgIcon="tune"></mat-icon> Variants
-                    </button>
-                    <button class="adm-btn danger small" (click)="remove(p)">
-                      <mat-icon svgIcon="delete"></mat-icon>
-                    </button>
-                  </div>
-                </td>
+            @for (product of products(); track product.id) {
+              <tr [class.row-expanded]="expandedProductId() === product.id">
+                <td class="mono">{{ product.id }}</td>
+                <td><div class="product-name-cell"><span>{{ product.name }}</span><span class="slug-tag">{{ product.slug }}</span></div></td>
+                <td>{{ product.size || '—' }}</td>
+                <td class="hide-mobile">{{ product.color }}</td>
+                <td><span class="bool-dot" [class.on]="product.is_active"></span></td>
+                <td><div class="row-actions">
+                  <button class="adm-btn ghost small" (click)="openEdit(product)"><mat-icon svgIcon="edit"></mat-icon>Edit</button>
+                  <button class="adm-btn ghost small" (click)="toggleVariants(product)"><mat-icon svgIcon="tune"></mat-icon>Options</button>
+                  <button class="adm-btn danger small" (click)="remove(product)"><mat-icon svgIcon="delete"></mat-icon></button>
+                </div></td>
               </tr>
-
-              @if (expandedProductId() === p.id) {
-                <tr class="variants-row">
-                  <td colspan="8">
-                    <div class="variants-panel">
-                      <div class="variants-header">
-                        <span class="variants-title">Variants — {{ p.name }}</span>
-                        <button class="adm-btn ghost small" (click)="openNewVariantForm()">
-                          <mat-icon svgIcon="add"></mat-icon> Add Variant
-                        </button>
-                      </div>
-
-                      @if (variantLoading()) {
-                        <div class="variants-loading">
-                          <div class="spin"></div>
-                          <span>Loading…</span>
-                        </div>
-                      } @else {
-
-                        @if (showVariantForm()) {
-                          <div class="variant-form">
-                            <form [formGroup]="variantForm">
-                              <div class="variant-form-grid">
-                                <div class="adm-field">
-                                  <label>Type</label>
-                                  <select formControlName="variant_type">
-                                    @for (t of variantTypes; track t) { <option [value]="t">{{ t }}</option> }
-                                  </select>
-                                </div>
-                                <div class="adm-field">
-                                  <label>Value</label>
-                                  <input formControlName="variant_value">
-                                </div>
-                                <div class="adm-field">
-                                  <label>Display Label</label>
-                                  <input formControlName="label">
-                                </div>
-                                <div class="adm-field">
-                                  <label>Price Delta (R) <span class="field-hint">0 = base price</span></label>
-                                  <input type="number" formControlName="price_delta" step="50">
-                                </div>
-                                <div class="adm-field">
-                                  <label>Sort Order</label>
-                                  <input type="number" formControlName="sort_order" min="0">
-                                </div>
-                                <div class="adm-field">
-                                  <label>Active</label>
-                                  <div class="toggle-row">
-                                    <input type="checkbox" formControlName="is_active">
-                                    <span>Visible</span>
-                                  </div>
-                                </div>
-                              </div>
-                              <div class="adm-form-actions">
-                                <button type="button" class="adm-btn primary small" (click)="saveVariant()" [disabled]="variantSaving()">
-                                  <mat-icon svgIcon="save"></mat-icon> {{ variantSaving() ? 'Saving…' : (editingVariantId() ? 'Update' : 'Add') }}
-                                </button>
-                                <button type="button" class="adm-btn ghost small" (click)="cancelVariantForm()">Cancel</button>
-                              </div>
-                            </form>
-                          </div>
-                        }
-
-                        @if (variants().length === 0) {
-                          <div class="variants-empty">No variants defined for this product.</div>
-                        } @else {
-                          @for (type of variantTypeLabels(); track type) {
-                            <div class="variant-group">
-                              <div class="variant-group-label">{{ type }}</div>
-                              <div class="variant-rows">
-                                @for (v of variantsByType(type); track v.id) {
-                                  <div class="variant-item" [class.inactive]="!v.is_active">
-                                    <span class="variant-label">{{ v.label }}</span>
-                                    <span class="variant-value mono">{{ v.variant_value }}</span>
-                                    <span class="variant-delta" [class.positive]="v.price_delta > 0" [class.negative]="v.price_delta < 0">
-                                      {{ priceDeltaDisplay(+v.price_delta) }}
-                                    </span>
-                                    <div class="variant-actions">
-                                      <button class="adm-btn ghost small" (click)="toggleVariantActive(v)"
-                                              [title]="v.is_active ? 'Deactivate' : 'Activate'">
-                                        <mat-icon [svgIcon]="v.is_active ? 'pause_circle' : 'play_circle'"></mat-icon>
-                                      </button>
-                                      <button class="adm-btn ghost small" (click)="editVariant(v)">
-                                        <mat-icon svgIcon="edit"></mat-icon>
-                                      </button>
-                                      <button class="adm-btn danger small" (click)="deleteVariant(v)">
-                                        <mat-icon svgIcon="delete"></mat-icon>
-                                      </button>
-                                    </div>
-                                  </div>
-                                }
+              @if (expandedProductId() === product.id) {
+                <tr class="variants-row"><td colspan="6"><div class="variants-panel">
+                  <div class="variants-header"><span class="variants-title">Options — {{ product.name }}</span><button class="adm-btn ghost small" (click)="openNewVariantForm()"><mat-icon svgIcon="add"></mat-icon>Add Option</button></div>
+                  @if (variantLoading()) { <div class="variants-loading"><div class="spin"></div><span>Loading…</span></div> }
+                  @else {
+                    @if (showVariantForm()) {
+                      <div class="variant-form"><form [formGroup]="variantForm"><div class="variant-form-grid">
+                        <div class="adm-field"><label>Type</label><select formControlName="variant_type">@for (type of variantTypes; track type) { <option [value]="type">{{ type }}</option> }</select></div>
+                        <div class="adm-field"><label>Value</label><input formControlName="variant_value"></div>
+                        <div class="adm-field"><label>Display Label</label><input formControlName="label"></div>
+                        <div class="adm-field"><label>Sort Order</label><input type="number" formControlName="sort_order" min="0"></div>
+                        <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible</label></div>
+                      </div><div class="adm-form-actions">
+                        <button type="button" class="adm-btn primary small" (click)="saveVariant()" [disabled]="variantSaving()"><mat-icon svgIcon="save"></mat-icon>{{ variantSaving() ? 'Saving…' : 'Save Option' }}</button>
+                        <button type="button" class="adm-btn ghost small" (click)="cancelVariantForm()">Cancel</button>
+                      </div></form></div>
+                    }
+                    @if (variants().length === 0) { <div class="variants-empty">No descriptive options defined for this canopy.</div> }
+                    @else {
+                      @for (type of variantTypeLabels(); track type) {
+                        <div class="variant-group"><div class="variant-group-label">{{ type }}</div><div class="variant-rows">
+                          @for (variant of variantsByType(type); track variant.id) {
+                            <div class="variant-item" [class.inactive]="!variant.is_active">
+                              <span class="variant-label">{{ variant.label }}</span><span class="variant-value mono">{{ variant.variant_value }}</span>
+                              <div class="variant-actions">
+                                <button class="adm-btn ghost small" (click)="toggleVariantActive(variant)"><mat-icon [svgIcon]="variant.is_active ? 'pause_circle' : 'play_circle'"></mat-icon></button>
+                                <button class="adm-btn ghost small" (click)="editVariant(variant)"><mat-icon svgIcon="edit"></mat-icon></button>
+                                <button class="adm-btn danger small" (click)="deleteVariant(variant)"><mat-icon svgIcon="delete"></mat-icon></button>
                               </div>
                             </div>
                           }
-                        }
+                        </div></div>
                       }
-                    </div>
-                  </td>
-                </tr>
+                    }
+                  }
+                </div></td></tr>
               }
             }
           </tbody>

@@ -1,56 +1,47 @@
-<div class="pdp-page" [class.has-sticky-action]="purchaseMode() === 'online_checkout'">
-  @if (isLoading()) {
-    <div class="pdp-loading" aria-live="polite">
-      <div class="nv-spinner"></div>
-      <p>Loading product details…</p>
-    </div>
-  } @else if (hasError()) {
+<div class="pdp-page">
+  @if (productService.loading()) {
+    <div class="pdp-loading" aria-live="polite"><div class="nv-spinner"></div><p>Loading canopy details…</p></div>
+  } @else if (productService.error()) {
     <div class="pw-container">
       <section class="error-state" aria-live="polite">
         <div class="error-icon-wrap"><mat-icon svgIcon="warning"></mat-icon></div>
         <div class="error-body">
-          <h1 class="error-heading">Product details are unavailable</h1>
+          <h1 class="error-heading">Canopy details are unavailable</h1>
           <p class="error-sub">Please try again shortly or contact our team for help.</p>
           <div class="error-actions">
-            <a routerLink="/products" class="error-cta-primary"><mat-icon svgIcon="arrow_back"></mat-icon>Back to products</a>
-            <a [href]="'mailto:' + siteSettings.settings().contact.email" class="error-cta-secondary"><mat-icon svgIcon="email"></mat-icon>Contact sales</a>
+            <a routerLink="/products" class="error-cta-primary"><mat-icon svgIcon="arrow_back"></mat-icon>Back to canopies</a>
+            <a [href]="'mailto:' + siteSettings.settings().contact.email" class="error-cta-secondary"><mat-icon svgIcon="email"></mat-icon>Contact us</a>
           </div>
         </div>
       </section>
     </div>
   } @else if (product(); as product) {
-    <section class="pdp-hero texture-hex" aria-label="Product heading">
+    <section class="pdp-hero texture-hex" aria-label="Canopy heading">
       <div class="pdp-hero-body pw-container">
-        @if (product.tray_type) {
-          <span class="pdp-hero-badge" [class.premium-badge]="product.tray_type === 'premium'">{{ product.tray_type === 'premium' ? 'Premium' : 'Standard' }}</span>
-        }
         @if (product.size) { <span class="pdp-hero-badge canopy-badge">{{ product.size }}</span> }
         <h1 class="pdp-hero-title">{{ product.name }}</h1>
       </div>
     </section>
 
     <div class="pdp-breadcrumb pw-container">
-      <a routerLink="/products" class="back-link"><mat-icon svgIcon="arrow_back"></mat-icon>All products</a>
+      <a routerLink="/products" class="back-link"><mat-icon svgIcon="arrow_back"></mat-icon>All canopies</a>
     </div>
 
     <main class="pdp-main pw-container">
-      <section class="viewer-side" aria-label="Product images">
+      <section class="viewer-side" aria-label="Canopy images">
         <div class="viewer-card panel-machined">
           @if (currentImage()) {
             <div class="product-stage canopy-stage">
-              <img [src]="currentImage()" [alt]="product.name" class="product-img" loading="eager" fetchpriority="high" decoding="async" />
+              <img [src]="currentImage()" [alt]="product.name" class="product-img" loading="eager" fetchpriority="high" decoding="async">
             </div>
           } @else {
-            <div class="product-stage canopy-stage product-image-empty">
-              <mat-icon svgIcon="image"></mat-icon>
-              <span>Product image not available</span>
-            </div>
+            <div class="product-stage canopy-stage product-image-empty"><mat-icon svgIcon="image"></mat-icon><span>Canopy image not available</span></div>
           }
           @if (gallery().length > 1) {
             <div class="gallery-strip">
               @for (image of gallery(); track image; let index = $index) {
                 <button class="gallery-thumb" [class.active]="galleryIndex() === index" (click)="selectGalleryImage(index)" [attr.aria-label]="'View image ' + (index + 1)">
-                  <img [src]="image" [alt]="product.name + ' image ' + (index + 1)" loading="lazy" decoding="async" />
+                  <img [src]="image" [alt]="product.name + ' image ' + (index + 1)" loading="lazy" decoding="async">
                 </button>
               }
             </div>
@@ -58,7 +49,7 @@
         </div>
       </section>
 
-      <section class="config-side" aria-label="Configure {{ product.name }}">
+      <section class="config-side" [attr.aria-label]="product.name">
         <div class="product-identity">
           <h2 class="product-name">{{ product.name }}</h2>
           @if (product.description) { <p class="product-desc">{{ product.description }}</p> }
@@ -75,71 +66,25 @@
           </div>
         }
 
-        @for (group of variantGroups(); track group.type) {
-          <div class="config-block">
-            <h3 class="config-label">{{ group.label }}</h3>
-            <div class="size-grid">
-              @for (option of group.options; track option.id) {
-                <button class="size-btn" [class.active]="isSelectedVariant(group.type, option)" (click)="selectVariant(group.type, option)" [attr.aria-pressed]="isSelectedVariant(group.type, option)">
-                  <span class="size-name">{{ option.label }}</span>
-                </button>
-              }
-            </div>
+        <section class="price-card panel-machined quote-card" aria-label="Quote request">
+          <p class="quote-note"><mat-icon svgIcon="forum"></mat-icon>Tell us about your vehicle and fitment needs for a tailored canopy quote.</p>
+          <div class="pdp-actions">
+            <button class="quote-request-btn"
+                    type="button"
+                    [attr.data-quote-product]="product.slug"
+                    [attr.aria-label]="'Request a quote for ' + product.name"
+                    (click)="openQuoteModal()">
+              <mat-icon svgIcon="email"></mat-icon>Request a quote
+            </button>
           </div>
-        }
-
-        @if (compatibleAccessories().length) {
-          <div class="config-block">
-            <h3 class="config-label">Compatible accessories</h3>
-            <p class="product-desc">Select any available accessories for the server to validate with this configuration.</p>
-            <div class="accessories-grid">
-              @for (accessory of compatibleAccessories(); track accessory.id) {
-                <button class="acc-card panel-machined" [class.is-selected]="isSelectedAccessory(accessory.id)" (click)="toggleAccessory(accessory.id)" [attr.aria-pressed]="isSelectedAccessory(accessory.id)">
-                  @if (accessory.image_url) { <img [src]="accessory.image_url" [alt]="accessory.name" class="acc-img" loading="lazy" decoding="async" /> }
-                  <span class="acc-cat-badge">{{ categoryLabel(accessory.category) }}</span>
-                  <span class="acc-name">{{ accessory.name }}</span>
-                  @if (accessory.description) { <span class="acc-desc">{{ accessory.description }}</span> }
-                  <span class="acc-action">{{ isSelectedAccessory(accessory.id) ? 'Selected' : 'Select' }}</span>
-                </button>
-              }
-            </div>
-          </div>
-        }
-
-        @if (purchaseMode(product) === 'online_checkout') {
-          <section class="price-card panel-machined quote-card" aria-label="Online checkout">
-            <p class="quote-note"><mat-icon svgIcon="security"></mat-icon>Your choices are checked against the live catalogue and the current amount is calculated securely before payment.</p>
-            <div class="pdp-actions">
-              <button class="add-cart-btn desktop-cta" (click)="addToCart()"><mat-icon svgIcon="add_shopping_cart"></mat-icon>Add selection to cart</button>
-            </div>
-          </section>
-        } @else {
-          <section class="price-card panel-machined quote-card" aria-label="Quote request">
-            <p class="quote-note"><mat-icon svgIcon="forum"></mat-icon>Pricing is confirmed in your quote after we review your vehicle and fitment.</p>
-            <div class="pdp-actions">
-              <button class="add-cart-btn" (click)="openQuoteModal()"><mat-icon svgIcon="email"></mat-icon>Request a quote</button>
-            </div>
-          </section>
-        }
+        </section>
       </section>
     </main>
   }
 </div>
 
-@if (!isLoading() && product(); as product) {
-  @if (purchaseMode(product) === 'online_checkout') {
-  <div class="sticky-action-bar">
-    <div class="sticky-inner pw-container">
-      <span class="sticky-label">Current amount calculated before payment</span>
-      <button class="sticky-add-btn" (click)="addToCart()"><mat-icon svgIcon="add_shopping_cart"></mat-icon>Add selection</button>
-    </div>
-  </div>
-  }
-}
-
 <website-quote-modal
   [isOpen]="quoteModalOpen()"
   [preSelectedProduct]="product()?.name ?? ''"
-  [configuration]="quoteConfiguration()"
   (closeModal)="closeQuoteModal()">
 </website-quote-modal>

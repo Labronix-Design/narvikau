@@ -9,14 +9,12 @@ import { MatIconRegistry } from '@angular/material/icon';
 // Components
 import { ToastComponent } from './_components/toast/toast.component';
 import { NavbarComponent } from './_components/navbar/navbar.component';
-import { CartComponent } from './_components/cart/cart.component';
 import { FooterComponent } from './_components/footer/footer.component';
 import { AnalyticsConsentComponent } from './_components/analytics-consent/analytics-consent.component';
 
 // Services & Data
 import { GoogleReviewsService } from './_services/google.service';
 import { PerformanceService } from './_services/performance.service';
-import { CartService } from './_services/cart.service';
 import { SiteSettingsService } from './_services/site-settings.service';
 import { APP_ICONS } from '../assets/icons/icon-registry';
 
@@ -69,20 +67,12 @@ export function configuredLogoDocumentUrl(
 
 const PUBLIC_PAGE_METADATA: Readonly<Record<string, PublicPageMetadata>> = {
   '/': {
-    title: 'Navrik | Aluminium Bakkie Trays, Canopies & Accessories',
-    description: 'Navrik designs aluminium bakkie trays, canopies and accessories for South African vehicles. Explore the range and request a tailored quote.',
+    title: 'Navrik Australia | Aluminium Canopies',
+    description: 'Explore Navrik aluminium canopies for Australian vehicles and request a tailored quote.',
   },
   '/products': {
-    title: 'Aluminium Bakkie Trays & Canopies | Navrik',
-    description: 'Browse the current Navrik range of aluminium bakkie trays and canopies, then request guidance for your vehicle.',
-  },
-  '/accessories': {
-    title: 'Bakkie Tray & Canopy Accessories | Navrik',
-    description: 'Explore Navrik accessories designed to complete your aluminium bakkie tray or canopy setup.',
-  },
-  '/finance': {
-    title: 'Finance Options for Navrik Products',
-    description: 'Learn about finance options for your Navrik aluminium tray, canopy or accessory package.',
+    title: 'Aluminium Canopies | Navrik Australia',
+    description: 'Browse the current Navrik aluminium canopy range and request guidance for your vehicle.',
   },
   '/contact': {
     title: 'Contact Navrik | Product Guidance & Quotes',
@@ -90,7 +80,7 @@ const PUBLIC_PAGE_METADATA: Readonly<Record<string, PublicPageMetadata>> = {
   },
   '/refund-policy': {
     title: 'Refund & Warranty Policy | Navrik',
-    description: 'Read Navrik’s refund and warranty policy for aluminium trays, canopies and accessories.',
+    description: 'Read Navrik’s refund and warranty policy for aluminium canopies.',
   },
   '/privacy': {
     title: 'Privacy Notice | Navrik',
@@ -104,7 +94,7 @@ const PUBLIC_PAGE_METADATA: Readonly<Record<string, PublicPageMetadata>> = {
 
 @Component({
   selector: 'website-root',
-  imports: [RouterModule, ToastComponent, NavbarComponent, CartComponent, FooterComponent, AnalyticsConsentComponent],
+  imports: [RouterModule, ToastComponent, NavbarComponent, FooterComponent, AnalyticsConsentComponent],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
@@ -117,7 +107,6 @@ const PUBLIC_PAGE_METADATA: Readonly<Record<string, PublicPageMetadata>> = {
       We are refreshing this information. Please try again shortly.
     </aside>
   }
-  <website-cart></website-cart>
   <router-outlet></router-outlet>
 </main>
 
@@ -131,7 +120,6 @@ export class WebsiteComponent implements OnInit {
   private iconRegistry = inject(MatIconRegistry);
   private sanitizer = inject(DomSanitizer);
   private perfService = inject(PerformanceService);
-  private cartService = inject(CartService);
   private platformId = inject(PLATFORM_ID);
   private meta = inject(Meta);
   private title = inject(Title);
@@ -170,7 +158,6 @@ export class WebsiteComponent implements OnInit {
     if (event instanceof NavigationEnd) {
       if (isPlatformBrowser(this.platformId)) {
         document.body.style.overflow = '';
-        this.cartService.closeCart();
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;          // Safari fallback
         window.scrollTo(0, 0);
@@ -277,8 +264,8 @@ export class WebsiteComponent implements OnInit {
   private publicMetadata(pathname: string): PublicPageMetadata {
     if (pathname.startsWith('/products/')) {
       return {
-        title: 'Aluminium Bakkie Tray & Canopy Details | Navrik',
-        description: 'View Navrik aluminium bakkie tray and canopy details, then request fitment guidance for your vehicle.',
+        title: 'Aluminium Canopy Details | Navrik Australia',
+        description: 'View Navrik aluminium canopy details, then request tailored guidance for your vehicle.',
       };
     }
     return PUBLIC_PAGE_METADATA[pathname] ?? PUBLIC_PAGE_METADATA['/'];
