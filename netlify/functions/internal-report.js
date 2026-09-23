@@ -98,12 +98,12 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
   return async (event) => {
     const headers = headersFor(event);
     if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers, body: '' };
+    if (event.httpMethod !== 'GET') return response(405, headers, { error: 'Method not allowed' });
 
     try {
-      const sql = getSql();
-      if (event.httpMethod !== 'GET') return response(405, headers, { error: 'Method not allowed' });
       const authed = await verify(event);
       if (!authed) return response(401, headers, { error: 'Unauthorized' });
+      const sql = getSql();
       const reports = await sql`
         SELECT id, report_type, scheduled_for, payload, created_at
         FROM internal_report_snapshots

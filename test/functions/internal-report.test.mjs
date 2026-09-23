@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildReport, isScheduledReportTime, persistScheduledReport } from '../../netlify/functions/internal-report.js';
+import { buildReport, createHandler, isScheduledReportTime, persistScheduledReport } from '../../netlify/functions/internal-report.js';
 
 test('internal reports run at 06:00 SAST on Saturdays and Mondays only', () => {
   assert.equal(isScheduledReportTime(new Date('2026-08-24T04:00:00.000Z')), true); // Monday 06:00 SAST
@@ -50,4 +50,20 @@ test('a refreshed enquiry snapshot is persisted in the scheduled operations repo
   assert.deepEqual(payload.enquiries, enquirySnapshot);
   assert.equal(Object.hasOwn(payload, 'orders'), false);
   assert.equal(Object.hasOwn(payload, 'revenueCents'), false);
+});
+
+test('unauthorized internal report reads return 401 before database setup', async () => {
+  let databaseAccessed = false;
+  let verified = false;
+  const handler = createHandler({
+    verifyAdminToken: async () => { verified = true; return false; },
+    getSql: () => { databaseAccessed = true; throw new Error('database setup must not run'); },
+  });
+
+  const response = await handler({ httpMethod: 'GET', headers: {} });
+
+  assert.equal(response.statusCode, 401);
+  assert.deepEqual(JSON.parse(response.body), { error: 'Unauthorized' });
+  assert.equal(verified, true);
+  assert.equal(databaseAccessed, false);
 });
