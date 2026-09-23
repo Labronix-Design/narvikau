@@ -4,7 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterModule } from '@angular/router';
 
-const WARRANTY_URL = 'https://www.navrik.com.au/register-warranty';
+const WARRANTY_URL = 'https://navrik.com.au/register-warranty';
 
 @Component({
   selector: 'website-warranty-registration',
