@@ -1,70 +1,64 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { readCatalogueReadModel, rebuildCatalogueReadModels, resolvePurchaseMode } from '../../netlify/functions/_catalogue-cache.js';
+import { readCatalogueReadModel, rebuildCatalogueReadModels } from '../../netlify/functions/_catalogue-cache.js';
 
-test('resolves the database-owned purchase mode with a safe legacy price fallback', () => {
-  assert.equal(resolvePurchaseMode({ priceCents: 0, purchaseMode: null }), 'quote_only');
-  assert.equal(resolvePurchaseMode({ priceCents: 199900, purchaseMode: null }), 'online_checkout');
-  assert.equal(resolvePurchaseMode({ priceCents: 199900, purchaseMode: 'quote_only' }), 'quote_only');
-});
+const adventure = {
+  id: 1,
+  slug: 'navrik-canopy-adventure',
+  name: 'Navrik Canopy — Adventure',
+  category: 'canopy',
+  size: 'Adventure',
+  color: 'black',
+  description: null,
+  image_url: null,
+  sort_order: 1,
+  gallery_urls: [],
+  material: null,
+  thickness: null,
+  front_door_window: null,
+  side_door: null,
+  rear_door: null,
+  vehicle_fit: null,
+};
 
-test('catalogue snapshots expose a resolved purchaseMode for every product and accessory', async () => {
+test('catalogue rebuild creates only the canopy product snapshot', async () => {
+  const queries = [];
   const sql = async (strings) => {
     const query = strings.join(' ');
-    if (query.includes('FROM catalog_products')) {
-      return [
-        { id: 1, slug: 'legacy-quote-product', base_price_cents: 0, purchase_mode: null },
-        { id: 2, slug: 'priced-quote-product', base_price_cents: 199900, purchase_mode: 'quote_only' },
-      ];
-    }
-    if (query.includes('FROM product_variants')) return [];
-    if (query.includes('FROM catalog_accessories')) {
-      return [
-        { id: 3, slug: 'legacy-priced-accessory', price_cents: 15000, purchase_mode: null },
-        { id: 4, slug: 'quote-accessory', price_cents: 0, purchase_mode: 'online_checkout' },
-      ];
-    }
+    queries.push(query);
+    if (query.includes('FROM catalog_products')) return [adventure];
     return [];
   };
 
-  const payloads = await rebuildCatalogueReadModels(sql, ['products', 'accessories']);
+  const payloads = await rebuildCatalogueReadModels(sql);
 
-  assert.deepEqual(payloads.products.map((product) => product.purchaseMode), ['quote_only', 'quote_only']);
-  assert.deepEqual(payloads.accessories.map((accessory) => accessory.purchaseMode), ['online_checkout', 'quote_only']);
+  assert.deepEqual(payloads, { products: [adventure] });
+  assert.equal(queries.length, 2);
+  assert.match(queries[0], /category = 'canopy'/);
+  assert.doesNotMatch(queries.join('\n'), /purchase_mode|price_cents|catalog_accessories|compatibility_matrix|catalog_categories/i);
 });
 
-test('catalogue snapshots keep the price fallback while the nullable mode migration is not yet applied', async () => {
-  const sql = async (strings) => {
-    const query = strings.join(' ');
-    if (query.includes('purchase_mode')) {
-      const error = new Error('column "purchase_mode" does not exist');
-      error.code = '42703';
-      throw error;
-    }
-    if (query.includes('FROM catalog_products')) return [{ id: 1, slug: 'legacy-product', base_price_cents: 199900 }];
-    if (query.includes('FROM product_variants')) return [];
-    if (query.includes('FROM catalog_accessories')) return [{ id: 2, slug: 'legacy-accessory', price_cents: 0 }];
-    return [];
-  };
+test('catalogue rebuild rejects retired or unknown snapshot sections', async () => {
+  const sql = async () => assert.fail('invalid sections must be rejected before a query');
 
-  const payloads = await rebuildCatalogueReadModels(sql, ['products', 'accessories']);
-
-  assert.deepEqual(payloads.products.map((product) => product.purchaseMode), ['online_checkout']);
-  assert.deepEqual(payloads.accessories.map((accessory) => accessory.purchaseMode), ['quote_only']);
+  await assert.rejects(() => rebuildCatalogueReadModels(sql, ['accessories']), /Unknown catalogue cache section/);
+  await assert.rejects(() => readCatalogueReadModel(sql, 'categories'), /Unknown catalogue cache section/);
 });
 
-test('a legacy cached payload is normalised in memory before a public response', async () => {
+test('a cached public product payload is allowlisted and limited to canopies', async () => {
   const sql = async () => [{
     payload: [
-      { id: 1, slug: 'legacy-product', base_price_cents: 199900 },
-      { id: 2, slug: 'legacy-quote-product', base_price_cents: 0 },
+      { ...adventure, base_price_cents: 199900, purchaseMode: 'online_checkout' },
+      { ...adventure, id: 2, slug: 'navrik-standard-tray', category: 'tray' },
+      { ...adventure, id: 3, slug: 'navrik-canopy-expedition', name: 'Navrik Canopy — Expedition' },
     ],
   }];
 
   const payload = await readCatalogueReadModel(sql, 'products');
 
-  assert.deepEqual(payload.map((product) => product.purchaseMode), ['online_checkout', 'quote_only']);
+  assert.deepEqual(payload, [adventure]);
+  assert.doesNotMatch(JSON.stringify(payload), /purchase|price|tray|accessory/i);
 });
 
 test('a public catalogue read returns an empty setup state without rebuilding or writing a missing cache', async () => {

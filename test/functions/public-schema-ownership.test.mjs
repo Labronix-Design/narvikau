@@ -9,7 +9,6 @@ const PUBLIC_AND_ADMIN_FUNCTIONS = [
   'admin-site-settings.js',
   'admin-legal-pages.js',
   'admin-finance-page.js',
-  'admin-coupons.js',
 ];
 
 const RUNTIME_SCHEMA_DDL = /\b(?:CREATE\s+(?:TABLE|(?:UNIQUE\s+)?INDEX|(?:OR\s+REPLACE\s+)?(?:FUNCTION|TRIGGER|VIEW))|ALTER\s+TABLE|DROP\s+(?:CONSTRAINT|TABLE|INDEX|TRIGGER|FUNCTION|VIEW)|TRUNCATE\s+TABLE)\b/i;

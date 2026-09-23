@@ -59,11 +59,9 @@ test('a rejected method is never stored at the edge in place of the catalogue', 
 });
 
 // A cached failure would replay one bad moment to every visitor for the whole
-// cache window. Promo remains a fail-closed 200 so it never advertises a deal
-// it cannot verify; content endpoints communicate that their information is
+// cache window. Content endpoints communicate that their information is
 // unavailable instead of fabricating a default page.
 const FAIL_CLOSED_ENDPOINTS = [
-  { name: 'promo-status', event: { httpMethod: 'GET' }, expectedStatus: 200 },
   { name: 'site-settings', event: { httpMethod: 'GET' }, expectedStatus: 503 },
   { name: 'legal-pages', event: { httpMethod: 'GET', queryStringParameters: { page: 'refund' } }, expectedStatus: 503 },
   { name: 'finance-page', event: { httpMethod: 'GET' }, expectedStatus: 503 },

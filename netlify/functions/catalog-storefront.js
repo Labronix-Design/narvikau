@@ -1,5 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { taggedPublicReadHeaders, uncachedResponseHeaders } from './_public-cache.js';
+import { normaliseCatalogueProducts } from './_catalogue-cache.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -27,12 +28,7 @@ const DEFAULT_SETTINGS = {
   brand_logos: [],
   contact: {},
   trust_bar: [],
-  compat_note: '',
 };
-
-function asArray(value) {
-  return Array.isArray(value) ? value : [];
-}
 
 export function createCatalogStorefrontHandler({
   getSql = () => neon(process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL),
@@ -48,9 +44,6 @@ export function createCatalogStorefrontHandler({
       const [model] = await getSql()`
         SELECT
           COALESCE((SELECT payload FROM catalogue_read_models WHERE section = 'products'), '[]'::jsonb) AS products,
-          COALESCE((SELECT payload FROM catalogue_read_models WHERE section = 'accessories'), '[]'::jsonb) AS accessories,
-          COALESCE((SELECT payload FROM catalogue_read_models WHERE section = 'compatibility'), '[]'::jsonb) AS compatibility,
-          COALESCE((SELECT payload FROM catalogue_read_models WHERE section = 'categories'), '[]'::jsonb) AS categories,
           COALESCE((
             SELECT jsonb_build_object(
               'logo_url', logo_url,
@@ -59,8 +52,7 @@ export function createCatalogStorefrontHandler({
               'hero_slides', hero_slides,
               'brand_logos', brand_logos,
               'contact', contact,
-              'trust_bar', trust_bar,
-              'compat_note', compat_note
+              'trust_bar', trust_bar
             )
             FROM site_settings WHERE id = 1
           ), ${JSON.stringify(DEFAULT_SETTINGS)}::jsonb) AS settings
@@ -69,10 +61,7 @@ export function createCatalogStorefrontHandler({
         statusCode: 200,
         headers,
         body: JSON.stringify({
-          products: asArray(model?.products),
-          accessories: asArray(model?.accessories),
-          compatibility: asArray(model?.compatibility),
-          categories: asArray(model?.categories),
+          products: normaliseCatalogueProducts(model?.products),
           settings: model?.settings && typeof model.settings === 'object' && !Array.isArray(model.settings)
             ? model.settings
             : DEFAULT_SETTINGS,

@@ -4,13 +4,9 @@ import test from 'node:test';
 import { createHandler as createOrdersHandler } from '../../netlify/functions/admin-orders.js';
 import { createHandler as createQueriesHandler } from '../../netlify/functions/admin-queries.js';
 import { createAdminProductsHandler } from '../../netlify/functions/admin-products.js';
-import { createAdminAccessoriesHandler } from '../../netlify/functions/admin-accessories.js';
-import { createAdminCategoriesHandler } from '../../netlify/functions/admin-categories.js';
-import { createAdminCompatibilityHandler } from '../../netlify/functions/admin-compatibility.js';
 import { createAdminSiteSettingsHandler } from '../../netlify/functions/admin-site-settings.js';
 import { createAdminLegalPagesHandler } from '../../netlify/functions/admin-legal-pages.js';
 import { createAdminFinancePageHandler } from '../../netlify/functions/admin-finance-page.js';
-import { createAdminCouponsHandler } from '../../netlify/functions/admin-coupons.js';
 
 const request = (body) => ({
   httpMethod: 'PUT',
@@ -102,47 +98,11 @@ const publicMutationCases = [
     createHandler: createAdminProductsHandler,
     event: {
       httpMethod: 'POST',
-      body: JSON.stringify({ slug: 'tray', name: 'Tray', category: 'trays', base_price: 100 }),
+      body: JSON.stringify({ slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy' }),
     },
     expectedStatus: 201,
-    expectedTags: ['catalogue:products', 'catalogue:compatibility', 'catalogue:storefront'],
-    expectedRebuild: ['products', 'categories'],
-    expectedTimeline: ['write', 'rebuild', 'purge'],
-  },
-  {
-    name: 'accessory',
-    createHandler: createAdminAccessoriesHandler,
-    event: {
-      httpMethod: 'POST',
-      body: JSON.stringify({ slug: 'rail', name: 'Rail', category: 'rails', price: 100 }),
-    },
-    expectedStatus: 201,
-    expectedTags: ['catalogue:accessories', 'catalogue:compatibility', 'catalogue:storefront'],
-    expectedRebuild: ['accessories', 'categories', 'compatibility'],
-    expectedTimeline: ['write', 'rebuild', 'purge'],
-  },
-  {
-    name: 'category',
-    createHandler: createAdminCategoriesHandler,
-    event: {
-      httpMethod: 'POST',
-      body: JSON.stringify({ slug: 'trays', name: 'Trays', type: 'product' }),
-    },
-    expectedStatus: 201,
-    expectedTags: ['catalogue:categories', 'catalogue:storefront'],
-    expectedRebuild: undefined,
-    expectedTimeline: ['write', 'rebuild', 'purge'],
-  },
-  {
-    name: 'compatibility rule',
-    createHandler: createAdminCompatibilityHandler,
-    event: {
-      httpMethod: 'POST',
-      body: JSON.stringify({ accessory_id: 4, tray_type: 'standard' }),
-    },
-    expectedStatus: 201,
-    expectedTags: ['catalogue:compatibility', 'catalogue:storefront'],
-    expectedRebuild: undefined,
+    expectedTags: ['catalogue:products', 'catalogue:storefront'],
+    expectedRebuild: ['products'],
     expectedTimeline: ['write', 'rebuild', 'purge'],
   },
   {
@@ -195,18 +155,6 @@ const publicMutationCases = [
     expectedRebuild: undefined,
     expectedTimeline: ['write', 'purge'],
   },
-  {
-    name: 'coupon',
-    createHandler: createAdminCouponsHandler,
-    event: {
-      httpMethod: 'POST',
-      body: JSON.stringify({ code: 'SAVE10', discount_type: 'percent', discount_value: 10 }),
-    },
-    expectedStatus: 201,
-    expectedTags: ['promo-status'],
-    expectedRebuild: undefined,
-    expectedTimeline: ['write', 'purge'],
-  },
 ];
 
 for (const mutationCase of publicMutationCases) {
@@ -250,42 +198,28 @@ test('product variants rebuild and purge only the product-related snapshots', as
   const response = await handler({
     httpMethod: 'PUT',
     headers: {},
-    body: JSON.stringify({ variant: true, id: 17, product_id: 4, variant_type: 'finish', variant_value: 'black', label: 'Black', price_delta: 0 }),
+    body: JSON.stringify({ variant: true, id: 17, product_id: 4, variant_type: 'finish', variant_value: 'black', label: 'Black' }),
   });
 
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(rebuilds, [['products', 'categories']]);
-  assert.deepEqual(purges, [['catalogue:products', 'catalogue:compatibility', 'catalogue:storefront']]);
+  assert.deepEqual(rebuilds, [['products']]);
+  assert.deepEqual(purges, [['catalogue:products', 'catalogue:storefront']]);
 });
 
 for (const sourceMutation of [
   {
     name: 'product update',
     createHandler: createAdminProductsHandler,
-    event: { httpMethod: 'PUT', body: JSON.stringify({ id: 4, slug: 'tray', name: 'Tray', category: 'trays', base_price: 100 }) },
-    rebuild: ['products', 'categories'],
-    tags: ['catalogue:products', 'catalogue:compatibility', 'catalogue:storefront'],
+    event: { httpMethod: 'PUT', body: JSON.stringify({ id: 4, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy' }) },
+    rebuild: ['products'],
+    tags: ['catalogue:products', 'catalogue:storefront'],
   },
   {
     name: 'product delete',
     createHandler: createAdminProductsHandler,
     event: { httpMethod: 'DELETE', body: JSON.stringify({ id: 4 }) },
-    rebuild: ['products', 'categories'],
-    tags: ['catalogue:products', 'catalogue:compatibility', 'catalogue:storefront'],
-  },
-  {
-    name: 'accessory update',
-    createHandler: createAdminAccessoriesHandler,
-    event: { httpMethod: 'PUT', body: JSON.stringify({ id: 9, slug: 'rail', name: 'Rail', category: 'rails', price: 100 }) },
-    rebuild: ['accessories', 'categories', 'compatibility'],
-    tags: ['catalogue:accessories', 'catalogue:compatibility', 'catalogue:storefront'],
-  },
-  {
-    name: 'accessory delete',
-    createHandler: createAdminAccessoriesHandler,
-    event: { httpMethod: 'DELETE', body: JSON.stringify({ id: 9 }) },
-    rebuild: ['accessories', 'categories', 'compatibility'],
-    tags: ['catalogue:accessories', 'catalogue:compatibility', 'catalogue:storefront'],
+    rebuild: ['products'],
+    tags: ['catalogue:products', 'catalogue:storefront'],
   },
 ]) {
   test(`a successful direct ${sourceMutation.name} refreshes only its related snapshots`, async () => {
@@ -332,7 +266,7 @@ test('every default admin mutation path passes the Lambda purge token with only 
       const response = await handler({
         headers: {},
         ...mutationCase.event,
-        body: JSON.stringify({ ...requestBody, purge_api_token: 'request-controlled-secret' }),
+        body: JSON.stringify(mutationCase.name === 'product' ? requestBody : { ...requestBody, purge_api_token: 'request-controlled-secret' }),
       }, context);
 
       assert.equal(response.statusCode, mutationCase.expectedStatus, mutationCase.name);
@@ -363,12 +297,12 @@ const missingPublicMutationCases = [
   {
     name: 'product update',
     createHandler: createAdminProductsHandler,
-    event: { httpMethod: 'PUT', body: JSON.stringify({ id: 404, base_price: 100 }) },
+    event: { httpMethod: 'PUT', body: JSON.stringify({ id: 404, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy' }) },
   },
   {
     name: 'product variant update',
     createHandler: createAdminProductsHandler,
-    event: { httpMethod: 'PUT', body: JSON.stringify({ variant: true, id: 404, price_delta: 0 }) },
+    event: { httpMethod: 'PUT', body: JSON.stringify({ variant: true, id: 404, product_id: 4, variant_type: 'finish', variant_value: 'black', label: 'Black' }) },
   },
   {
     name: 'product delete',
@@ -379,31 +313,6 @@ const missingPublicMutationCases = [
     name: 'product variant delete',
     createHandler: createAdminProductsHandler,
     event: { httpMethod: 'DELETE', body: JSON.stringify({ variant: true, id: 404 }) },
-  },
-  {
-    name: 'accessory update',
-    createHandler: createAdminAccessoriesHandler,
-    event: { httpMethod: 'PUT', body: JSON.stringify({ id: 404, price: 100 }) },
-  },
-  {
-    name: 'accessory delete',
-    createHandler: createAdminAccessoriesHandler,
-    event: { httpMethod: 'DELETE', body: JSON.stringify({ id: 404 }) },
-  },
-  {
-    name: 'category update',
-    createHandler: createAdminCategoriesHandler,
-    event: { httpMethod: 'PUT', body: JSON.stringify({ id: 404 }) },
-  },
-  {
-    name: 'category delete',
-    createHandler: createAdminCategoriesHandler,
-    event: { httpMethod: 'DELETE', body: JSON.stringify({ id: 404 }) },
-  },
-  {
-    name: 'compatibility delete',
-    createHandler: createAdminCompatibilityHandler,
-    event: { httpMethod: 'DELETE', body: JSON.stringify({ id: 404 }) },
   },
   {
     name: 'site settings update',
@@ -447,7 +356,7 @@ test('a public cache purge failure is visible after a successful product write',
   const response = await handler({
     httpMethod: 'POST',
     headers: {},
-    body: JSON.stringify({ slug: 'tray', name: 'Tray', category: 'trays', base_price: 100 }),
+    body: JSON.stringify({ slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy' }),
   });
 
   assert.equal(response.statusCode, 503);

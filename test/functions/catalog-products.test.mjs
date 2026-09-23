@@ -6,10 +6,18 @@ import * as catalogProducts from '../../netlify/functions/catalog-products.js';
 test('catalog products returns the cached product read model on GET', async () => {
   const cachedProducts = [{
     id: 7,
-    slug: 'navrik-canopy',
-    name: 'Navrik Canopy',
+    slug: 'navrik-canopy-adventure',
+    name: 'Navrik Canopy — Adventure',
+    category: 'canopy',
+    gallery_urls: [],
     base_price_cents: 125000,
     purchase_mode: 'online_checkout',
+  }, {
+    id: 8,
+    slug: 'navrik-standard-tray',
+    name: 'Standard Aluminium Tray',
+    category: 'tray',
+    gallery_urls: [],
   }];
   const sql = async (strings) => {
     assert.match(strings.join(' '), /FROM catalogue_read_models/);
@@ -22,11 +30,12 @@ test('catalog products returns the cached product read model on GET', async () =
   assert.equal(response.statusCode, 200);
   assert.deepEqual(JSON.parse(response.body), [{
     id: 7,
-    slug: 'navrik-canopy',
-    name: 'Navrik Canopy',
-    base_price_cents: 125000,
-    purchaseMode: 'online_checkout',
+    slug: 'navrik-canopy-adventure',
+    name: 'Navrik Canopy — Adventure',
+    category: 'canopy',
+    gallery_urls: [],
   }]);
+  assert.doesNotMatch(response.body, /purchaseMode|price_cents|tray|accessory/i);
   assert.match(response.headers['Netlify-CDN-Cache-Control'], /durable/);
   assert.equal(response.headers['Netlify-Cache-Tag'], 'catalogue:products');
 });

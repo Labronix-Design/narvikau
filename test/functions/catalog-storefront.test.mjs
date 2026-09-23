@@ -8,10 +8,10 @@ test('storefront read model returns only cached public catalogue and site config
   const sql = async (strings) => {
     queries.push(strings.join(' '));
     return [{
-      products: [{ id: 1, slug: 'canopy', base_price_cents: 120000, purchaseMode: 'online_checkout' }],
-      accessories: [{ id: 2, slug: 'toolbox', price_cents: 40000, purchaseMode: 'online_checkout' }],
-      compatibility: [{ id: 3, accessory_id: 2 }],
-      categories: [{ id: 4, slug: 'canopy', name: 'Canopies' }],
+      products: [
+        { id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [] },
+        { id: 2, slug: 'navrik-standard-tray', name: 'Standard Aluminium Tray', category: 'tray', gallery_urls: [] },
+      ],
       settings: { logo_url: '/uploads/logo.svg', primary_color: '#ea580c' },
     }];
   };
@@ -21,14 +21,13 @@ test('storefront read model returns only cached public catalogue and site config
 
   assert.equal(response.statusCode, 200);
   assert.deepEqual(JSON.parse(response.body), {
-    products: [{ id: 1, slug: 'canopy', base_price_cents: 120000, purchaseMode: 'online_checkout' }],
-    accessories: [{ id: 2, slug: 'toolbox', price_cents: 40000, purchaseMode: 'online_checkout' }],
-    compatibility: [{ id: 3, accessory_id: 2 }],
-    categories: [{ id: 4, slug: 'canopy', name: 'Canopies' }],
+    products: [{ id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [] }],
     settings: { logo_url: '/uploads/logo.svg', primary_color: '#ea580c' },
   });
+  assert.doesNotMatch(response.body, /purchaseMode|price_cents|tray|accessor|compatibility|packages/i);
   assert.equal(queries.length, 1);
   assert.match(queries[0], /catalogue_read_models/);
+  assert.doesNotMatch(queries[0], /accessor|compatibility|packages|categories/);
   assert.equal(response.headers['Netlify-Cache-Tag'], 'catalogue:storefront');
   assert.match(response.headers['Netlify-CDN-Cache-Control'], /durable/);
 });

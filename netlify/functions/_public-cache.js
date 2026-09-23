@@ -14,15 +14,11 @@
 
 const PUBLIC_CACHE_TAGS = new Set([
   'catalogue:products',
-  'catalogue:accessories',
-  'catalogue:categories',
-  'catalogue:compatibility',
   'catalogue:storefront',
   'site-settings',
   'legal:refund',
   'legal:terms',
   'finance-page',
-  'promo-status',
 ]);
 
 export function normalisePublicCacheTags(tags) {

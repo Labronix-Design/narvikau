@@ -80,7 +80,7 @@ export function createAdminSiteSettingsHandler({
 
     if (event.httpMethod === 'PUT') {
       const body = JSON.parse(event.body || '{}');
-      const { logo_url, font_family, primary_color, hero_slides, brand_logos, contact, trust_bar, compat_note } = body;
+      const { logo_url, font_family, primary_color, hero_slides, brand_logos, contact, trust_bar } = body;
 
       if (primary_color && !HEX_COLOR_RE.test(primary_color)) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'primary_color must be a 6-digit hex value, e.g. #ea580c' }) };
@@ -98,7 +98,6 @@ export function createAdminSiteSettingsHandler({
           brand_logos   = ${JSON.stringify(sanitizeBrandLogos(brand_logos))}::jsonb,
           contact       = ${JSON.stringify(sanitizeContact(contact))}::jsonb,
           trust_bar     = ${JSON.stringify(sanitizeTrustBar(trust_bar))}::jsonb,
-          compat_note   = ${typeof compat_note === 'string' ? compat_note.trim() : ''},
           updated_at    = NOW()
         WHERE id = 1
         RETURNING *
