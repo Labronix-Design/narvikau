@@ -13,7 +13,7 @@ function headersFor(event) {
     'Content-Type': 'application/json',
     Vary: 'Origin',
   };
-  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://www.navrik.co.za';
+  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://www.navrik.com.au';
   if (event.headers?.origin === allowedOrigin) headers['Access-Control-Allow-Origin'] = allowedOrigin;
   return headers;
 }
@@ -21,7 +21,7 @@ function headersFor(event) {
 function response(statusCode, headers, body) { return { statusCode, headers, body: JSON.stringify(body) }; }
 
 function databaseUrl() {
-  const url = process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL;
+  const url = process.env.NETLIFY_DATABASE_URL;
   if (!url) throw new Error('Database configuration is missing');
   return url;
 }
@@ -38,21 +38,12 @@ export function isScheduledReportTime(date) {
   return (parts.weekday === 'Mon' || parts.weekday === 'Sat') && parts.hour === '06' && parts.minute === '00';
 }
 
-export function isInvoicePreparationMonday(date) {
-  const parts = localParts(date);
-  if (parts.weekday !== 'Mon') return false;
-  const localDate = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day)));
-  localDate.setUTCDate(localDate.getUTCDate() + 7);
-  return localDate.getUTCMonth() !== Number(parts.month) - 1;
-}
-
-export function buildReport({ business, search, hosting }, invoicePreparationReminder) {
+export function buildReport({ business, search, hosting }) {
   return {
     business,
     search,
     hosting,
     measurementCoverage: { search: search?.status || 'not_measured', hosting: hosting?.status || 'not_measured' },
-    invoicePreparationReminder,
   };
 }
 
@@ -79,13 +70,13 @@ async function currentReportData(sql) {
 
 export async function persistScheduledReport(sql, scheduledFor) {
   if (!isScheduledReportTime(scheduledFor)) return { status: 'ignored', explanation: 'Not a configured reporting time.' };
-  const report = buildReport(await currentReportData(sql), isInvoicePreparationMonday(scheduledFor));
+  const report = buildReport(await currentReportData(sql));
   await sql`
     INSERT INTO internal_report_snapshots (report_type, scheduled_for, payload)
-    VALUES ('scheduled_business_control', ${scheduledFor.toISOString()}::timestamptz, ${JSON.stringify(report)}::jsonb)
+    VALUES ('scheduled_operations', ${scheduledFor.toISOString()}::timestamptz, ${JSON.stringify(report)}::jsonb)
     ON CONFLICT (report_type, scheduled_for) DO NOTHING
   `;
-  return { status: 'persisted', invoicePreparationReminder: report.invoicePreparationReminder };
+  return { status: 'persisted' };
 }
 
 export function createHandler({ verifyAdminToken: verify = verifyAdminToken, getSql = () => neon(databaseUrl()), now = () => new Date() } = {}) {
@@ -106,7 +97,7 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
       `;
       return response(200, headers, { reports, cache: { status: reports.length ? 'ready' : 'empty', updatedAt: reports[0]?.created_at || null } });
     } catch (error) {
-      log.error('internal report failed', { error: error instanceof Error ? error.message : 'unknown' });
+      log.error('internal report failed', { error: error instanceof Error ? error.name : 'unknown' });
       return response(500, headers, { error: 'Unable to process internal report' });
     }
   };

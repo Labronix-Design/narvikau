@@ -1,12 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createHandler as createOrdersHandler } from '../../netlify/functions/admin-orders.js';
 import { createHandler as createQueriesHandler } from '../../netlify/functions/admin-queries.js';
 import { createAdminProductsHandler } from '../../netlify/functions/admin-products.js';
 import { createAdminSiteSettingsHandler } from '../../netlify/functions/admin-site-settings.js';
 import { createAdminLegalPagesHandler } from '../../netlify/functions/admin-legal-pages.js';
-import { createAdminFinancePageHandler } from '../../netlify/functions/admin-finance-page.js';
 
 const request = (body) => ({
   httpMethod: 'PUT',
@@ -14,46 +12,7 @@ const request = (body) => ({
   body: JSON.stringify(body),
 });
 
-test('a successful order status update invalidates only the affected overview, sales and order snapshots', async () => {
-  const invalidated = [];
-  let queryCount = 0;
-  const sql = async () => (++queryCount === 1 ? [{ id: 42 }] : []);
-  const handler = createOrdersHandler({
-    verifyAdminToken: async () => true,
-    getSql: () => sql,
-    invalidateSections: async (_sql, sections) => { invalidated.push(sections); },
-  });
-
-  const response = await handler(request({ id: 42, status: 'in_production', notes: 'Scheduled' }));
-
-  assert.equal(response.statusCode, 200);
-  assert.deepEqual(invalidated, [['business_overview', 'sales_performance', 'orders']]);
-});
-
-test('a missing order returns 404 without an audit write or cache invalidation', async () => {
-  const invalidated = [];
-  const queries = [];
-  const sql = async (strings) => {
-    queries.push(strings.join(' '));
-    return [];
-  };
-  const handler = createOrdersHandler({
-    verifyAdminToken: async () => true,
-    getSql: () => sql,
-    invalidateSections: async (_sql, sections) => { invalidated.push(sections); },
-  });
-
-  const response = await handler(request({ id: 404, status: 'in_production', notes: 'No record' }));
-
-  assert.equal(response.statusCode, 404);
-  assert.deepEqual(JSON.parse(response.body), { error: 'Order not found' });
-  assert.deepEqual(invalidated, []);
-  assert.equal(queries.length, 1);
-  assert.match(queries[0], /UPDATE orders SET/);
-  assert.match(queries[0], /RETURNING id/);
-});
-
-test('a successful lead status or notes update invalidates only the affected overview, sales and enquiry snapshots', async () => {
+test('a successful lead status or notes update invalidates only the affected operations snapshots', async () => {
   const invalidated = [];
   const sql = async () => [{ id: 8, status: 'contacted', admin_notes: 'Called', updated_at: '2026-08-24T04:00:00.000Z' }];
   const handler = createQueriesHandler({
@@ -65,7 +24,7 @@ test('a successful lead status or notes update invalidates only the affected ove
   const response = await handler(request({ id: 8, status: 'contacted', admin_notes: 'Called' }));
 
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(invalidated, [['business_overview', 'sales_performance', 'enquiries']]);
+  assert.deepEqual(invalidated, [['business_overview', 'enquiries']]);
 });
 
 test('a missing lead is not treated as a successful update and does not invalidate the cache', async () => {
@@ -82,12 +41,18 @@ test('a missing lead is not treated as a successful update and does not invalida
   assert.deepEqual(invalidated, []);
 });
 
-test('admin mutation responses do not advertise wildcard cross-origin access', async () => {
-  const handler = createOrdersHandler({ verifyAdminToken: async () => true, getSql: () => async () => [] });
+test('lead updates reject unknown fields before a database query', async () => {
+  let queried = false;
+  const handler = createQueriesHandler({
+    verifyAdminToken: async () => true,
+    getSql: () => async () => { queried = true; return []; },
+  });
 
-  const response = await handler({ httpMethod: 'GET', headers: {}, queryStringParameters: {} });
+  const response = await handler(request({ id: 8, status: 'contacted', unexpected: true }));
 
-  assert.equal(response.headers['Access-Control-Allow-Origin'], undefined);
+  assert.equal(response.statusCode, 400);
+  assert.deepEqual(JSON.parse(response.body), { error: 'Invalid lead update' });
+  assert.equal(queried, false);
 });
 
 const successfulSql = async () => [{ id: 1, content: { title_main: 'Saved' } }];
@@ -140,18 +105,6 @@ const publicMutationCases = [
     },
     expectedStatus: 200,
     expectedTags: ['legal:terms'],
-    expectedRebuild: undefined,
-    expectedTimeline: ['write', 'purge'],
-  },
-  {
-    name: 'finance page',
-    createHandler: createAdminFinancePageHandler,
-    event: {
-      httpMethod: 'PUT',
-      body: JSON.stringify({ title: 'Finance' }),
-    },
-    expectedStatus: 200,
-    expectedTags: ['finance-page'],
     expectedRebuild: undefined,
     expectedTimeline: ['write', 'purge'],
   },
@@ -318,11 +271,6 @@ const missingPublicMutationCases = [
     name: 'site settings update',
     createHandler: createAdminSiteSettingsHandler,
     event: { httpMethod: 'PUT', body: JSON.stringify({ font_family: 'Inter', primary_color: '#112233' }) },
-  },
-  {
-    name: 'finance page update',
-    createHandler: createAdminFinancePageHandler,
-    event: { httpMethod: 'PUT', body: JSON.stringify({ title: 'Finance' }) },
   },
 ];
 

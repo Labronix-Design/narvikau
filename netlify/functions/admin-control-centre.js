@@ -1,9 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 import { verifyAdminToken } from './admin-auth.js';
 
-export const BUSINESS_CACHE_SECTIONS = ['business_overview', 'sales_performance', 'orders', 'enquiries'];
+export const BUSINESS_CACHE_SECTIONS = ['business_overview', 'enquiries'];
 const CACHE_SECTIONS = new Set([...BUSINESS_CACHE_SECTIONS, 'search']);
-const PAID_ORDER_STATUSES = ['deposit_paid', 'in_production', 'ready', 'completed'];
 const PROFILE_FIELDS = new Set(['companyName', 'tradingName', 'serviceInformation', 'domains', 'contacts', 'preferences']);
 const CONTACT_FIELDS = new Set(['email', 'phone', 'address']);
 const PREFERENCE_FIELDS = new Set(['reportingTimezone']);
@@ -24,7 +23,7 @@ function headersFor(event) {
     Pragma: 'no-cache',
     Vary: 'Origin',
   };
-  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://www.navrik.co.za';
+  const allowedOrigin = process.env.ADMIN_APP_ORIGIN || 'https://www.navrik.com.au';
   if (event.headers?.origin === allowedOrigin) headers['Access-Control-Allow-Origin'] = allowedOrigin;
   return headers;
 }
@@ -34,7 +33,7 @@ function response(statusCode, headers, body) {
 }
 
 function databaseUrl() {
-  const url = process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL;
+  const url = process.env.NETLIFY_DATABASE_URL;
   if (!url) throw new Error('Database configuration is missing');
   return url;
 }
@@ -95,9 +94,8 @@ export function validateProfile(value) {
 
 export function selectInvalidationSections(resource) {
   const map = {
-    orders: ['business_overview', 'sales_performance', 'orders'],
-    leads: ['business_overview', 'sales_performance', 'enquiries'],
-    enquiries: ['business_overview', 'sales_performance', 'enquiries'],
+    leads: ['business_overview', 'enquiries'],
+    enquiries: ['business_overview', 'enquiries'],
     'google-search': ['search'],
     'search-console': ['search'],
   };
@@ -118,8 +116,6 @@ export async function invalidateControlCentreSections(sql, sections) {
 function unavailableData() {
   return {
     business_overview: { status: 'not_measured', explanation: 'Business overview has not been cached yet.' },
-    sales_performance: { status: 'not_measured', explanation: 'Sales performance has not been cached yet.' },
-    orders: { status: 'not_measured', explanation: 'Orders have not been cached yet.' },
     enquiries: { status: 'not_measured', explanation: 'Customer enquiries have not been cached yet.' },
     search: { status: 'not_measured', explanation: 'Search Console has not been measured yet.' },
   };
@@ -168,7 +164,6 @@ function metricInteger(value) {
 function recommendedActions(metrics) {
   const actions = [];
   if (metrics.newEnquiries > 0) actions.push({ key: 'follow_up_new_enquiries', explanation: `${metrics.newEnquiries} ${metrics.newEnquiries === 1 ? 'new enquiry needs' : 'new enquiries need'} follow-up.` });
-  if (metrics.ordersInProduction > 0) actions.push({ key: 'review_production_orders', explanation: `${metrics.ordersInProduction} order${metrics.ordersInProduction === 1 ? '' : 's'} are in production.` });
   if (!actions.length) actions.push({ key: 'maintain_measurement', explanation: 'No operational action is currently measured as urgent.' });
   return actions;
 }
@@ -177,46 +172,18 @@ function notMeasuredComparison() {
   return { status: 'not_measured', explanation: 'No measured comparison period is available.' };
 }
 
-function paidRevenueScope() {
-  return 'Paid or confirmed money received; pending, failed, cancelled and test orders are excluded.';
-}
-
-async function loadBusinessMetrics(sql, section) {
-  const requiresOrders = section !== 'enquiries';
-  const requiresEnquiries = section === 'business_overview' || section === 'enquiries';
-  const [orderRows, enquiryRows] = await Promise.all([
-    requiresOrders ? sql`
-      WITH paid_order_metrics AS (
-        SELECT
-          COUNT(*) FILTER (WHERE status = ANY(${PAID_ORDER_STATUSES}) AND payment_method <> 'yoco_test')::INTEGER AS paid_order_count,
-          COALESCE(SUM(COALESCE(
-            deposit_paid_amount_cents,
-            payment_amount_cents,
-            total_incl_vat_cents,
-            ROUND(total_incl_vat * 100)::BIGINT
-          )) FILTER (WHERE status = ANY(${PAID_ORDER_STATUSES}) AND payment_method <> 'yoco_test'), 0)::BIGINT AS revenue_cents,
-          COUNT(*) FILTER (WHERE status = 'in_production' AND payment_method <> 'yoco_test')::INTEGER AS orders_in_production,
-          COUNT(*) FILTER (WHERE payment_method <> 'yoco_test')::INTEGER AS order_count,
-          COUNT(*) FILTER (WHERE status = 'pending' AND payment_method <> 'yoco_test')::INTEGER AS pending_order_count,
-          COUNT(*) FILTER (WHERE status = 'deposit_paid' AND payment_method <> 'yoco_test')::INTEGER AS deposit_paid_order_count,
-          COUNT(*) FILTER (WHERE status = 'ready' AND payment_method <> 'yoco_test')::INTEGER AS ready_order_count,
-          COUNT(*) FILTER (WHERE status = 'completed' AND payment_method <> 'yoco_test')::INTEGER AS completed_order_count
-        FROM orders
-      )
-      SELECT * FROM paid_order_metrics
-    ` : Promise.resolve([{}]),
-    requiresEnquiries ? sql`
-      SELECT
-        COUNT(*)::INTEGER AS enquiry_count,
-        COUNT(*) FILTER (WHERE status = 'new')::INTEGER AS new_enquiries,
-        COUNT(*) FILTER (WHERE status = 'contacted')::INTEGER AS contacted_enquiries,
-        COUNT(*) FILTER (WHERE status = 'quoted')::INTEGER AS quoted_enquiries,
-        COUNT(*) FILTER (WHERE status = 'converted')::INTEGER AS converted_enquiries,
-        COUNT(*) FILTER (WHERE status = 'closed')::INTEGER AS closed_enquiries
-      FROM leads
-    ` : Promise.resolve([{}]),
-  ]);
-  return { ...(orderRows[0] || {}), ...(enquiryRows[0] || {}) };
+async function loadBusinessMetrics(sql) {
+  const [rows] = await sql`
+    SELECT
+      COUNT(*)::INTEGER AS enquiry_count,
+      COUNT(*) FILTER (WHERE status = 'new')::INTEGER AS new_enquiries,
+      COUNT(*) FILTER (WHERE status = 'contacted')::INTEGER AS contacted_enquiries,
+      COUNT(*) FILTER (WHERE status = 'quoted')::INTEGER AS quoted_enquiries,
+      COUNT(*) FILTER (WHERE status = 'converted')::INTEGER AS converted_enquiries,
+      COUNT(*) FILTER (WHERE status = 'closed')::INTEGER AS closed_enquiries
+    FROM leads
+  `;
+  return rows || {};
 }
 
 function snapshotHealth(metrics) {
@@ -226,14 +193,6 @@ function snapshotHealth(metrics) {
 
 export function buildBusinessSnapshot(section, row) {
   const metrics = {
-    revenueCents: metricInteger(row?.revenue_cents),
-    paidOrderCount: metricInteger(row?.paid_order_count),
-    orderCount: metricInteger(row?.order_count),
-    ordersInProduction: metricInteger(row?.orders_in_production),
-    pendingOrderCount: metricInteger(row?.pending_order_count),
-    depositPaidOrderCount: metricInteger(row?.deposit_paid_order_count),
-    readyOrderCount: metricInteger(row?.ready_order_count),
-    completedOrderCount: metricInteger(row?.completed_order_count),
     enquiryCount: metricInteger(row?.enquiry_count),
     newEnquiries: metricInteger(row?.new_enquiries),
     contactedEnquiries: metricInteger(row?.contacted_enquiries),
@@ -246,40 +205,13 @@ export function buildBusinessSnapshot(section, row) {
   const health = snapshotHealth(metrics);
   if (section === 'business_overview') return {
     status: 'ready',
-    scope: { orders: 'All recorded non-test orders by business status.', revenue: paidRevenueScope(), enquiries: 'All recorded customer enquiries by their recorded status.' },
-    revenueCents: metrics.revenueCents,
-    paidOrderCount: metrics.paidOrderCount,
-    orderCount: metrics.orderCount,
-    ordersInProduction: metrics.ordersInProduction,
+    scope: { enquiries: 'All recorded customer enquiries by their recorded status.' },
     enquiryCount: metrics.enquiryCount,
     newEnquiries: metrics.newEnquiries,
     conversion,
     comparison,
     actions: recommendedActions(metrics),
     health,
-  };
-  if (section === 'sales_performance') return {
-    status: 'ready',
-    scope: { revenue: paidRevenueScope(), orders: 'Paid or confirmed non-test orders.' },
-    revenueCents: metrics.revenueCents,
-    paidOrderCount: metrics.paidOrderCount,
-    averagePaidOrderValueCents: metrics.paidOrderCount ? Math.floor(metrics.revenueCents / metrics.paidOrderCount) : 0,
-    comparison,
-    health: { state: 'ready', label: 'Ready', explanation: 'Sales performance is based on paid or confirmed orders only.' },
-  };
-  if (section === 'orders') return {
-    status: 'ready',
-    scope: { orders: 'All recorded non-test orders by business status. Revenue is not inferred from this work queue.' },
-    orderCount: metrics.orderCount,
-    pendingOrderCount: metrics.pendingOrderCount,
-    depositPaidOrderCount: metrics.depositPaidOrderCount,
-    ordersInProduction: metrics.ordersInProduction,
-    readyOrderCount: metrics.readyOrderCount,
-    completedOrderCount: metrics.completedOrderCount,
-    comparison,
-    health: metrics.pendingOrderCount > 0
-      ? { state: 'attention', label: 'Needs attention', explanation: 'Pending orders need payment confirmation or follow-up.' }
-      : { state: 'ready', label: 'Ready', explanation: 'No pending orders are recorded.' },
   };
   if (section === 'enquiries') return {
     status: 'ready',
@@ -298,7 +230,7 @@ export function buildBusinessSnapshot(section, row) {
 }
 
 async function refreshBusinessSection(sql, section) {
-  const row = await loadBusinessMetrics(sql, section);
+  const row = await loadBusinessMetrics(sql);
   const data = buildBusinessSnapshot(section, row);
   const [cached] = await sql`
     INSERT INTO control_centre_cache (section, payload, source, updated_at, invalidated_at)
@@ -333,7 +265,7 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
     try {
       authed = await verify(event);
     } catch (error) {
-      log.error('admin verification failed', { error: error instanceof Error ? error.message : 'unknown' });
+      log.error('admin verification failed', { error: error instanceof Error ? error.name : 'unknown' });
       return response(503, headers, { error: 'Service unavailable' });
     }
     if (!authed) return response(401, headers, { error: 'Unauthorized' });
@@ -377,7 +309,7 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
       if (error instanceof Error && /^(Request body|profile|Unknown|companyName|tradingName|serviceInformation|domains|contacts|preferences)/.test(error.message)) {
         return response(400, headers, { error: error.message });
       }
-      log.error('control centre request failed', { error: error instanceof Error ? error.message : 'unknown' });
+      log.error('control centre request failed', { error: error instanceof Error ? error.name : 'unknown' });
       return response(500, headers, { error: 'Unable to process the control-centre request' });
     }
   };

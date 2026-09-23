@@ -4,7 +4,7 @@ import test from 'node:test';
 import { persistContactLead } from '../../netlify/functions/contact-email.js';
 import { persistQuoteLead } from '../../netlify/functions/quote-email.js';
 
-test('a persisted contact lead invalidates only the affected overview, sales and enquiry snapshots', async () => {
+test('a persisted contact lead invalidates only the affected operations snapshots', async () => {
   const invalidated = [];
   const sql = async () => [{ id: 17 }];
 
@@ -14,10 +14,10 @@ test('a persisted contact lead invalidates only the affected overview, sales and
     lead: { Name: 'Ava Smith', Surname: 'Northside Motors', Phone: '0820000000', Email: 'ava@example.com', Message: 'Dealer enquiry' },
   });
 
-  assert.deepEqual(invalidated, [['business_overview', 'sales_performance', 'enquiries']]);
+  assert.deepEqual(invalidated, [['business_overview', 'enquiries']]);
 });
 
-test('a persisted quote lead invalidates only the affected overview, sales and enquiry snapshots', async () => {
+test('a persisted quote lead invalidates only the affected operations snapshots', async () => {
   const invalidated = [];
   const sql = async () => [{ id: 18 }];
 
@@ -27,7 +27,7 @@ test('a persisted quote lead invalidates only the affected overview, sales and e
     lead: { Name: 'Ava Smith', Phone: '0820000000', Email: 'ava@example.com', Product: 'Toolbox', Message: 'Please quote' },
   });
 
-  assert.deepEqual(invalidated, [['business_overview', 'sales_performance', 'enquiries']]);
+  assert.deepEqual(invalidated, [['business_overview', 'enquiries']]);
 });
 
 test('a failed public lead insert does not invalidate the business cache', async () => {

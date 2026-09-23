@@ -18,7 +18,6 @@ const PUBLIC_CACHE_TAGS = new Set([
   'site-settings',
   'legal:refund',
   'legal:terms',
-  'finance-page',
 ]);
 
 export function normalisePublicCacheTags(tags) {

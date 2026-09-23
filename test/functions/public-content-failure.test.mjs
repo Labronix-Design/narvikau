@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createFinancePageHandler } from '../../netlify/functions/finance-page.js';
 import { createLegalPagesHandler } from '../../netlify/functions/legal-pages.js';
 import { createSiteSettingsHandler } from '../../netlify/functions/site-settings.js';
 
@@ -38,13 +37,6 @@ const endpoints = [
     name: 'legal page',
     createHandler: createLegalPagesHandler,
     event: { httpMethod: 'GET', queryStringParameters: { page: 'refund' } },
-    emptyRow: [{ content: {} }],
-    expectedEmptyBody: {},
-  },
-  {
-    name: 'finance page',
-    createHandler: createFinancePageHandler,
-    event: { httpMethod: 'GET' },
     emptyRow: [{ content: {} }],
     expectedEmptyBody: {},
   },

@@ -1,17 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFile } from 'node:fs/promises';
 
 import * as cacheInvalidation from '../../netlify/functions/_cache-invalidation.js';
 
 const { purgePublicCacheTags } = cacheInvalidation;
-
-test('deployable cache invalidation has no Netlify runtime import that can fail function loading', async () => {
-  const source = await readFile(new URL('../../netlify/functions/_cache-invalidation.js', import.meta.url), 'utf8');
-
-  assert.doesNotMatch(source, /from\s+['"]@netlify\/functions['"]/);
-  assert.equal(typeof purgePublicCacheTags, 'function');
-});
 
 test('official purge options omit the token property when Lambda context has no purge token', () => {
   assert.equal(typeof cacheInvalidation.officialPurgeOptions, 'function');

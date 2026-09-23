@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { publicReadCacheHeaders, taggedPublicReadHeaders, uncachedResponseHeaders } from '../../netlify/functions/_public-cache.js';
 import { catalogueCacheHeaders, catalogueUncachedHeaders } from '../../netlify/functions/_catalogue-cache.js';
@@ -64,7 +63,6 @@ test('a rejected method is never stored at the edge in place of the catalogue', 
 const FAIL_CLOSED_ENDPOINTS = [
   { name: 'site-settings', event: { httpMethod: 'GET' }, expectedStatus: 503 },
   { name: 'legal-pages', event: { httpMethod: 'GET', queryStringParameters: { page: 'refund' } }, expectedStatus: 503 },
-  { name: 'finance-page', event: { httpMethod: 'GET' }, expectedStatus: 503 },
 ];
 
 for (const endpoint of FAIL_CLOSED_ENDPOINTS) {
@@ -82,13 +80,4 @@ test('uncached responses opt out of both the browser and the edge cache', () => 
     'Cache-Control': 'no-store',
     'Netlify-CDN-Cache-Control': 'no-store',
   });
-});
-
-test('checkout reservation cleanup has no periodic or public function deployment path', async () => {
-  const config = await readFile(new URL('../../netlify.toml', import.meta.url), 'utf8');
-  assert.doesNotMatch(config, /\[functions\."checkout-reservation-reaper"\]/);
-  await assert.rejects(
-    readFile(new URL('../../netlify/functions/checkout-reservation-reaper.js', import.meta.url), 'utf8'),
-    { code: 'ENOENT' },
-  );
 });

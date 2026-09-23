@@ -13,7 +13,6 @@ import {
 function monthlySql({ delivery = null, claim = delivery ? null : { send_state: 'sending', attempt_started_at: '2026-08-24T04:00:00.000Z' } } = {}) {
   return async (strings) => {
     const query = strings.join(' ');
-    if (query.includes('FROM orders')) return [{ order_count: 3, confirmed_order_count: 2, confirmed_order_value_cents: 125000 }];
     if (query.includes('FROM leads')) return [{ lead_count: 4, converted_lead_count: 1 }];
     if (query.includes('FROM control_centre_cache')) return [];
     if (query.includes('INSERT INTO monthly_report_deliveries')) return claim ? [claim] : [];
@@ -22,10 +21,10 @@ function monthlySql({ delivery = null, claim = delivery ? null : { send_state: '
   };
 }
 
-test('monthly report omits Search Console figures when the cache period is not the report period', () => {
+test('monthly operations report omits Search Console figures when the cache period is not the report period', () => {
   const report = buildMonthlyReport({
     period: { startDate: '2026-08-01', endDate: '2026-08-24', complete: false },
-    business: { orderCount: 3, confirmedOrderCount: 2, confirmedOrderValueCents: 125000, leadCount: 4, convertedLeadCount: 1 },
+    business: { leadCount: 4, convertedLeadCount: 1 },
     searchCache: { status: 'ready', period: { startDate: '2026-07-25', endDate: '2026-08-21' }, metrics: { clicks: 900 } },
     hosting: { status: 'ready', supplierCosts: { currency: 'USD', amountMinor: 5000 }, invoiceReady: false },
   });
@@ -35,11 +34,12 @@ test('monthly report omits Search Console figures when the cache period is not t
     explanation: 'Cached Search Console data does not cover this reporting period.',
     data: null,
   });
-  assert.equal(report.orders.confirmedOrderValueCents, 125000);
+  assert.deepEqual(report.leads, { status: 'measured', total: 4, converted: 1 });
+  assert.equal(Object.hasOwn(report, 'orders'), false);
   assert.equal(report.measurementCoverage.search, 'not_measured');
 });
 
-test('monthly report preserves the secure Search Console setup explanation when no monthly snapshot can be refreshed', () => {
+test('monthly operations report preserves the secure Search Console setup explanation when no monthly snapshot can be refreshed', () => {
   const report = buildMonthlyReport({
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true },
     business: {},
@@ -70,12 +70,12 @@ test('monthly period maps SAST month edges to start-inclusive, end-exclusive UTC
   assert.equal(new Date('2026-08-31T22:00:00.000Z') < new Date('2026-08-31T22:00:00.000Z'), false);
 });
 
-test('monthly report email escapes business-controlled content', () => {
+test('monthly operations report email escapes business-controlled content', () => {
   const html = renderMonthlyReportEmail({
     period: { label: '<img src=x onerror=alert(1)>', startDate: '2026-08-01', endDate: '2026-08-31', complete: true },
     report: buildMonthlyReport({
       period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true },
-      business: { orderCount: 0, confirmedOrderCount: 0, confirmedOrderValueCents: 0, leadCount: 0, convertedLeadCount: 0 },
+      business: { leadCount: 0, convertedLeadCount: 0 },
       searchCache: null,
       hosting: { status: 'not_measured', explanation: '<script>alert(1)</script>', invoiceReady: false },
     }),
@@ -101,7 +101,7 @@ test('admin preview does not expose a recipient and recognises only the approved
   const handler = createHandler({
     verifyAdminToken: async () => true,
     getSql: () => monthlySql(),
-    env: { MONTHLY_REPORT_RECIPIENTS: ' ACCOUNTS@LABRONIX.CO.ZA, info@navrik.co.za ' },
+    env: { MONTHLY_REPORT_RECIPIENTS: ' ACCOUNTS@LABRONIX.CO.ZA, info@navrik.com.au ' },
     now: () => new Date('2026-08-24T04:00:00.000Z'),
   });
   const response = await handler({ httpMethod: 'GET', headers: {}, queryStringParameters: {} });
@@ -136,7 +136,7 @@ test('monthly delivery refuses a configured recipient other than the approved ac
   const result = await deliverMonthlyReport({
     sql: monthlySql(),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: ' Accounts@Other.example, info@navrik.co.za ' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: ' Accounts@Other.example, info@navrik.com.au ' },
   });
 
   assert.deepEqual(result, { status: 'setup_required', missingConfiguration: ['MONTHLY_REPORT_RECIPIENTS'] });
@@ -147,20 +147,20 @@ test('monthly delivery requires exactly the two approved internal recipients and
   const result = await deliverMonthlyReport({
     sql: monthlySql(),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'info@navrik.co.za, accounts@labronix.co.za' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'info@navrik.com.au, accounts@labronix.co.za' },
     sendEmail: async (message) => { deliveries.push(message.to); return { id: `email_${deliveries.length}` }; },
   });
 
   assert.equal(result.status, 'sent');
-  assert.deepEqual(deliveries.sort(), ['accounts@labronix.co.za', 'info@navrik.co.za']);
+  assert.deepEqual(deliveries.sort(), ['accounts@labronix.co.za', 'info@navrik.com.au']);
 });
 
-test('admin completed-month send delivers the real report only to the configured internal recipient', async () => {
+test('admin completed-month send delivers the operations report only to the configured internal recipient', async () => {
   let email;
   const handler = createHandler({
     verifyAdminToken: async () => true,
     getSql: () => monthlySql(),
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.co.za' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.com.au' },
     now: () => new Date('2026-08-24T04:00:00.000Z'),
     sendEmail: async (message) => { email = message; return { id: 'email_123' }; },
   });
@@ -169,10 +169,10 @@ test('admin completed-month send delivers the real report only to the configured
 
   assert.equal(response.statusCode, 202);
   assert.equal(JSON.parse(response.body).status, 'sent');
-  assert.equal(email.to, 'info@navrik.co.za');
-  assert.equal(email.subject, 'Navrik monthly business report — July 2026');
-  assert.equal(email.html.includes('R1 250.00') || email.html.includes('R1,250.00'), true);
-  assert.equal(email.html.includes('client invoice'), true);
+  assert.equal(email.to, 'info@navrik.com.au');
+  assert.equal(email.subject, 'Navrik monthly operations report — July 2026');
+  assert.equal(email.html.includes('Orders received'), false);
+  assert.equal(email.html.includes('invoice'), false);
 });
 
 test('monthly delivery does not send again after its period and recipient were recorded as sent', async () => {
@@ -180,7 +180,7 @@ test('monthly delivery does not send again after its period and recipient were r
   const result = await deliverMonthlyReport({
     sql: monthlySql({ delivery: { send_state: 'sent', sent_at: '2026-08-31T04:00:00.000Z' } }),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.co.za' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.com.au' },
     sendEmail: async () => { mailCalls += 1; },
   });
 
@@ -193,7 +193,7 @@ test('monthly delivery fails closed instead of sending a duplicate while an exis
   const result = await deliverMonthlyReport({
     sql: monthlySql({ delivery: { send_state: 'sending', sent_at: null } }),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.co.za' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.com.au' },
     sendEmail: async () => { mailCalls += 1; },
   });
 
@@ -206,11 +206,11 @@ test('monthly delivery reclaims a stale crash lease and retains the deterministi
   const result = await deliverMonthlyReport({
     sql: monthlySql({ delivery: { send_state: 'sending', sent_at: null }, claim: { send_state: 'sending', attempt_started_at: '2026-09-01T04:00:00.000Z' } }),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'ACCOUNTS@LABRONIX.CO.ZA,info@navrik.co.za' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'ACCOUNTS@LABRONIX.CO.ZA,info@navrik.com.au' },
     sendEmail: async (message) => { email = message; return { id: 'email_456' }; },
   });
 
   assert.equal(result.status, 'sent');
-  assert.equal(email.to, 'info@navrik.co.za');
+  assert.equal(email.to, 'info@navrik.com.au');
   assert.match(email.idempotencyKey, /^[a-f0-9]{64}$/);
 });

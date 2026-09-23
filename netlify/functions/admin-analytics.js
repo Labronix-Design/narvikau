@@ -24,7 +24,7 @@ function snapshotResponse(cache) {
   if (!cache || cache.invalidated_at || !cache.payload || typeof cache.payload !== 'object' || Array.isArray(cache.payload)) {
     return {
       status: 'not_measured',
-      explanation: 'Sales performance is awaiting an authenticated refresh.',
+      explanation: 'Enquiry analytics is awaiting an authenticated refresh.',
       data: null,
       cache: { status: cache ? 'stale' : 'empty', updatedAt: cache?.updated_at || null },
     };
@@ -44,11 +44,11 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
       return { statusCode: 503, headers, body: JSON.stringify({ error: 'Service unavailable' }) };
     }
 
-    const type = (event.queryStringParameters || {}).type || 'sales_performance';
+    const type = (event.queryStringParameters || {}).type || 'enquiries';
 
     try {
       const sql = getSql();
-    const snapshotSection = type === 'sales_performance' ? 'sales_performance' : type === 'overview' ? 'business_overview' : null;
+    const snapshotSection = type === 'enquiries' ? 'enquiries' : type === 'overview' ? 'business_overview' : null;
     if (snapshotSection) {
       const [cache] = await sql`
         SELECT payload, updated_at, invalidated_at
@@ -59,23 +59,10 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
       return { statusCode: 200, headers, body: JSON.stringify(snapshotResponse(cache)) };
     }
 
-    if (type === 'revenue_trend' || type === 'product_mix' || type === 'order_funnel') {
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          status: 'not_measured',
-          explanation: 'This analytics breakdown is not measured in a cached snapshot yet.',
-          data: null,
-          cache: { status: 'not_measured', updatedAt: null },
-        }),
-      };
-    }
-
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'Unknown analytics type' }) };
     } catch (error) {
-      log.error('analytics snapshot read failed', { error: error instanceof Error ? error.message : 'unknown' });
-      return { statusCode: 500, headers, body: JSON.stringify({ error: 'Unable to load sales performance' }) };
+      log.error('analytics snapshot read failed', { error: error instanceof Error ? error.name : 'unknown' });
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'Unable to load enquiry analytics' }) };
     }
   };
 }

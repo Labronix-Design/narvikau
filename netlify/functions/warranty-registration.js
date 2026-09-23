@@ -1,14 +1,13 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { neon } from '@neondatabase/serverless';
 import { verifyAdminToken } from './admin-auth.js';
 import { createSubmissionRateLimiter, SubmissionValidationError } from './_public-submission.js';
-import { hashSecret } from './_security.js';
 
 const WARRANTY_FIELDS = new Set([
-  'token',
-  'vehicleMake', 'vehicleModel', 'vehicleYear', 'vehicleRegistration',
-  'purchaseDate', 'fitmentDate', 'consent',
+  'purchaserName', 'purchaserEmail', 'purchaserPhone', 'productId', 'productName', 'purchaseReference',
+  'vehicleMake', 'vehicleModel', 'vehicleYear', 'vehicleRegistration', 'purchaseDate', 'fitmentDate', 'consent',
 ]);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const headers = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -20,14 +19,9 @@ const log = {
   error: (msg, d = {}) => console.error(JSON.stringify({ level: 'ERROR', fn: 'warranty-registration', msg, ...d, ts: new Date().toISOString() })),
 };
 
-function databaseUrl() {
-  const url = process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL;
-  if (!url) throw new Error('Database configuration is missing');
-  return url;
-}
-
 function defaultGetSql() {
-  return neon(databaseUrl());
+  if (!process.env.NETLIFY_DATABASE_URL) throw new Error('Database configuration is missing');
+  return neon(process.env.NETLIFY_DATABASE_URL);
 }
 
 function parseObject(rawBody) {
@@ -58,41 +52,46 @@ function date(value, field) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(result)) throw new SubmissionValidationError(`${field} must be a date`);
   const parsed = new Date(`${result}T00:00:00.000Z`);
   if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== result) throw new SubmissionValidationError(`${field} must be a date`);
-  const today = new Date().toISOString().slice(0, 10);
-  if (result > today) throw new SubmissionValidationError(`${field} cannot be in the future`);
+  if (result > new Date().toISOString().slice(0, 10)) throw new SubmissionValidationError(`${field} cannot be in the future`);
   return result;
 }
 
-function integer(value, field, { minimum, maximum }) {
+function integer(value, field, { minimum, maximum, optional = false }) {
+  if (optional && (value === undefined || value === null)) return null;
   if (!Number.isSafeInteger(value) || value < minimum || value > maximum) throw new SubmissionValidationError(`${field} is invalid`);
   return value;
 }
 
 export function validateWarrantyRegistration(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new SubmissionValidationError('Invalid warranty registration');
-  const unknown = Object.keys(value).filter((key) => !WARRANTY_FIELDS.has(key));
-  if (unknown.length) throw new SubmissionValidationError('Unknown warranty registration fields');
+  if (Object.keys(value).some((key) => !WARRANTY_FIELDS.has(key))) throw new SubmissionValidationError('Unknown warranty registration fields');
 
   const purchaseDate = date(value.purchaseDate, 'purchaseDate');
   const fitmentDate = date(value.fitmentDate, 'fitmentDate');
   if (fitmentDate < purchaseDate) throw new SubmissionValidationError('fitmentDate cannot be before purchaseDate');
-  const currentYear = new Date().getUTCFullYear() + 1;
-
   if (value.consent !== true) throw new SubmissionValidationError('consent is required');
+  const purchaserEmail = text(value.purchaserEmail, 'purchaserEmail', { required: true, maxLength: 254 }).toLowerCase();
+  if (!EMAIL_RE.test(purchaserEmail)) throw new SubmissionValidationError('purchaserEmail is invalid');
+
   return {
-    token: (() => {
-      const token = text(value.token, 'token', { required: true, maxLength: 128 });
-      if (!/^[A-Za-z0-9_-]{32,128}$/.test(token)) throw new SubmissionValidationError('token is invalid');
-      return token;
-    })(),
+    purchaserName: text(value.purchaserName, 'purchaserName', { required: true, maxLength: 160 }),
+    purchaserEmail,
+    purchaserPhone: text(value.purchaserPhone, 'purchaserPhone', { required: true, maxLength: 50 }),
+    productId: integer(value.productId, 'productId', { minimum: 1, maximum: 2147483647, optional: true }),
+    productName: text(value.productName, 'productName', { required: true, maxLength: 160 }),
+    purchaseReference: text(value.purchaseReference, 'purchaseReference', { maxLength: 160 }),
     vehicleMake: text(value.vehicleMake, 'vehicleMake', { required: true, maxLength: 80 }),
     vehicleModel: text(value.vehicleModel, 'vehicleModel', { required: true, maxLength: 100 }),
-    vehicleYear: integer(value.vehicleYear, 'vehicleYear', { minimum: 1900, maximum: currentYear }),
+    vehicleYear: integer(value.vehicleYear, 'vehicleYear', { minimum: 1900, maximum: new Date().getUTCFullYear() + 1 }),
     vehicleRegistration: text(value.vehicleRegistration, 'vehicleRegistration', { required: true, maxLength: 32 }),
     purchaseDate,
     fitmentDate,
     consent: true,
   };
+}
+
+function submissionHash(registration) {
+  return createHash('sha256').update(JSON.stringify(registration)).digest('hex');
 }
 
 export function createWarrantyRegistrationHandler({ getSql = defaultGetSql, rateLimiter, makeReference = () => `WTY-${randomUUID()}` } = {}) {
@@ -111,8 +110,9 @@ export function createWarrantyRegistrationHandler({ getSql = defaultGetSql, rate
     try {
       sql = rateLimiter ? null : getSql();
       const limiter = rateLimiter || createSubmissionRateLimiter(sql);
-      const allowed = await limiter.check({ event, source: 'warranty_registration', email: hashSecret(registration.token) });
-      if (!allowed) return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many registrations. Please try again later.' }) };
+      if (!await limiter.check({ event, source: 'warranty_registration', email: registration.purchaserEmail })) {
+        return { statusCode: 429, headers, body: JSON.stringify({ error: 'Too many registrations. Please try again later.' }) };
+      }
     } catch (error) {
       log.error('rate limit unavailable', { error: error instanceof Error ? error.name : 'unknown' });
       return { statusCode: 503, headers, body: JSON.stringify({ error: 'Warranty registration is temporarily unavailable.' }) };
@@ -120,42 +120,31 @@ export function createWarrantyRegistrationHandler({ getSql = defaultGetSql, rate
 
     try {
       sql ||= getSql();
-      const [created] = await sql`
-        WITH claimed_token AS (
-          UPDATE warranty_registration_tokens
-          SET used_at = NOW()
-          WHERE token_hash = ${hashSecret(registration.token)} AND used_at IS NULL
-          RETURNING order_id
-        ), order_data AS (
-          SELECT
-            claimed_token.order_id,
-            o.product_label,
-            CONCAT_WS(' ', c.first_name, c.last_name) AS purchaser_name,
-            c.email AS purchaser_email,
-            c.phone AS purchaser_phone
-          FROM claimed_token
-          JOIN orders o ON o.id = claimed_token.order_id
-          JOIN customers c ON c.id = o.customer_id
-        ), registered AS (
-          INSERT INTO warranty_registrations (
-            registration_reference, order_id, purchaser_name, purchaser_email, purchaser_phone,
-            product_name, vehicle_make, vehicle_model, vehicle_year, vehicle_registration,
-            purchase_date, fitment_date, consent_at
-          )
-          SELECT
-            ${makeReference()}, order_id, purchaser_name, purchaser_email, purchaser_phone,
-            product_label, ${registration.vehicleMake}, ${registration.vehicleModel}, ${registration.vehicleYear}, ${registration.vehicleRegistration},
-            ${registration.purchaseDate}, ${registration.fitmentDate}, NOW()
-          FROM order_data
-          RETURNING registration_reference
+      const hash = submissionHash(registration);
+      const [saved] = await sql`
+        INSERT INTO warranty_registrations (
+          registration_reference, submission_hash, purchaser_name, purchaser_email, purchaser_phone,
+          product_id, product_name, purchase_reference, vehicle_make, vehicle_model, vehicle_year,
+          vehicle_registration, purchase_date, fitment_date, consent_at
+        ) VALUES (
+          ${makeReference()}, ${hash}, ${registration.purchaserName}, ${registration.purchaserEmail}, ${registration.purchaserPhone},
+          ${registration.productId}, ${registration.productName}, ${registration.purchaseReference || null},
+          ${registration.vehicleMake}, ${registration.vehicleModel}, ${registration.vehicleYear}, ${registration.vehicleRegistration},
+          ${registration.purchaseDate}, ${registration.fitmentDate}, NOW()
         )
-        SELECT registration_reference FROM registered
+        ON CONFLICT (submission_hash) DO UPDATE SET submission_hash = EXCLUDED.submission_hash
+        RETURNING registration_reference, (xmax = 0) AS created
       `;
-      if (!created) return { statusCode: 400, headers, body: JSON.stringify({ error: 'This registration link is not valid or has already been used.' }) };
-      log.info('registered');
-      return { statusCode: 201, headers, body: JSON.stringify({ ok: true, registrationReference: created.registration_reference }) };
+      if (!saved?.registration_reference) throw new Error('Warranty persistence returned no reference');
+      const created = saved.created === true || saved.created === 'true';
+      log.info(created ? 'registered' : 'replayed');
+      return {
+        statusCode: created ? 201 : 200,
+        headers,
+        body: JSON.stringify({ ok: true, registrationReference: saved.registration_reference, replayed: !created }),
+      };
     } catch (error) {
-      if (error?.code === '23505') return { statusCode: 400, headers, body: JSON.stringify({ error: 'This registration link is not valid or has already been used.' }) };
+      if (error?.code === '23503') return { statusCode: 422, headers, body: JSON.stringify({ error: 'The selected product is not available for warranty registration.' }) };
       log.error('persistence failed', { error: error instanceof Error ? error.name : 'unknown' });
       return { statusCode: 503, headers, body: JSON.stringify({ error: 'Warranty registration is temporarily unavailable.' }) };
     }
@@ -185,8 +174,8 @@ export function createAdminWarrantyHandler({ verifyAdminToken: verify = verifyAd
       const offset = boundedInteger(params.offset, 0, 10000);
       const rows = await getSql()`
         SELECT
-          id, registration_reference, order_id, purchaser_name, purchaser_email, purchaser_phone,
-          product_name, order_reference, vehicle_make, vehicle_model, vehicle_year,
+          id, registration_reference, purchaser_name, purchaser_email, purchaser_phone,
+          product_id, product_name, purchase_reference, vehicle_make, vehicle_model, vehicle_year,
           vehicle_registration, purchase_date, fitment_date, consent_at, registered_at
         FROM warranty_registrations
         ORDER BY registered_at DESC, id DESC

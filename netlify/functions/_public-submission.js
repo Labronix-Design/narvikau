@@ -30,13 +30,19 @@ function text(value, field, { required = false, maxLength }) {
 
 export function validatePublicLead(body, { quote = false } = {}) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new SubmissionValidationError('Invalid submission');
+  const allowed = quote
+    ? new Set(['Name', 'Phone', 'Email', 'Message', 'Product', 'Type'])
+    : new Set(['Name', 'Surname', 'Phone', 'Email', 'Message']);
+  if (Object.keys(body).some((key) => !allowed.has(key))) throw new SubmissionValidationError('Unknown submission fields');
+  if (quote && body.Type !== 'Canopy Quote Request') throw new SubmissionValidationError('Invalid quote request type');
   const lead = {
     Name: text(body.Name, 'Name', { required: true, maxLength: 160 }),
     Surname: quote ? '' : text(body.Surname, 'Surname', { maxLength: 160 }),
-    Phone: text(body.Phone, 'Phone', { maxLength: 50 }),
+    Phone: text(body.Phone, 'Phone', { required: true, maxLength: 50 }),
     Email: text(body.Email, 'Email', { required: true, maxLength: 254 }).toLowerCase(),
-    Message: text(body.Message, 'Message', { maxLength: 4000 }),
-    Product: quote ? text(body.Product, 'Product', { maxLength: 160 }) : '',
+    Message: text(body.Message, 'Message', { required: true, maxLength: 4000 }),
+    Product: quote ? text(body.Product, 'Product', { required: true, maxLength: 160 }) : '',
+    ...(quote ? { Type: 'Canopy Quote Request' } : {}),
   };
   if (!EMAIL_RE.test(lead.Email)) throw new SubmissionValidationError('Email is invalid');
   return lead;

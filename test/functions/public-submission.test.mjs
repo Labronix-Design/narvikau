@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildContactEmailHtml, createContactEmailHandler } from '../../netlify/functions/contact-email.js';
-import { buildQuoteEmailHtml } from '../../netlify/functions/quote-email.js';
+import { buildQuoteEmailHtml, createQuoteEmailHandler } from '../../netlify/functions/quote-email.js';
 import { createSubmissionRateLimiter, submissionRateKeys } from '../../netlify/functions/_public-submission.js';
 
 const maliciousLead = {
@@ -11,6 +11,16 @@ const maliciousLead = {
   Email: 'customer@example.test',
   Message: '<img src=x onerror=alert(1)>',
   Product: '<img src=x onerror=alert(1)>',
+};
+const maliciousContact = Object.fromEntries(Object.entries(maliciousLead).filter(([key]) => key !== 'Product'));
+
+const validQuote = {
+  Name: 'Avery Customer',
+  Phone: '+61 412 345 678',
+  Email: 'avery@example.test',
+  Message: 'Please quote this canopy.',
+  Product: 'Navrik Canopy Adventure',
+  Type: 'Canopy Quote Request',
 };
 
 test('contact and quote emails escape untrusted HTML in text and attribute contexts', () => {
@@ -34,7 +44,7 @@ test('contact rejects a malformed email before persistence or email delivery', a
 
   const response = await handler({
     httpMethod: 'POST', headers: {},
-    body: JSON.stringify({ ...maliciousLead, Email: 'not-an-email' }),
+    body: JSON.stringify({ ...maliciousContact, Email: 'not-an-email' }),
   });
 
   assert.equal(response.statusCode, 400);
@@ -51,10 +61,100 @@ test('contact returns 429 without persistence or email after the server-side rat
     rateLimiter: { check: async () => false },
   });
 
-  const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(maliciousLead) });
+  const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(maliciousContact) });
 
   assert.equal(response.statusCode, 429);
   assert.equal(persisted, false);
+  assert.equal(delivered, false);
+});
+
+test('contact sends only Australian identity after durable persistence', async () => {
+  const sent = [];
+  const sql = async (strings) => strings.join('').includes('RETURNING id') ? [{ id: 18 }] : [];
+  const handler = createContactEmailHandler({
+    getSql: () => sql,
+    rateLimiter: { check: async () => true },
+    sendEmail: async (message) => { sent.push(message); return { ok: true }; },
+  });
+
+  const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(maliciousContact) });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sent[0].from, 'Navrik <info@navrik.com.au>');
+  assert.equal(sent[0].to, 'info@navrik.com.au');
+  assert.match(sent[1].html, /navrik\.com\.au/);
+  assert.doesNotMatch(sent.map((message) => message.html).join('\n'), /navrik\.co\.za|Built Tough for Africa/);
+});
+
+test('contact rejects unknown fields before rate limiting or persistence', async () => {
+  let rateLimited = false;
+  let databaseAccessed = false;
+  const handler = createContactEmailHandler({
+    getSql: () => { databaseAccessed = true; throw new Error('must not access database'); },
+    rateLimiter: { check: async () => { rateLimited = true; return true; } },
+  });
+
+  const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify({ ...maliciousContact, internal: true }) });
+
+  assert.equal(response.statusCode, 400);
+  assert.equal(rateLimited, false);
+  assert.equal(databaseAccessed, false);
+});
+
+test('quote accepts the Task 4 canopy quote contract and sends only Australian identity', async () => {
+  const sent = [];
+  const sql = async (strings) => strings.join('').includes('RETURNING id') ? [{ id: 17 }] : [];
+  const handler = createQuoteEmailHandler({
+    getSql: () => sql,
+    rateLimiter: { check: async ({ source }) => source === 'canopy_quote' },
+    sendEmail: async (message) => { sent.push(message); return { ok: true }; },
+  });
+
+  const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(validQuote) });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(sent.length, 2);
+  assert.equal(sent[0].from, 'Navrik <info@navrik.com.au>');
+  assert.equal(sent[0].to, 'info@navrik.com.au');
+  assert.equal(sent[1].to, validQuote.Email);
+  assert.match(sent[1].html, /navrik\.com\.au/);
+  assert.doesNotMatch(sent.map((message) => message.html).join('\n'), /navrik\.co\.za|Built Tough for Africa/);
+});
+
+test('quote rejects malformed or non-canopy payloads before persistence and delivery', async () => {
+  let databaseAccessed = false;
+  let delivered = false;
+  const handler = createQuoteEmailHandler({
+    getSql: () => { databaseAccessed = true; throw new Error('must not access database'); },
+    rateLimiter: { check: async () => true },
+    sendEmail: async () => { delivered = true; },
+  });
+
+  for (const payload of [
+    { ...validQuote, Email: 'invalid' },
+    { ...validQuote, Type: 'Accessory Quote Request' },
+    { ...validQuote, unexpected: true },
+  ]) {
+    const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(payload) });
+    assert.equal(response.statusCode, 400);
+  }
+  assert.equal(databaseAccessed, false);
+  assert.equal(delivered, false);
+});
+
+test('quote returns 429 without persistence or delivery when the canopy quote limit is exhausted', async () => {
+  let databaseAccessed = false;
+  let delivered = false;
+  const handler = createQuoteEmailHandler({
+    getSql: () => { databaseAccessed = true; throw new Error('must not access database'); },
+    rateLimiter: { check: async () => false },
+    sendEmail: async () => { delivered = true; },
+  });
+
+  const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(validQuote) });
+
+  assert.equal(response.statusCode, 429);
+  assert.equal(databaseAccessed, false);
   assert.equal(delivered, false);
 });
 
@@ -110,7 +210,7 @@ test('missing Netlify connection IP denies submissions despite spoofed XFF befor
   const response = await handler({
     httpMethod: 'POST',
     headers: { 'x-forwarded-for': '203.0.113.7', 'client-ip': '192.0.2.99' },
-    body: JSON.stringify(maliciousLead),
+    body: JSON.stringify(maliciousContact),
   });
 
   assert.equal(response.statusCode, 503);

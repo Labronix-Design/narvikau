@@ -7,7 +7,7 @@ const log = {
 };
 
 function databaseUrl() {
-  const url = process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL;
+  const url = process.env.NETLIFY_DATABASE_URL;
   if (!url) throw new Error('Database configuration is missing');
   return url;
 }
@@ -30,7 +30,7 @@ export function createHandler({ getSql = () => neon(databaseUrl()), env = proces
       log.info('monthly internal report delivery completed', { status: result.status, periodStart: result.period.startDate, periodEnd: result.period.endDate });
       return { statusCode: 202, body: JSON.stringify({ status: result.status }) };
     } catch (error) {
-      log.error('scheduled monthly report failed', { error: error instanceof Error ? error.message : 'unknown' });
+      log.error('scheduled monthly report failed', { error: error instanceof Error ? error.name : 'unknown' });
       return { statusCode: 502, body: JSON.stringify({ error: 'Unable to send monthly internal report' }) };
     }
   };

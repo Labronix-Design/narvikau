@@ -9,6 +9,26 @@ const headers = {
 };
 
 const VALID_STATUSES = ['new', 'contacted', 'quoted', 'converted', 'closed'];
+const UPDATE_FIELDS = new Set(['id', 'status', 'admin_notes']);
+
+const log = {
+  error: (msg, d = {}) => console.error(JSON.stringify({ level: 'ERROR', fn: 'admin-queries', msg, ...d, ts: new Date().toISOString() })),
+};
+
+function parseUpdateBody(raw) {
+  let body;
+  try {
+    body = JSON.parse(raw || '{}');
+  } catch {
+    return null;
+  }
+  if (!body || typeof body !== 'object' || Array.isArray(body)
+    || Object.keys(body).some((key) => !UPDATE_FIELDS.has(key))
+    || !Number.isSafeInteger(body.id) || body.id < 1
+    || (body.status !== undefined && !VALID_STATUSES.includes(body.status))
+    || (body.admin_notes !== undefined && (typeof body.admin_notes !== 'string' || body.admin_notes.length > 4000))) return null;
+  return { id: body.id, status: body.status, admin_notes: body.admin_notes };
+}
 
 export function createHandler({
   verifyAdminToken: verify = verifyAdminToken,
@@ -61,18 +81,15 @@ export function createHandler({
     }
 
     if (event.httpMethod === 'PUT') {
-      const { id, status, admin_notes } = JSON.parse(event.body || '{}');
-      if (!id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'id required' }) };
-      if (status && !VALID_STATUSES.includes(status)) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid status' }) };
-      }
+      const update = parseUpdateBody(event.body);
+      if (!update) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid lead update' }) };
 
       const [row] = await sql`
         UPDATE leads SET
-          status      = COALESCE(${status      || null}::TEXT, status),
-          admin_notes = COALESCE(${admin_notes ?? null}::TEXT, admin_notes),
+          status      = COALESCE(${update.status ?? null}::TEXT, status),
+          admin_notes = COALESCE(${update.admin_notes ?? null}::TEXT, admin_notes),
           updated_at  = NOW()
-        WHERE id = ${id}
+        WHERE id = ${update.id}
         RETURNING id, status, admin_notes, updated_at
       `;
       if (!row) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Lead not found' }) };
@@ -81,9 +98,9 @@ export function createHandler({
     }
 
     return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
-  } catch (err) {
-    console.error('admin-queries error:', err);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
+  } catch (error) {
+    log.error('request failed', { error: error instanceof Error ? error.name : 'unknown' });
+    return { statusCode: 500, headers, body: JSON.stringify({ error: 'Unable to process lead request' }) };
   }
   };
 }

@@ -43,7 +43,7 @@
 
 [functions."monthly-business-report-scheduled"]
   # 06:00 SAST on the first day of every month. Sends the completed prior
-  # calendar-month internal report only; never creates a client invoice.
+  # calendar-month operations report only.
   schedule = "0 4 1 * *"
 
 # 1. API REDIRECTS (Highest Priority)

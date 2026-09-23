@@ -128,6 +128,7 @@ CREATE INDEX idx_public_submission_rate_limits_cleanup
 CREATE TABLE warranty_registrations (
   id                       BIGSERIAL PRIMARY KEY,
   registration_reference   TEXT NOT NULL UNIQUE,
+  submission_hash          TEXT NOT NULL UNIQUE,
   purchaser_name           TEXT NOT NULL,
   purchaser_email          TEXT NOT NULL,
   purchaser_phone          TEXT NOT NULL,

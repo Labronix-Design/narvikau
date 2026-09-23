@@ -16,10 +16,10 @@ export function createHandler({ getSql = () => neon(databaseUrl()), now = () => 
   return async () => {
     try {
       const result = await persistScheduledReport(getSql(), now());
-      if (result.status === 'persisted') log.info('internal report snapshot persisted', { invoicePreparationReminder: result.invoicePreparationReminder });
+      if (result.status === 'persisted') log.info('internal report snapshot persisted');
       return { statusCode: 202, body: JSON.stringify({ status: result.status, ...(result.explanation ? { explanation: result.explanation } : {}) }) };
     } catch (error) {
-      log.error('internal report failed', { error: error instanceof Error ? error.message : 'unknown' });
+      log.error('internal report failed', { error: error instanceof Error ? error.name : 'unknown' });
       return { statusCode: 500, body: JSON.stringify({ error: 'Unable to process internal report' }) };
     }
   };

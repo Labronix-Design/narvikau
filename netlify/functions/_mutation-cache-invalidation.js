@@ -5,7 +5,6 @@ export const MUTATION_TAGS = Object.freeze({
   siteSettings: Object.freeze(['site-settings', 'catalogue:storefront']),
   legalRefund: Object.freeze(['legal:refund']),
   legalTerms: Object.freeze(['legal:terms']),
-  financePage: Object.freeze(['finance-page']),
 });
 
 export async function purgeMutationCache(kind, purgeTags, context) {
