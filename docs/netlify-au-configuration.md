@@ -16,7 +16,7 @@ features. Values are intentionally omitted.
 | `EMAIL_API_KEY` | Dedicated AU Resend credential for transactional mail |
 | `ADMIN_PASSWORD` | AU administration login secret |
 | `ADMIN_APP_ORIGIN` | Allowed browser origin for administration requests |
-| `MONTHLY_REPORT_RECIPIENTS` | Approved internal recipients for monthly operations reports |
+| `MONTHLY_REPORT_RECIPIENTS` | Exact allowlist: `accounts@labronix.co.za,info@navrik.com.au` |
 | `REPORTING_TIME_ZONE` | IANA time zone used for scheduled operations reports |
 | `SITE_ID` | AU Netlify site identifier used for cache invalidation |
 | `NETLIFY_PURGE_API_TOKEN` | AU site cache-purge credential |
@@ -24,9 +24,12 @@ features. Values are intentionally omitted.
 Optional measurement integrations use `GA4_MEASUREMENT_ID`, `GA4_PROPERTY_ID`,
 `GSC_OAUTH_CLIENT_ID`, `GSC_OAUTH_CLIENT_SECRET`, `GSC_OAUTH_REDIRECT_URI`,
 `GSC_OAUTH_STATE_SECRET`, `GSC_TOKEN_ENCRYPTION_KEY`, and `GSC_SITE_URL`.
-Configure them only for the AU properties. The public contact and quote mailbox
-uses the AU domain identity in server code; the Resend sending domain must be
-verified in the separate AU Resend account.
+Configure them only for the AU properties. Register
+`https://navrik.com.au/api/admin-search-console?action=callback` as the exact
+OAuth callback and `sc-domain:navrik.com.au` as the exact Search Console domain
+property. The public contact and quote mailbox uses the AU domain identity in
+server code; the Resend sending domain must be verified in the separate AU
+Resend account.
 
 ## Database preparation
 
@@ -52,9 +55,10 @@ from another deployment.
 5. Confirm the deployed canonical tag, Open Graph URL, sitemap, robots file, and
    Search Console property all resolve to the apex AU domain.
 
-Netlify schedules run hourly because the report functions enforce 06:00 in
-`REPORTING_TIME_ZONE` themselves. This keeps the local schedule correct across
-daylight-saving changes.
+Netlify schedules run at minute 0 and minute 30 of every hour because the report
+functions enforce 06:00 in `REPORTING_TIME_ZONE` themselves. The two trigger
+minutes cover Australian whole-hour and half-hour zones while keeping local
+scheduling correct across daylight-saving changes.
 
 ## Pre-launch checks
 

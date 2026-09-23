@@ -10,6 +10,11 @@ test('internal reports run at 06:00 in the configured Australian time zone on Sa
   assert.equal(isScheduledReportTime(new Date('2026-08-23T19:00:00.000Z'), 'Australia/Sydney'), false);
 });
 
+test('internal reports can reach 06:00 in an Australian half-hour time zone', () => {
+  assert.equal(isScheduledReportTime(new Date('2026-08-23T20:30:00.000Z'), 'Australia/Adelaide'), true);
+  assert.equal(isScheduledReportTime(new Date('2026-08-23T20:00:00.000Z'), 'Australia/Adelaide'), false);
+});
+
 test('internal operations report includes enquiry data but no payment, delivery instruction, or email recipient', () => {
   const report = buildReport({ business: { enquiryCount: 4 }, enquiries: { enquiryCount: 4 }, search: { status: 'not_measured' }, hosting: { status: 'not_measured' } });
 

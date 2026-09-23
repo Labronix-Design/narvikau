@@ -21,10 +21,11 @@ setup-required state instead of inventing metrics.
 
 ## Monthly internal operations report
 
-The scheduled function runs hourly and sends only when it reaches 06:00 on the
-first day of the month in `REPORTING_TIME_ZONE`. The preceding completed local
-calendar month is sent separately to the exact server-side allowlist in
-`MONTHLY_REPORT_RECIPIENTS`.
+The scheduled function runs at minute 0 and minute 30 of every hour and sends
+only when it reaches 06:00 on the first day of the month in
+`REPORTING_TIME_ZONE`. The preceding completed local calendar month is sent
+separately to the exact server-side allowlist in `MONTHLY_REPORT_RECIPIENTS`:
+`accounts@labronix.co.za,info@navrik.com.au`.
 
 Independent durable delivery records and provider idempotency keys keep a
 period/recipient/report-type combination from being sent twice when Netlify

@@ -38,14 +38,14 @@
     X-Robots-Tag = "noindex, nofollow, noarchive"
 
 [functions."internal-report-scheduled"]
-  # Run hourly so the function can honour REPORTING_TIME_ZONE and daylight
-  # saving while persisting snapshots only at 06:00 on configured weekdays.
-  schedule = "0 * * * *"
+  # Run on both whole and half hours so every Australian IANA time zone can
+  # reach 06:00 local time, including zones with a 30-minute offset.
+  schedule = "0,30 * * * *"
 
 [functions."monthly-business-report-scheduled"]
-  # Run hourly so the function can honour REPORTING_TIME_ZONE and daylight
-  # saving. It sends only at 06:00 on the first local day of the month.
-  schedule = "0 * * * *"
+  # Run on both whole and half hours so every Australian IANA time zone can
+  # reach 06:00 local time. The handler sends only on the first local day.
+  schedule = "0,30 * * * *"
 
 # 1. API REDIRECTS (Highest Priority)
 [[redirects]]
