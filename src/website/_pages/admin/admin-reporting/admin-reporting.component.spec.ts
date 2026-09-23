@@ -46,7 +46,7 @@ describe('AdminReportingComponent', () => {
 
   it('shows the current period and recipient only when server configuration confirms delivery', () => {
     expect(fixture.nativeElement.textContent).toContain(REPORTING_PERIOD.label);
-    expect(fixture.nativeElement.textContent).toContain('Current month to date');
+    expect(fixture.nativeElement.textContent).toContain('Completed calendar month');
     expect(fixture.nativeElement.textContent).toContain(CONFIGURED_RECIPIENT);
     expect(fixture.nativeElement.textContent).toContain('Configured internal recipient');
   });
@@ -85,5 +85,19 @@ describe('AdminReportingComponent', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Already sent internally');
     expect(fixture.nativeElement.textContent).toContain(CONFIGURED_RECIPIENT);
+  });
+
+  it('presents only enquiry and website operations reporting', () => {
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(text).toContain('Canopy enquiries');
+    expect(text).toContain('Search & website traffic');
+    expect(text).toContain('Website operations');
+    expect(text).toContain('Measurement coverage');
+    expect(text).not.toContain('Orders & sales');
+    expect(text).not.toContain('paid deposits');
+    expect(text).not.toContain('revenue');
+    expect(text).not.toContain('Sales performance');
+    expect(text).not.toContain('Invoice readiness');
   });
 });

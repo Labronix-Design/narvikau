@@ -21,10 +21,9 @@ export class AdminReportingComponent {
   readonly reportSections = computed(() => {
     const report = this.monthlyReport()?.report;
     const sections: Array<{ key: keyof MonthlyBusinessReportContent; title: string; detail: string }> = [
-      { key: 'orders', title: 'Orders & sales', detail: 'Orders, paid deposits and revenue where they are measured.' },
-      { key: 'leads', title: 'Leads & conversion', detail: 'Customer enquiries and conversion coverage where connected.' },
+      { key: 'leads', title: 'Canopy enquiries', detail: 'Customer enquiries and follow-up coverage where connected.' },
       { key: 'search', title: 'Search & website traffic', detail: 'Search visibility and website traffic measurement where it is connected.' },
-      { key: 'invoiceReadiness', title: 'Invoice readiness', detail: 'What is ready to prepare and which measurements are still missing.' },
+      { key: 'hosting', title: 'Website operations', detail: 'Website availability and operational observations where measured.' },
       { key: 'measurementCoverage', title: 'Measurement coverage', detail: 'Which parts of this internal report are based on recorded data.' },
     ];
     return sections.map((section) => ({ ...section, status: this.sectionStatus(report, section.key) }));

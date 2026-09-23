@@ -23,7 +23,7 @@
 
 /* ── Hero ────────────────────────────────────────────────── */
 .listing-hero {
-  padding: clamp(48px, 8vw, 96px) 0 clamp(40px, 6vw, 72px);
+  padding: calc(var(--nv-nav-height) + clamp(48px, 8vw, 96px)) 0 clamp(40px, 6vw, 72px);
 
   .listing-eyebrow {
     font-size: 0.78rem;
@@ -49,49 +49,6 @@
     max-width: 580px;
     line-height: 1.7;
   }
-}
-
-/* ── Breadcrumb ───────────────────────────────────────────── */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #555;
-  margin-bottom: 20px;
-  a { color: #555; text-decoration: none; &:hover { color: var(--nv-orange); } }
-  span:last-child { color: var(--nv-orange); }
-}
-
-/* ── Category filter pills ────────────────────────────────── */
-.cat-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 28px;
-}
-
-.cat-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 2px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: #666;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-  mat-icon { font-size: 14px; width: 14px; height: 14px; }
-
-  &:hover { border-color: rgba(255,255,255,0.25); color: #ccc; }
-  &.active { border-color: var(--nv-orange); color: var(--nv-orange); background: rgba(var(--nv-orange-rgb, 234, 88, 12),0.06); }
 }
 
 /* ── Content body ─────────────────────────────────────────── */
@@ -187,20 +144,6 @@
   &.canopy-badge   { background: color-mix(in srgb, var(--nv-alloy) 14%, var(--nv-carbon)); color: var(--nv-aluminum-light); border: 1px solid color-mix(in srgb, var(--nv-alloy) 30%, transparent); }
 }
 
-.render-note {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  font-size: 0.62rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  text-align: center;
-  color: rgba(255,255,255,0.75);
-  background: rgba(0,0,0,0.65);
-  padding: 4px 8px;
-}
-
 .card-body {
   display: flex;
   flex-direction: column;
@@ -290,17 +233,6 @@
 }
 
 /* ── Skeleton loading ─────────────────────────────────────── */
-.skeleton-section { padding: 48px 0; }
-
-.skeleton-heading {
-  width: 200px;
-  height: 32px;
-  background: var(--nv-metal);
-  margin-bottom: 32px;
-  border-radius: 2px;
-  animation: shimmer 1.4s infinite ease-in-out;
-}
-
 .skeleton-card {
   pointer-events: none;
   border-color: var(--nv-metal) !important;
@@ -330,15 +262,6 @@
 
   &.wide   { width: 75%; }
   &.narrow { width: 45%; }
-}
-
-.skeleton-btn-placeholder {
-  width: 120px;
-  height: 36px;
-  background: var(--nv-metal);
-  border-radius: 2px;
-  margin-top: 8px;
-  animation: shimmer 1.4s infinite ease-in-out;
 }
 
 @keyframes shimmer {

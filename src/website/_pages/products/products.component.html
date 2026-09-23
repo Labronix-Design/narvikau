@@ -1,9 +1,9 @@
 <div class="products-page">
-  <section class="products-hero texture-hex">
+  <section class="listing-hero texture-hex">
     <div class="pw-container">
-      <span class="hero-eyebrow">Australian canopy range</span>
-      <h1>Aluminium Canopies</h1>
-      <p>Explore the current Navrik canopy range and request a tailored quote for your vehicle.</p>
+      <span class="listing-eyebrow">Australian canopy range</span>
+      <h1 class="listing-title">Aluminium Canopies</h1>
+      <p class="listing-subtitle">Explore the current Navrik canopy range and request a tailored quote for your vehicle.</p>
     </div>
   </section>
 
@@ -12,11 +12,11 @@
       <div class="product-grid">
         @for (skeleton of skeletons; track skeleton) {
           <div class="product-card panel-machined skeleton-card">
-            <div class="skeleton skeleton-image"></div>
-            <div class="card-body">
-              <div class="skeleton skeleton-line skeleton-title"></div>
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton-body">
+              <div class="skeleton skeleton-line wide"></div>
               <div class="skeleton skeleton-line"></div>
-              <div class="skeleton skeleton-line skeleton-short"></div>
+              <div class="skeleton skeleton-line narrow"></div>
             </div>
           </div>
         }

@@ -10,6 +10,7 @@ import { CatalogProduct } from '../../_models/catalog.models';
 describe('ProductsPage canopy quotes', () => {
   let fixture: ComponentFixture<ProductsPage>;
   const products = signal<CatalogProduct[]>([]);
+  const loading = signal(false);
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -18,7 +19,7 @@ describe('ProductsPage canopy quotes', () => {
         {
           provide: ProductService,
           useValue: {
-            products, loading: signal(false), error: signal(null), load: async () => undefined,
+            products, loading, error: signal(null), load: async () => undefined,
           },
         },
         { provide: SiteSettingsService, useValue: { settings: signal({ contact: { email: 'sales@example.test' } }) } },
@@ -28,6 +29,7 @@ describe('ProductsPage canopy quotes', () => {
     }).compileComponents();
     fixture = TestBed.createComponent(ProductsPage);
     products.set([]);
+    loading.set(false);
   });
 
   it('renders an exact named quote action for every canopy without checkout copy', () => {
@@ -54,6 +56,21 @@ describe('ProductsPage canopy quotes', () => {
 
   it('does not manufacture a product image when the catalogue omits one', () => {
     expect(fixture.componentInstance.heroImage(canopy())).toBe('');
+  });
+
+  it('renders a fixed-navigation-safe hero and dimensioned loading cards', () => {
+    loading.set(true);
+    fixture.detectChanges();
+
+    const hero = fixture.nativeElement.querySelector<HTMLElement>('.listing-hero');
+    const skeletonImage = fixture.nativeElement.querySelector<HTMLElement>('.skeleton-img');
+    const skeletonBody = fixture.nativeElement.querySelector<HTMLElement>('.skeleton-body');
+
+    expect(hero).not.toBeNull();
+    expect(Number.parseFloat(getComputedStyle(hero!).paddingTop)).toBeGreaterThan(72);
+    expect(skeletonImage).not.toBeNull();
+    expect(skeletonImage!.getBoundingClientRect().height).toBeGreaterThan(0);
+    expect(skeletonBody).not.toBeNull();
   });
 });
 
