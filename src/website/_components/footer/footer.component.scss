@@ -1,0 +1,173 @@
+:host { display: block; inline-size: 100%; }
+
+.app-footer {
+  position: relative;
+  overflow: clip;
+  border-block-start: 1px solid var(--nv-border-strong);
+  background: var(--nv-ink);
+  color: var(--nv-text-main);
+  font-family: var(--font-family-base);
+}
+
+.app-footer::before {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  block-size: 1px;
+  background: linear-gradient(90deg, transparent, var(--nv-gunmetal), transparent);
+  content: '';
+  pointer-events: none;
+}
+
+.footer-content {
+  max-inline-size: var(--nv-content-max);
+  margin-inline: auto;
+  padding: clamp(3rem, 7vw, 5rem) var(--nv-page-gutter) calc(var(--nv-space-3) + env(safe-area-inset-bottom));
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--nv-space-4);
+  margin-block-end: var(--nv-space-4);
+}
+
+.brand-col { min-inline-size: 0; }
+.brand-logo { margin-block-end: var(--nv-space-2); }
+
+/* The admin-managed artwork may include a black export matte. Screen blending
+   lets that matte take the footer's ink surface instead of forming a box. */
+.brand-logo-img-link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  max-inline-size: min(100%, 14rem);
+  background: var(--nv-ink);
+  color: var(--nv-text-main);
+  isolation: isolate;
+  text-decoration: none;
+}
+
+.brand-logo-img {
+  display: block;
+  inline-size: auto;
+  block-size: auto;
+  max-inline-size: 100%;
+  max-block-size: 3.25rem;
+  object-fit: contain;
+  /* Match the navbar treatment: retain the admin artwork but drop its
+     near-black raster matte into the shared ink background. */
+  filter: contrast(1.2);
+  mix-blend-mode: screen;
+}
+
+.brand-logo-fallback {
+  color: var(--nv-text-main);
+  font-size: 1.25rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.brand-subline {
+  max-inline-size: 28rem;
+  margin: 0 0 var(--nv-space-3);
+  color: var(--nv-text-muted);
+  font-size: var(--font-sm);
+  line-height: 1.65;
+}
+
+.contact-block { display: grid; gap: var(--nv-space-1); }
+
+.contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nv-space-1);
+  min-block-size: 2.75rem;
+  color: var(--nv-text-muted);
+  font-size: var(--font-sm);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  text-decoration: none;
+  transition: color 160ms ease-out;
+}
+
+.contact-link:hover { color: var(--nv-text-main); }
+
+.icon-box {
+  display: grid;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--nv-border-subtle);
+  background: var(--nv-carbon);
+  box-shadow: var(--nv-shell-inset);
+  color: var(--nv-orange);
+}
+
+.icon-box mat-icon { inline-size: 1.25rem; block-size: 1.25rem; font-size: 1.25rem; }
+
+.links-col {
+  padding-block-start: var(--nv-space-1);
+  border-block-start: 1px solid var(--nv-border-subtle);
+}
+
+.col-header {
+  margin: 0 0 var(--nv-space-2);
+  padding-block-end: var(--nv-space-1);
+  border-block-end: 1px solid var(--nv-border-subtle);
+  color: var(--nv-text-main);
+  font-size: var(--font-sm);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.link-list { display: grid; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+
+.link-list a,
+.legal-links a {
+  color: var(--nv-text-muted);
+  font-size: var(--font-sm);
+  text-decoration: none;
+  transition: color 160ms ease-out;
+}
+
+.link-list a { display: inline-flex; align-items: center; min-block-size: 2.75rem; }
+.link-list a:hover,
+.legal-links a:hover { color: var(--nv-text-main); }
+
+.footer-divider { block-size: 1px; margin-block-end: var(--nv-space-2); background: var(--nv-border-subtle); }
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nv-space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.copyright { margin: 0; color: var(--nv-text-muted); font-size: 0.75rem; line-height: 1.55; }
+.copyright strong { color: var(--nv-alloy); font-weight: 700; letter-spacing: 0.04em; }
+
+.legal-links { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.legal-links a { display: inline-flex; align-items: center; min-block-size: 2.75rem; }
+.legal-links .dot { color: var(--nv-alloy-muted); }
+
+@media (min-width: 48rem) {
+  .footer-grid {
+    grid-template-columns: minmax(0, 1.6fr) repeat(2, minmax(0, 1fr));
+    gap: clamp(2rem, 5vw, 5rem);
+  }
+
+  .links-col { padding-block-start: 0; border-block-start: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact-link,
+  .link-list a,
+  .legal-links a { transition-duration: 0.01ms; }
+}

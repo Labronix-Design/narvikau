@@ -1,0 +1,35 @@
+<div class="control-page">
+  <header>
+    <div><p class="eyebrow">Search and traffic</p><h1>Search &amp; website traffic</h1><p>Search Console and website traffic are shown only from the latest secure server-side snapshot.</p></div>
+    <div class="actions">@if(model()?.cache?.updatedAt;as updated){<small>Last updated {{updated|date:'d MMM, HH:mm'}}</small>}@if(showRefreshAction()){<button type="button" (click)="refresh()" [disabled]="refreshing()"><mat-icon svgIcon="refresh" aria-hidden="true"></mat-icon>{{refreshing()?'Refreshing':'Refresh search data'}}</button>}</div>
+  </header>
+
+  @if(loading()) {
+    <website-control-state state="loading" />
+  } @else if(error()&&!model()) {
+    <website-control-state state="error" title="Search visibility unavailable" [message]="error()" />
+  } @else if(model()?.status!=='ready') {
+    <section class="setup-stage" aria-labelledby="search-setup-title">
+      <website-control-state state="setup" [title]="setupTitle()" [message]="setupMessage()" />
+      @if(hasMissingConfiguration()) {
+        <p class="setup-note"><mat-icon svgIcon="lock" aria-hidden="true"></mat-icon><span><strong>Secure server setup required</strong> An administrator must finish the secure server setup before this data can be measured.</span></p>
+      } @else if(showConnectAction()) {
+        <button type="button" class="connect" (click)="connect()" [disabled]="connecting()"><mat-icon svgIcon="link"></mat-icon>{{connecting()?'Opening Google…':'Connect Google'}}</button>
+      } @else if(showRefreshAction()) {
+        <button type="button" class="connect" (click)="refresh()" [disabled]="refreshing()"><mat-icon svgIcon="refresh"></mat-icon>{{refreshing()?'Refreshing':'Refresh secure data'}}</button>
+      }
+    </section>
+  } @else {
+    @if(error()){<p class="error" role="alert">{{error()}}</p>}
+    @if(staleNotice()){<p class="stale-notice" role="status"><mat-icon svgIcon="history" aria-hidden="true"></mat-icon>{{staleNotice()}}</p>}
+    <section class="health-line" aria-label="Search data health"><website-control-health [state]="searchHealth()" [detail]="model()?.explanation || 'Search Console status from the latest snapshot.'" /></section>
+    <section class="metric-grid" aria-label="Search Console metrics">
+      @for(metric of searchMetrics();track metric.label){<website-control-metric [label]="metric.label" [value]="metric.value" [format]="metric.format||'number'" [context]="metric.context||''" [trend]="metric.trend||''" [unavailableReason]="metric.unavailableReason||'Not measured in the latest Search Console snapshot.'"/>}
+      @empty { <website-control-state state="empty" title="No Search Console snapshot yet" message="Refresh this view after Google Search Console is connected." /> }
+    </section>
+    @if(comparisonSummary(); as comparison) { <p class="comparison"><mat-icon svgIcon="compare_arrows" aria-hidden="true"></mat-icon>{{ comparison }}</p> }
+    <section class="grid"><article><h2>Top queries</h2><div class="table"><div class="row head"><span>Query</span><span>Clicks</span><span>Impressions</span><span>Position</span></div>@for(item of model()?.data?.topQueries||[];track item.query){<div class="row"><strong data-label="Query">{{item.query}}</strong><span data-label="Clicks">{{item.clicks??'—'}}</span><span data-label="Impressions">{{item.impressions??'—'}}</span><span data-label="Position">{{item.averagePosition??item.position??'—'}}</span></div>}@empty{<p>Not measured yet. Search queries will appear after the first secure refresh.</p>}</div></article><article><h2>Top pages</h2><div class="table"><div class="row head"><span>Page</span><span>Clicks</span><span>Impressions</span><span>Position</span></div>@for(item of model()?.data?.topPages||[];track item.page){<div class="row"><strong data-label="Page">{{item.page}}</strong><span data-label="Clicks">{{item.clicks??'—'}}</span><span data-label="Impressions">{{item.impressions??'—'}}</span><span data-label="Position">{{item.averagePosition??item.position??'—'}}</span></div>}@empty{<p>Not measured yet. Pages will appear after the first secure refresh.</p>}</div></article></section>
+    <section class="opportunities"><h2>Opportunities</h2>@for(item of model()?.data?.opportunities||[];track item.title){<div><strong>{{item.title}}</strong><p>{{item.detail}}</p></div>}@empty{<p>Opportunities need measured Search Console data. No recommendations are being generated yet.</p>}</section>
+    <section class="website-analytics"><div><h2>Website traffic</h2><p>Website traffic is optional and remains separate from the sales analysis.</p></div><website-control-health [state]="websiteHealth()" [detail]="model()?.data?.websiteAnalytics?.explanation || 'Website traffic measurement status.'" />@if(model()?.data?.websiteAnalytics?.status==='ready'){<div class="metric-grid">@for(metric of websiteMetrics();track metric.label){<website-control-metric [label]="metric.label" [value]="metric.value" [format]="metric.format||'number'" [context]="metric.context||''" [trend]="metric.trend||''" [unavailableReason]="metric.unavailableReason||'Not measured in the latest Analytics snapshot.'"/>}</div>}@else{<p class="analytics-state">{{model()?.data?.websiteAnalytics?.explanation || 'Not measured yet. An administrator must connect the website traffic measurement.'}}</p>@if(canReconnectAnalytics()){<button type="button" class="connect" (click)="connect()" [disabled]="connecting()"><mat-icon svgIcon="link"></mat-icon>{{connecting()?'Opening Google…':'Reconnect Google'}}</button>}}</section>
+  }
+</div>

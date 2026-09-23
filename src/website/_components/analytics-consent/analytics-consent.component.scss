@@ -1,0 +1,15 @@
+/* Consent follows the same matte alloy shell as public navigation. Runtime
+   orange is a rail/focus accent only, so arbitrary admin colours never become
+   small-text pairings. */
+:host { position: fixed; z-index: 1100; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); left: max(1rem, env(safe-area-inset-left)); display: block; pointer-events: none; }
+.consent { pointer-events: auto; width: min(100%, 39rem); margin-left: auto; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1rem 1.5rem; align-items: center; padding: 1rem 1.1rem; border: 1px solid color-mix(in srgb, var(--nv-orange) 52%, var(--nv-gunmetal)); border-radius: .75rem; background: var(--nv-carbon); color: var(--nv-text-main); box-shadow: var(--nv-shell-inset), var(--nv-shell-elevation); }
+strong { display: block; font-size: .92rem; letter-spacing: .01em; }
+p { margin: .25rem 0; color: var(--nv-text-muted); font-size: .79rem; line-height: 1.45; }
+a { color: var(--nv-alloy); font-size: .76rem; font-weight: 750; }
+.actions { display: flex; gap: .55rem; flex-wrap: wrap; justify-content: flex-end; }
+button { min-height: 2.75rem; padding: .55rem .75rem; border-radius: .45rem; font: inherit; font-size: .77rem; font-weight: 800; cursor: pointer; }
+.primary { border: 1px solid var(--nv-orange); background: var(--nv-cta-surface); color: var(--nv-text-on-accent); }
+.secondary { border: 1px solid var(--nv-gunmetal); background: transparent; color: inherit; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--nv-orange); outline-offset: 3px; }
+button:disabled { cursor: wait; opacity: .7; }
+@media (max-width: 620px) { .consent { grid-template-columns: 1fr; gap: .85rem; } .actions { justify-content: stretch; } button { flex: 1; } }

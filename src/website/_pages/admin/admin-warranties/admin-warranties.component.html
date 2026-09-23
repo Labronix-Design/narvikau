@@ -1,0 +1,14 @@
+<div class="adm-page warranties-page">
+  <header class="adm-header"><p class="eyebrow">After-sales care</p><h1 class="adm-title">Warranty registrations</h1><p class="adm-sub">Customer registrations tied to paid Navrik orders. Product and purchaser details are verified server-side before a record appears here.</p></header>
+  @if (loading()) { <div class="adm-loading"><div class="spin"></div><span class="spin-label">Loading warranty registrations…</span></div> }
+  @else if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error" aria-hidden="true"></mat-icon>{{ error() }}</div> }
+  @else {
+    <section class="register" aria-label="Warranty registrations">
+      <p class="register-count">{{ records().length }} most recent registrations</p>
+      <div class="adm-table-wrap"><table class="adm-table"><thead><tr><th>Registered</th><th>Customer</th><th>Product</th><th>Vehicle</th><th>Purchase / fitment</th></tr></thead><tbody>
+      @for (record of records(); track record.id) { <tr><td><span class="mono">{{ record.registration_reference }}</span><span class="sub">{{ date(record.registered_at) }}</span></td><td><strong>{{ record.purchaser_name }}</strong><span class="sub">{{ record.purchaser_email }}</span><span class="sub">{{ record.purchaser_phone }}</span></td><td>{{ record.product_name }}</td><td>{{ record.vehicle_year }} {{ record.vehicle_make }} {{ record.vehicle_model }}<span class="sub">{{ record.vehicle_registration }}</span></td><td>{{ date(record.purchase_date) }}<span class="sub">Fitment: {{ date(record.fitment_date) }}</span></td></tr> }
+      @empty { <tr><td colspan="5" class="empty-row">No warranty registrations are recorded yet.</td></tr> }
+      </tbody></table></div>
+    </section>
+  }
+</div>

@@ -1,0 +1,160 @@
+:host {
+  display: block;
+}
+
+.img-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.drop-zone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+  max-width: 280px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover, &.dragging {
+    border-color: var(--nv-orange, #ea580c);
+    background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.05);
+  }
+
+  &.has-image {
+    border-style: solid;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+}
+
+.preview-img {
+  width: 100%;
+  height: 120px;
+  // contain, not cover — a wide crop box forcing `cover` on a narrow logo
+  // (e.g. a wordmark SVG) zooms in until only one or two letters are
+  // visible. Letterboxing is always correct; cropping only works when
+  // every uploaded image shares the preview box's aspect ratio, which
+  // isn't true here (product photos, hero photos, and brand logos all
+  // get uploaded through this same component).
+  object-fit: contain;
+  display: block;
+}
+
+// Compact mode — a small fixed-size thumbnail for use inside repeater rows
+// (hero slides, brand logos, gallery images) instead of the full drag-drop
+// zone, which is sized for a single hero upload, not a repeated list.
+.img-upload.compact {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+
+  .drop-zone {
+    min-height: 72px;
+    height: 72px;
+    width: 72px;
+    max-width: 72px;
+    flex-shrink: 0;
+    border-radius: 3px;
+  }
+
+  .preview-img { height: 72px; }
+
+  .empty-state {
+    padding: 4px;
+    gap: 0;
+    mat-icon { font-size: 20px; width: 20px; height: 20px; margin-bottom: 0; }
+  }
+
+  .upload-state .spin { width: 18px; height: 18px; border-width: 2px; }
+
+  .clear-btn { width: 18px; height: 18px; top: 3px; right: 3px; }
+}
+
+.preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0;
+  transition: opacity 0.15s;
+
+  mat-icon { font-size: 16px; width: 16px; height: 16px; }
+}
+
+.drop-zone:hover .preview-overlay { opacity: 1; }
+
+.clear-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  color: #f87171;
+  cursor: pointer;
+  z-index: 2;
+
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+  &:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+}
+
+.empty-state, .upload-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px;
+  color: #555;
+  text-align: center;
+
+  mat-icon { font-size: 26px; width: 26px; height: 26px; color: #444; margin-bottom: 4px; }
+}
+
+.primary-txt { font-size: 0.78rem; font-weight: 700; color: #888; }
+.hint-txt { font-size: 0.68rem; color: #444; }
+
+.upload-state {
+  .spin {
+    width: 26px;
+    height: 26px;
+    border: 3px solid rgba(255, 255, 255, 0.08);
+    border-top-color: var(--nv-orange, #ea580c);
+    border-radius: 50%;
+    animation: img-upload-spin 0.9s linear infinite;
+    margin-bottom: 4px;
+  }
+  span { font-size: 0.75rem; color: #888; }
+}
+
+@keyframes img-upload-spin {
+  to { transform: rotate(360deg); }
+}
+
+.upload-err {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: #f87171;
+  mat-icon { font-size: 14px; width: 14px; height: 14px; }
+}

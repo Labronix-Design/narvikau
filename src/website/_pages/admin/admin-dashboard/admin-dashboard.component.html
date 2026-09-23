@@ -1,0 +1,68 @@
+<div class="adm-page orders-page">
+  <header class="adm-header">
+    <p class="eyebrow">Sales work queue</p>
+    <h1 class="adm-title">Sales &amp; orders</h1>
+    <p class="adm-sub">Work through customer orders, keep their fulfilment status current, and use each total only when the server provides cents.</p>
+  </header>
+
+  @if (loading()) {
+    <div class="adm-loading"><div class="spin"></div><span class="spin-label">Loading sales and orders…</span></div>
+  } @else if (error()) {
+    <div class="adm-error" role="alert"><mat-icon svgIcon="error" aria-hidden="true"></mat-icon>{{ error() }}</div>
+  } @else {
+    @if (summary(); as stats) {
+      <section class="stat-grid" aria-label="Recorded order status totals">
+        <article class="stat-card"><mat-icon svgIcon="receipt_long" aria-hidden="true"></mat-icon><strong>{{ stats.total }}</strong><span>All recorded orders</span></article>
+        <article class="stat-card attention"><mat-icon svgIcon="schedule" aria-hidden="true"></mat-icon><strong>{{ stats.pending }}</strong><span>Pending payment</span></article>
+        <article class="stat-card"><mat-icon svgIcon="payments" aria-hidden="true"></mat-icon><strong>{{ stats.deposit_paid }}</strong><span>Deposit paid</span></article>
+        <article class="stat-card ready"><mat-icon svgIcon="check_circle" aria-hidden="true"></mat-icon><strong>{{ stats.completed }}</strong><span>Completed</span></article>
+      </section>
+    }
+
+    <section class="queue-section" aria-labelledby="orders-queue-title">
+      <div class="section-title-row"><div><p class="eyebrow">Order queue</p><h2 id="orders-queue-title" class="adm-section-title">Orders to work on</h2></div><span class="queue-count">{{ recentOrders().length }} shown</span></div>
+      <div class="adm-table-wrap desktop-table">
+        <table class="adm-table">
+          <thead><tr><th>Order</th><th>Customer</th><th>Product</th><th>Total</th><th>Status</th><th>Update</th></tr></thead>
+          <tbody>
+            @for (order of recentOrders(); track order.order_id) {
+              <tr>
+                <td><span class="mono">#{{ order.order_id }}</span><span class="table-date">{{ order.order_date || 'Date not measured' }}</span></td>
+                <td><span class="customer-name">{{ order.customer_name || 'Customer not measured' }}</span><span class="customer-email">{{ order.customer_email || '' }}</span></td>
+                <td>{{ order.product_label || 'Product not measured' }}</td>
+                <td><span [class.adm-money-unmeasured]="orderTotal(order) === 'Not measured'">{{ orderTotal(order) }}</span></td>
+                <td><span class="status-chip status-{{ order.status }}">{{ statusLabel(order.status) }}</span></td>
+                <td><select class="status-select" [value]="order.status" [disabled]="updatingOrderId() === order.order_id" [attr.aria-label]="'Update status for order ' + order.order_id" (change)="updateStatusFromEvent(order.order_id, $event)">@for (status of statusOptions; track status.value) { <option [value]="status.value">{{ status.label }}</option> }</select></td>
+              </tr>
+            } @empty { <tr><td colspan="6" class="empty-row">No orders are recorded yet.</td></tr> }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="order-cards">
+        @for (order of recentOrders(); track order.order_id) {
+          <article class="order-card">
+            <div class="order-card-heading"><div><span class="mono">#{{ order.order_id }}</span><h3>{{ order.customer_name || 'Customer not measured' }}</h3><p>{{ order.order_date || 'Date not measured' }}</p></div><span class="status-chip status-{{ order.status }}">{{ statusLabel(order.status) }}</span></div>
+            <dl><div><dt>Product</dt><dd>{{ order.product_label || 'Product not measured' }}</dd></div><div><dt>Total</dt><dd [class.adm-money-unmeasured]="orderTotal(order) === 'Not measured'">{{ orderTotal(order) }}</dd></div></dl>
+            <label><span>Update status</span><select class="status-select" [value]="order.status" [disabled]="updatingOrderId() === order.order_id" [attr.aria-label]="'Update status for order ' + order.order_id" (change)="updateStatusFromEvent(order.order_id, $event)">@for (status of statusOptions; track status.value) { <option [value]="status.value">{{ status.label }}</option> }</select></label>
+          </article>
+        } @empty { <p class="empty-cards">No orders are recorded yet.</p> }
+      </div>
+    </section>
+    <section class="queue-section warranty-queue" aria-labelledby="warranty-queue-title">
+      <div class="section-title-row">
+        <div><p class="eyebrow">After-sales care</p><h2 id="warranty-queue-title" class="adm-section-title">Recent warranty registrations</h2></div>
+        <a routerLink="/admin/warranties" class="admin-link">View all registrations</a>
+      </div>
+      <div class="warranty-list">
+        @for (registration of recentWarranties(); track registration.id) {
+          <article class="warranty-row">
+            <div><strong>{{ registration.purchaser_name }}</strong><span>{{ registration.product_name }}</span></div>
+            <div><span>{{ registration.vehicle_year }} {{ registration.vehicle_make }} {{ registration.vehicle_model }}</span><span>{{ registration.vehicle_registration }}</span></div>
+            <time [attr.datetime]="registration.registered_at">{{ warrantyDate(registration.registered_at) }}</time>
+          </article>
+        } @empty { <p class="empty-cards">No warranty registrations are recorded yet.</p> }
+      </div>
+    </section>
+  }
+</div>

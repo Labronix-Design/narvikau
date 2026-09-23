@@ -1,0 +1,25 @@
+@if (routerLink()) {
+  <a class="control-metric is-linked" [class]="'control-metric tone-' + tone()" [routerLink]="routerLink()" [matTooltip]="tooltip()" [matTooltipDisabled]="!tooltip()">
+    <ng-container *ngTemplateOutlet="metricContent" />
+  </a>
+} @else {
+  <article class="control-metric" [class]="'control-metric tone-' + tone()" [matTooltip]="tooltip()" [matTooltipDisabled]="!tooltip()">
+    <ng-container *ngTemplateOutlet="metricContent" />
+  </article>
+}
+
+<ng-template #metricContent>
+  <div class="metric-head">
+    <p class="metric-label">{{ label() }}</p>
+    @if (icon()) { <span class="metric-icon"><mat-icon [svgIcon]="icon()" aria-hidden="true"></mat-icon></span> }
+  </div>
+  <strong class="metric-value" [class.unavailable]="value() === null">{{ formattedValue() }}</strong>
+  @if (value() === null) {
+    <p class="metric-context">{{ unavailableReason() }}</p>
+  } @else if (context()) {
+    <p class="metric-context">{{ context() }}</p>
+  }
+  @if (trend()) {
+    <span class="metric-trend">{{ trend() }}</span>
+  }
+</ng-template>

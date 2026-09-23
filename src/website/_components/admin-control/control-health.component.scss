@@ -1,0 +1,23 @@
+:host { display: inline-flex; max-width: 100%; }
+
+.control-health {
+  --health-colour: var(--admin-neutral, #9ca3af);
+  align-items: center;
+  color: var(--health-colour);
+  display: inline-flex;
+  font-size: .7rem;
+  font-weight: 800;
+  gap: .35rem;
+  letter-spacing: .06em;
+  line-height: 1.25;
+  max-width: 100%;
+  text-transform: uppercase;
+
+  mat-icon { flex: 0 0 auto; font-size: 17px; height: 17px; width: 17px; }
+  span { min-width: 0; overflow-wrap: anywhere; }
+}
+
+.state-ready { --health-colour: var(--admin-success, #17834a); }
+.state-attention { --health-colour: var(--admin-warning, #b45309); }
+.state-action-required { --health-colour: var(--admin-danger, #b42318); }
+.state-not-measured { --health-colour: var(--admin-neutral, #667085); }

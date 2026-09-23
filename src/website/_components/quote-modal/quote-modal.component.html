@@ -1,0 +1,101 @@
+@if (isOpen) {
+  <div class="qm-overlay" (click)="onOverlayClick($event)">
+    <div class="qm-dialog" cdkTrapFocus [cdkTrapFocusAutoCapture]="isOpen" role="dialog" aria-modal="true" aria-labelledby="quote-modal-title">
+
+      <div class="qm-header">
+        <div class="qm-header-title">
+          <mat-icon svgIcon="email"></mat-icon>
+          <h2 id="quote-modal-title">Request a Quote</h2>
+        </div>
+        <button class="qm-close" (click)="onClose()" aria-label="Close modal" type="button">
+          <mat-icon svgIcon="close"></mat-icon>
+        </button>
+      </div>
+
+      @if (flags.emailsEnabled) {
+        <div class="qm-body">
+          <p class="qm-subtitle">Tell us what you need and we'll come back with pricing and availability.</p>
+
+          @if (selectedProduct()) {
+            <div class="qm-field-group">
+              <label class="qm-label">Product</label>
+              <p class="qm-selected-product">{{ selectedProduct() }}</p>
+            </div>
+          }
+
+          @if (configurationLines().length) {
+            <section class="qm-field-group qm-configuration" aria-label="Selected configuration">
+              <span class="qm-label">Selected configuration</span>
+              <ul>
+                @for (line of configurationLines(); track line) { <li>{{ line }}</li> }
+              </ul>
+            </section>
+          }
+
+          <form [formGroup]="quoteForm" (ngSubmit)="onSubmit()">
+            <div class="qm-row">
+              <div class="qm-field">
+                <label class="qm-label" for="q-name">Full Name *</label>
+                <input id="q-name" formControlName="Name" placeholder="John Smith" autocomplete="name"
+                       [class.has-error]="submitted && quoteForm.get('Name')?.invalid">
+                @if (submitted && quoteForm.get('Name')?.invalid) {
+                  <span class="qm-error">Required</span>
+                }
+              </div>
+              <div class="qm-field">
+                <label class="qm-label" for="q-phone">Phone Number *</label>
+                <input id="q-phone" formControlName="Phone" placeholder="071 234 5678" autocomplete="tel"
+                       [class.has-error]="submitted && quoteForm.get('Phone')?.invalid">
+                @if (submitted && quoteForm.get('Phone')?.invalid) {
+                  <span class="qm-error">Required</span>
+                }
+              </div>
+            </div>
+
+            <div class="qm-field">
+              <label class="qm-label" for="q-email">Email Address *</label>
+              <input id="q-email" formControlName="Email" placeholder="you@example.com"
+                     type="email" autocomplete="email"
+                     [class.has-error]="submitted && quoteForm.get('Email')?.invalid">
+              @if (submitted && quoteForm.get('Email')?.invalid) {
+                <span class="qm-error">Valid email address required</span>
+              }
+            </div>
+
+            <div class="qm-field">
+              <label class="qm-label" for="q-msg">What do you need? *</label>
+              <textarea id="q-msg" formControlName="Message" rows="4"
+                        placeholder="Describe what you're looking for — dimensions, cab size, quantity, preferred finish, any specific requirements..."
+                        [class.has-error]="submitted && quoteForm.get('Message')?.invalid"></textarea>
+              @if (submitted && quoteForm.get('Message')?.invalid) {
+                <span class="qm-error">Please describe what you need</span>
+              }
+            </div>
+
+            <website-button type="submit" class="full-width" [disabled]="isLoading">
+              <mat-icon svgIcon="send"></mat-icon>
+              {{ isLoading ? 'Sending...' : 'Send Quote Request' }}
+            </website-button>
+          </form>
+        </div>
+
+        <div class="qm-footer">
+          <mat-icon svgIcon="info"></mat-icon>
+          Or email us directly at <a [href]="'mailto:' + siteSettings.settings().contact.email">{{ siteSettings.settings().contact.email }}</a>
+        </div>
+      } @else {
+        <div class="qm-body qm-coming-soon">
+          <mat-icon svgIcon="build"></mat-icon>
+          <h3>Emails Offline</h3>
+          <p>Quote requests are temporarily unavailable for maintenance.</p>
+          <p class="qm-cs-sub">Please message us directly for a quote or more info:</p>
+          <a [href]="'mailto:' + siteSettings.settings().contact.email" class="qm-cs-email">
+            <mat-icon svgIcon="email"></mat-icon>
+            {{ siteSettings.settings().contact.email }}
+          </a>
+        </div>
+      }
+
+    </div>
+  </div>
+}

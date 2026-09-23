@@ -1,0 +1,188 @@
+<div class="products-listing">
+
+  <!-- ── Hero bar ── -->
+  <header class="listing-hero texture-hex">
+    <div class="pw-container">
+      <nav class="breadcrumb" aria-label="breadcrumb">
+        <a routerLink="/">Home</a>
+        <span>/</span>
+        <span>{{ heroTitle() }}</span>
+      </nav>
+      <p class="listing-eyebrow">Navrik Catalogue</p>
+      <h1 class="listing-title">{{ heroTitle() }}</h1>
+      <p class="listing-subtitle">{{ heroDescription() }}</p>
+
+      <!-- Category filter pills -->
+      <div class="cat-filters">
+        <a routerLink="/products" class="cat-pill" [class.active]="!activeCategory()">All</a>
+        <a routerLink="/products" [queryParams]="{category:'canopy'}" class="cat-pill" [class.active]="activeCategory()==='canopy'">Canopies</a>
+        <a routerLink="/products" [queryParams]="{category:'tray'}"   class="cat-pill" [class.active]="activeCategory()==='tray' || activeCategory()==='tray-standard' || activeCategory()==='tray-premium'">Trays</a>
+        <a routerLink="/products" [queryParams]="{category:'custom-made-tray-and-canopy-combo'}" class="cat-pill" [class.active]="activeCategory()==='custom-made-tray-and-canopy-combo'">Custom Made Tray and Canopy Combo</a>
+        <a routerLink="/accessories" class="cat-pill">
+          <mat-icon svgIcon="inventory_2"></mat-icon>
+          Accessories
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Loading skeleton ── -->
+  @if (productService.loading()) {
+    <div class="pw-container">
+      <div class="skeleton-section">
+        <div class="skeleton-heading"></div>
+        <div class="product-grid">
+          @for (s of skeletons; track s) {
+            <div class="product-card skeleton-card">
+              <div class="skeleton-img"></div>
+              <div class="skeleton-body">
+                <div class="skeleton-line wide"></div>
+                <div class="skeleton-line narrow"></div>
+                <div class="skeleton-btn-placeholder"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Error state ── -->
+  @if (productService.error()) {
+    <div class="pw-container">
+      <div class="error-state">
+        <div class="error-icon-wrap">
+          <mat-icon svgIcon="warning"></mat-icon>
+        </div>
+        <div class="error-body">
+          <h3 class="error-heading">Catalogue information is refreshing</h3>
+          <p class="error-sub">We are refreshing this information. Please try again shortly.</p>
+          <div class="error-actions">
+            <a [href]="'mailto:' + siteSettings.settings().contact.email" class="error-cta-primary">
+              <mat-icon svgIcon="email"></mat-icon>
+              {{ siteSettings.settings().contact.email }}
+            </a>
+            <a routerLink="/contact" class="error-cta-secondary">
+              <mat-icon svgIcon="phone"></mat-icon>
+              Contact Sales
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Product groups (dynamic) ── -->
+  @if (!productService.loading() && !productService.error()) {
+    <div class="pw-container listing-body">
+
+      @for (group of groups(); track group.key) {
+        <section class="product-section">
+          <div class="section-header">
+            <span class="section-eyebrow">{{ group.eyebrow }}</span>
+            <h2 class="section-title">{{ group.label }}</h2>
+          </div>
+          <div class="product-grid">
+            @for (p of group.items; track p.id) {
+              <article class="product-card panel-machined" [class.premium-card]="p.tray_type === 'premium'">
+                <div class="card-img-wrap">
+                  @if (heroImage(p); as image) { <img [src]="image" [alt]="p.name" class="card-img" loading="lazy" decoding="async" /> }
+                  @else { <div class="card-img-placeholder"><mat-icon svgIcon="image_not_supported"></mat-icon><span>Image unavailable</span></div> }
+                  @if (cardBadge(p); as badge) { <span class="card-badge" [class]="badge.cls">{{ badge.label }}</span> }
+                </div>
+                <div class="card-body">
+                  <h3 class="card-name">{{ p.name }}</h3>
+                  @if (p.description) {
+                    <p class="card-desc">{{ p.description }}</p>
+                  }
+                  <div class="card-footer">
+                    <div class="card-price">
+                      @if (purchaseMode(p) === 'online_checkout') {
+                        @if (listedPriceCents(p); as cents) {
+                          <span class="price-from">From</span>
+                          <span class="price-amount" [class.orange]="p.tray_type === 'premium'">
+                            R{{ cents / 100 | number:'1.2-2' }}
+                          </span>
+                        } @else {
+                          <span class="price-amount">Online checkout available</span>
+                        }
+                      } @else {
+                        <span class="price-amount">Pricing in quote</span>
+                      }
+                    </div>
+                    @if (purchaseMode(p) === 'online_checkout') {
+                      <a [routerLink]="['/products', p.slug]"
+                         class="configure-btn"
+                         [class.configure-btn--premium]="p.tray_type === 'premium'">
+                        View details <mat-icon svgIcon="arrow_forward"></mat-icon>
+                      </a>
+                    } @else {
+                      <button type="button"
+                              class="configure-btn configure-btn--quote"
+                              [attr.data-quote-product]="p.slug"
+                              [attr.aria-label]="'Request a quote for ' + p.name"
+                              (click)="openQuoteModal(p)">
+                        <mat-icon svgIcon="forum"></mat-icon>
+                        Request a quote
+                      </button>
+                    }
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        </section>
+      }
+
+      @if (groups().length) {
+        <!-- Keep this cross-link beside real catalogue content; it is not a fallback state. -->
+        <div class="accessories-cta">
+          <div class="cta-content">
+            <mat-icon svgIcon="inventory_2"></mat-icon>
+            <div>
+              <h3>Looking for accessories?</h3>
+              <p>Browse the current accessories catalogue for available items and quote requests.</p>
+            </div>
+          </div>
+          <a routerLink="/accessories" class="cta-btn">
+            View Accessories <mat-icon svgIcon="arrow_forward"></mat-icon>
+          </a>
+        </div>
+      }
+
+      <!-- Empty state -->
+      @if (isEmpty()) {
+        <div class="empty-state">
+          <div class="empty-icon-wrap">
+            <svg class="empty-svg" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="8" y="28" width="104" height="36" rx="2" stroke="#2d2d2d" stroke-width="2.5"/>
+              <rect x="8" y="28" width="104" height="8" rx="2" fill="#1a1a1a" stroke="#2d2d2d" stroke-width="2.5"/>
+              <line x1="8" y1="36" x2="112" y2="36" stroke="#2d2d2d" stroke-width="1.5"/>
+              <rect x="18" y="64" width="6" height="10" rx="1" fill="#1a1a1a" stroke="#2d2d2d" stroke-width="2"/>
+              <rect x="96" y="64" width="6" height="10" rx="1" fill="#1a1a1a" stroke="#2d2d2d" stroke-width="2"/>
+              <circle cx="100" cy="20" r="7" fill="var(--nv-orange, #ea580c)" opacity="0.9"/>
+              <path d="M100 16v5M100 22.5v.5" stroke="#000" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3 class="empty-heading">No products are listed yet</h3>
+          <p class="empty-sub">This catalogue has no matching published products at the moment.</p>
+          <div class="empty-actions">
+            <a routerLink="/contact" class="empty-cta-primary">Contact Sales</a>
+            <a [href]="'mailto:' + siteSettings.settings().contact.email" class="empty-cta-secondary">
+              <mat-icon svgIcon="email"></mat-icon>
+              {{ siteSettings.settings().contact.email }}
+            </a>
+          </div>
+        </div>
+      }
+
+    </div>
+  }
+
+</div>
+
+<website-quote-modal
+  [isOpen]="quoteModalOpen()"
+  [preSelectedProduct]="quoteModalProduct()"
+  (closeModal)="closeQuoteModal()">
+</website-quote-modal>

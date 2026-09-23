@@ -1,0 +1,301 @@
+<div class="home-page">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       HERO — full-stage product image with an accessible quote overlay
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="home" class="hero-section" aria-label="Hero">
+
+    <div class="hero-layout">
+      <!-- The current DB/fallback image is the whole hero stage, not a side panel. -->
+      <div class="hero-product-stage hero-media-stage">
+        <div class="hero-product-frame">
+          @for (img of carouselImages(); track img; let i = $index) {
+            <div class="hero-product-slide" [class.active]="currentSlide() === i">
+              @if (currentSlide() === i) {
+                <website-image
+                  [src]="img"
+                  [alt]="'Navrik aluminium product — image ' + (i + 1)"
+                  [priority]="i === 0"
+                  sizes="100vw"
+                  objectFit="cover">
+                </website-image>
+              }
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <div class="hero-body hero-copy-panel">
+        <div class="hero-copy-inner">
+          @if (promo()?.active) {
+            <span class="hero-eyebrow">
+              <mat-icon svgIcon="local_fire_department"></mat-icon>
+              <span class="hero-eyebrow-text">Free Install + {{ promo()!.discountPercent }}% Off — {{ promo()!.slotsRemaining }} Slots Left</span>
+            </span>
+          }
+
+          <h1 class="hero-h1">
+            Aluminium built<br>
+            <span class="hero-accent">for the work ahead.</span>
+          </h1>
+          <p class="hero-lead">Precision-engineered canopies, trays and accessories for South African bakkies.</p>
+
+          <div class="hero-actions" aria-label="Product actions">
+            <button type="button" class="hero-cta-btn" (click)="openGeneralQuote()">
+              <mat-icon svgIcon="forum"></mat-icon>
+              Request a quote
+            </button>
+            <a href="#catalogue" class="hero-quote-btn" (click)="scrollTo('catalogue', $event)">
+              View range
+              <mat-icon svgIcon="arrow_forward"></mat-icon>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-controls" aria-label="Carousel controls">
+        <button type="button" class="hero-arrow" (click)="prevSlide()" aria-label="Previous slide">
+          <mat-icon svgIcon="arrow_back"></mat-icon>
+        </button>
+        <div class="hero-dots" role="group" aria-label="Slide indicators">
+          @for (img of carouselImages(); track img; let i = $index) {
+            <button
+              type="button"
+              class="hero-dot"
+              [class.active]="currentSlide() === i"
+              (click)="goToSlide(i)"
+              [attr.aria-label]="'Go to slide ' + (i + 1)"
+              [attr.aria-current]="currentSlide() === i ? 'true' : null">
+            </button>
+          }
+        </div>
+        <button type="button" class="hero-arrow" (click)="nextSlide()" aria-label="Next slide">
+          <mat-icon svgIcon="arrow_forward"></mat-icon>
+        </button>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TRUST BAR — four horizontal signals
+       ═══════════════════════════════════════════════════════════ -->
+  <section class="trust-bar" aria-label="Product guarantees">
+    <div class="pw-container">
+      <ul class="trust-list">
+        @for (item of trustBar(); track item.label) {
+          <li class="trust-item">
+            <mat-icon [svgIcon]="item.icon"></mat-icon>
+            <span>{{ item.label }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CATALOGUE PREVIEW — one live representative per category
+       ═══════════════════════════════════════════════════════════ -->
+  @if (catalogueUnavailable()) {
+  <section id="catalogue" class="catalogue-section pw-section" aria-label="Current product catalogue">
+    <div class="pw-container">
+      <div class="catalogue-empty catalogue-unavailable panel-machined" aria-live="polite">
+        <mat-icon svgIcon="warning"></mat-icon>
+        <div>
+          <h2>Catalogue information is refreshing</h2>
+          <p>We are refreshing this information. Please try again shortly.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  } @else if (catalogueCategories().length) {
+  <section id="catalogue" class="catalogue-section pw-section" aria-label="Current product catalogue">
+    <div class="pw-container">
+      <div class="section-header scroll-reveal" #revealEl>
+        <h2 class="section-title">Build your <span class="highlight-orange">perfect setup.</span></h2>
+        <p class="section-subtitle">Start with the category that fits the way you work. Each preview is drawn from the current catalogue.</p>
+      </div>
+
+      <div class="category-lanes">
+        @for (category of catalogueCategories(); track category.key) {
+          <section class="category-lane" [attr.aria-labelledby]="'category-' + category.key">
+            <div class="category-lane-header">
+              <div>
+                <span class="category-eyebrow">{{ category.eyebrow }}</span>
+                <h3 [id]="'category-' + category.key" class="category-title">{{ category.label }}</h3>
+              </div>
+              <p class="category-meta">
+                {{ category.count }} {{ category.count === 1 ? 'item' : 'items' }} in the current catalogue
+              </p>
+            </div>
+
+            <article class="cat-card panel-machined">
+              <a [routerLink]="category.featured.detailRoute"
+                 class="cat-card-link"
+                 [attr.aria-label]="'View ' + category.featured.name">
+                @if (category.featured.imageUrl) {
+                  <div class="cat-img-wrap"><img [src]="catalogueCardImage(category.featured.imageUrl)" [alt]="category.featured.name" loading="lazy" decoding="async"></div>
+                }
+                <div class="cat-body">
+                  @if (category.featured.badge) { <span class="cat-badge">{{ category.featured.badge }}</span> }
+                  <h4 class="cat-title">{{ category.featured.name }}</h4>
+                  @if (category.featured.description) { <p class="cat-desc">{{ category.featured.description }}</p> }
+                </div>
+              </a>
+              <div class="cat-actions">
+                @if (category.featured.purchaseMode === 'quote_only') {
+                  <button type="button"
+                          class="cat-quote-btn"
+                          [attr.data-quote-product]="category.featured.slug"
+                          [attr.aria-label]="'Request a quote for ' + category.featured.name"
+                          (click)="openQuoteModal(category.featured)">
+                    <mat-icon svgIcon="forum"></mat-icon>
+                    Request a quote
+                  </button>
+                } @else {
+                  <a [routerLink]="category.featured.detailRoute" class="cat-detail-link">
+                    {{ category.featured.isAccessory ? 'Browse accessories' : 'View details' }} <mat-icon svgIcon="arrow_forward"></mat-icon>
+                  </a>
+                }
+                <a [routerLink]="category.browseRoute"
+                   [queryParams]="category.browseQueryParams"
+                   class="category-browse-link">
+                  Browse all {{ category.label | lowercase }} <mat-icon svgIcon="arrow_forward"></mat-icon>
+                </a>
+              </div>
+            </article>
+          </section>
+        }
+      </div>
+
+      <div class="catalogue-all-action">
+        <a routerLink="/products" class="catalogue-all-link">
+          View the full product range <mat-icon svgIcon="arrow_forward"></mat-icon>
+        </a>
+        <a routerLink="/accessories" class="catalogue-all-link catalogue-all-link--secondary">
+          Browse accessories <mat-icon svgIcon="inventory_2"></mat-icon>
+        </a>
+      </div>
+    </div>
+  </section>
+  } @else if (!productService.loading() && !accessoryService.loading()) {
+  <section id="catalogue" class="catalogue-section pw-section" aria-label="Current product catalogue">
+    <div class="pw-container">
+      <div class="catalogue-empty panel-machined">
+        <mat-icon svgIcon="inventory_2"></mat-icon>
+        <div>
+          <h2>Products are being prepared</h2>
+          <p>The current catalogue does not have published items to show yet. Request a quote and we will help you find the right setup.</p>
+        </div>
+        <button type="button" class="cat-quote-btn" (click)="openGeneralQuote()">
+          <mat-icon svgIcon="forum"></mat-icon>
+          Request a quote
+        </button>
+      </div>
+    </div>
+  </section>
+  }
+
+  <!-- ═══════════════════════════════════════════════════════════
+       COMPATIBLE VEHICLES — brand logo grid
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="about" class="pw-section texture-sand section-block" aria-label="Compatible vehicles">
+    <div class="pw-container">
+      <div class="section-header scroll-reveal" #revealEl>
+        <h2 class="section-title">Universal <span class="highlight-orange">Compatibility.</span></h2>
+        <p class="section-subtitle">Engineered to fit all major South African bakkie models with minimal modifications.</p>
+      </div>
+
+      <div class="brand-logo-grid scroll-reveal" #revealEl>
+        @for (car of compatibleBrands(); track car.model) {
+          <div class="brand-card panel-machined">
+            <div class="brand-logo-wrap">
+              <img [src]="car.logo" [alt]="car.brand + ' logo'" class="brand-logo-img" loading="lazy" decoding="async">
+            </div>
+            <span class="brand-name">{{ car.brand }}</span>
+            <span class="brand-model">{{ car.model }}</span>
+          </div>
+        }
+      </div>
+
+      <p class="compat-note scroll-reveal" #revealEl>
+        <mat-icon svgIcon="info"></mat-icon>
+        {{ compatNote() }}
+      </p>
+
+      <div class="bento-grid scroll-reveal delay-1" #revealEl>
+        @for (v of coreValues(); track v.title) {
+          <div class="bento-card panel-machined">
+            <div class="card-icon"><mat-icon [svgIcon]="v.icon"></mat-icon></div>
+            <h3 class="card-title">{{ v.title }}</h3>
+            <p class="card-desc">{{ v.desc }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CONTACT / PARTNER ENQUIRY
+       ═══════════════════════════════════════════════════════════ -->
+  <section id="contact" class="pw-section texture-hex scroll-reveal section-block" #revealEl aria-label="Partner enquiry">
+    <div class="pw-container">
+      <div class="order-box panel-machined">
+        <div class="order-text texture-sand">
+          <h2 class="section-title">Become A <span class="highlight-orange">Partner.</span></h2>
+          <p>Register as an official Navrik Reseller or Fitment Partner to access exclusive wholesale pricing and support.</p>
+          <div class="contact-direct">
+            <mat-icon svgIcon="email"></mat-icon>
+            <a [href]="'mailto:' + siteSettings.settings().contact.email">{{ siteSettings.settings().contact.email }}</a>
+          </div>
+        </div>
+        <div class="order-form">
+          @if (flags.emailsEnabled) {
+            <form [formGroup]="SubmitForm" (ngSubmit)="onSubmit()" novalidate>
+              <div class="form-row">
+                <website-text-input label="Full Name"       formControlName="Name"    [submitted]="submitted"></website-text-input>
+                <website-text-input label="Dealership Name" formControlName="Surname" [submitted]="submitted"></website-text-input>
+              </div>
+              <div class="form-row">
+                <website-text-input label="Contact Number"  formControlName="Phone"   [submitted]="submitted"></website-text-input>
+                <website-text-input label="Email Address"   formControlName="Email"   [submitted]="submitted"></website-text-input>
+              </div>
+              <div class="form-row single">
+                <website-text-input label="Fitment request or dealer inquiry" formControlName="Message" [submitted]="submitted"></website-text-input>
+              </div>
+              <website-button type="submit" [disabled]="isLoading" class="full-width">
+                <mat-icon svgIcon="send"></mat-icon>
+                {{ isLoading ? 'Processing...' : 'Submit Request' }}
+              </website-button>
+            </form>
+          } @else {
+            <div class="coming-soon-panel">
+              <mat-icon svgIcon="build"></mat-icon>
+              <h3>Contact Form Offline</h3>
+              <p>Please reach us directly for a quote or more information:</p>
+              <a [href]="'mailto:' + siteSettings.settings().contact.email" class="cs-email-btn">
+                <mat-icon svgIcon="email"></mat-icon>
+                {{ siteSettings.settings().contact.email }}
+              </a>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  @if (showCatalogueFloat()) {
+    <button type="button" class="catalogue-browse-float" aria-label="Scroll to the Navrik product catalogue" (click)="scrollTo('catalogue')">
+      <span>View products</span>
+      <mat-icon svgIcon="arrow_forward"></mat-icon>
+    </button>
+  }
+
+</div>
+
+<website-quote-modal
+  [isOpen]="quoteModalOpen"
+  [preSelectedProduct]="quoteModalProduct"
+  (closeModal)="closeQuoteModal()">
+</website-quote-modal>

@@ -1,0 +1,23 @@
+<button
+  #buttonElement
+  [ngClass]="class"
+  [style]="style"
+  [disabled]="isLoading || disabled"
+  [class.button-animate]="isVisualAnimating()"
+  [type]="type"
+  [id]="id"
+  [attr.aria-label]="ariaLabel || label || buttonText"
+  (click)="clickAnimation($event)"
+>
+  
+  @if (isLoading) {
+    <mat-icon class="spinner-icon" svgIcon="build"></mat-icon>
+    <span class="button-loader-text" aria-hidden="true">{{ loadingText || 'PROCESSING' }}</span>
+  } @else {
+    <ng-content></ng-content>
+    @if (buttonText) {
+      <span>{{ buttonText }}</span>
+    }
+  }
+
+</button>

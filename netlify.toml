@@ -1,0 +1,71 @@
+[build]
+  # We simplified the npm run build command above, so just call that
+  command = "npm run build"
+  publish = "dist/navrik"
+  functions = "netlify/functions"
+
+[dev]
+  targetPort = 4200
+  port = 8080
+  framework = "angular"
+
+[functions]
+  # Ensures models and certs are bundled into the serverless environment
+  included_files = ["netlify/models/**", "netlify/functions/models/**"]
+
+# Customer analytics remains opt-in. This policy permits only the Google tag
+# loader and collection origins needed after consent, while retaining the
+# existing self-hosted app, fonts, JSON-LD, and dynamic theme styles.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'self'; form-action 'self'; script-src 'self' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https://www.google-analytics.com https://region1.google-analytics.com; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
+    Permissions-Policy = "camera=(), geolocation=(), microphone=()"
+
+# The authenticated internal control centre is never a search result, snippet,
+# or cached page. Public customer routes remain crawlable through robots.txt and
+# the generated sitemap.
+[[headers]]
+  for = "/admin"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[functions."internal-report-scheduled"]
+  # 06:00 SAST is 04:00 UTC. This function only persists internal snapshots.
+  schedule = "0 4 * * 1,6"
+
+[functions."monthly-business-report-scheduled"]
+  # 06:00 SAST on the first day of every month. Sends the completed prior
+  # calendar-month internal report only; never creates a client invoice.
+  schedule = "0 4 1 * *"
+
+# 1. API REDIRECTS (Highest Priority)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# 2. SEO FILE BYPASS
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/sitemap.xml"
+  status = 200
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "/robots.txt"
+  status = 200
+
+# 3. GLOBAL SPA REDIRECT (Lowest Priority)
+# Essential for Angular routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

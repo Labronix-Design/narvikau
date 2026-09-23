@@ -1,0 +1,40 @@
+{
+  "name": "navrik",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "generate-sitemap": "node src/generate-sitemap.js",
+    "build": "ng build --configuration production --base-href /",
+    "postbuild": "npm run generate-sitemap",
+    "start": "ng serve",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:functions": "node --test test/functions/*.test.mjs"
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/animations": "^21.2.21",
+    "@angular/cdk": "^21.2.14",
+    "@angular/common": "^21.2.21",
+    "@angular/compiler": "^21.2.21",
+    "@angular/core": "^21.2.21",
+    "@angular/forms": "^21.2.21",
+    "@angular/material": "^21.2.14",
+    "@angular/platform-browser": "^21.2.21",
+    "@angular/router": "^21.2.21",
+    "@neondatabase/serverless": "^1.0.2",
+    "@netlify/blobs": "^10.7.13",
+    "@netlify/functions": "^6.0.0",
+    "axios": "^1.19.0",
+    "motion": "^12.42.2",
+    "rxjs": "^7.8.1",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular-devkit/build-angular": "^21.2.21",
+    "@angular/build": "^21.2.21",
+    "@angular/cli": "^21.2.21",
+    "@angular/compiler-cli": "^21.2.21",
+    "typescript": "5.9.3"
+  }
+}

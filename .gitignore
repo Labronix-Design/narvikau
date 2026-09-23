@@ -1,0 +1,72 @@
+# Node.js dependencies
+node_modules/
+
+# Angular build output
+/dist/
+/out-tsc/
+/src/**/*.map
+/src/**/*.d.ts
+
+# Dependency directories
+bower_components/
+jspm_packages/
+
+# TypeScript build output
+*.tsbuildinfo
+
+# Angular CLI build files
+.angular/
+
+# VSCode configuration files
+.vscode/
+
+# IDEs and text editors
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Logs
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# JetBrains
+*.iml
+
+# Coverage reports
+coverage/
+
+# GitHub Pages
+/public/
+/index.html
+
+# Ignore GitHub Actions workflow directory (Do not ignore YAMLs in .github/workflows)
+!.github/
+
+# Ignore all JS files except for those in src/scripts/ folder
+/src/**/*.map
+/src/**/*.d.ts
+
+# Ensure src/scripts/ is not excluded
+!.src/scripts/
+
+# Local Netlify state and generated function bundles. Source functions and the
+# tracked netlify.toml configuration remain deployable.
+.netlify/
+netlify/functions/*.zip
+netlify/functions/manifest.json
+
+# Claude Code agent worktrees (never commit these)
+.claude/worktrees/
+.worktrees/

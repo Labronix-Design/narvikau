@@ -1,0 +1,190 @@
+@use '../admin-shared' as adm;
+
+.jump-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -8px 0 28px;
+
+  button {
+    background: transparent;
+    padding: 7px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    font-family: inherit;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+
+    &:hover { border-color: var(--nv-orange, var(--nv-orange, #ea580c)); color: var(--nv-orange, var(--nv-orange, #ea580c)); background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.06); }
+
+    &.active {
+      border-color: var(--nv-orange, var(--nv-orange, #ea580c));
+      color: var(--nv-orange, var(--nv-orange, #ea580c));
+      background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.1);
+    }
+  }
+}
+
+.color-field-row {
+  display: flex;
+  gap: 8px;
+
+  input[type="color"] {
+    width: 44px;
+    height: 38px;
+    padding: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    height: 38px;
+  }
+}
+
+.preview-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 0.72rem;
+  color: #555;
+
+  mat-icon { font-size: 15px; width: 15px; height: 15px; color: var(--nv-orange, #ea580c); flex-shrink: 0; }
+}
+
+// ── Repeater rows (hero slides, brand logos) ──────────────────────
+// A fixed-size thumbnail + fields laid out horizontally, so a list of many
+// items reads as a compact list rather than a stack of oversized image
+// blocks — this is the layout every admin-editable image list should use.
+.repeater-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.repeater-row-media {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+
+  @media (max-width: 560px) {
+    flex-wrap: wrap;
+
+    // Force the fields onto their own full-width row below the thumbnail
+    // instead of squeezing to near-zero width — a flex child with
+    // min-width:0 will shrink indefinitely rather than wrap.
+    .row-fields { flex-basis: 100%; order: 3; }
+    .row-actions { margin-left: auto; }
+  }
+}
+
+.row-fields {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  input[type="text"] {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    color: #ddd;
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 9px 12px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s, background 0.15s;
+
+    &:focus { border-color: var(--nv-orange, var(--nv-orange, #ea580c)); background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.04); }
+  }
+}
+
+.row-fields-inline {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+// ── Business hours ─────────────────────────────────────────────
+.hours-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.hours-edit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+
+  input[type="text"] {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 2px;
+    color: #ddd;
+    font-family: inherit;
+    font-size: 0.82rem;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+
+    &:focus { border-color: var(--nv-orange, var(--nv-orange, #ea580c)); background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.04); }
+    &:disabled { opacity: 0.4; }
+  }
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.trust-bar-row {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto;
+}
+
+.closed-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #888;
+  white-space: nowrap;
+  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  cursor: pointer;
+
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--nv-orange, var(--nv-orange, #ea580c));
+    cursor: pointer;
+  }
+}

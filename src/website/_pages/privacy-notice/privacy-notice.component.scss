@@ -1,0 +1,71 @@
+:host { display: block; color: var(--nv-text-main); background-color: var(--nv-bg-dark); }
+
+.navrik-privacy-wrapper {
+  display: flex;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: clamp(2.5rem, 6vw, 4.5rem) var(--nv-page-gutter) calc(var(--nv-space-5) + env(safe-area-inset-bottom));
+  background-color: var(--nv-bg-dark);
+}
+
+.navrik-privacy-card {
+  width: min(100%, var(--nv-content-max));
+  align-self: flex-start;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  border: 1px solid var(--nv-border-subtle);
+  border-block-start: 0.25rem solid var(--nv-orange);
+  background-color: var(--nv-surface-raised);
+  box-shadow: var(--system-shadow);
+}
+
+.privacy-header { margin-block-end: var(--nv-space-4); padding-block-end: var(--nv-space-3); border-block-end: 1px solid var(--nv-border-subtle); }
+.spec-badge {
+  display: inline-flex;
+  min-block-size: 2rem;
+  align-items: center;
+  margin-block-end: var(--nv-space-2);
+  padding-inline: var(--nv-space-2);
+  border-inline-start: 0.1875rem solid var(--nv-orange);
+  background-color: var(--nv-bg-panel);
+  color: var(--nv-text-muted);
+  font-size: var(--font-sm);
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.privacy-header h1 { max-width: 15ch; color: var(--nv-text-main); font-size: clamp(2.25rem, 6vw, 4rem); font-weight: 900; letter-spacing: 0.02em; line-height: 1.05; overflow-wrap: anywhere; text-transform: uppercase; }
+.highlight-orange { color: var(--nv-orange); }
+.subtitle { max-width: 42rem; margin-block-start: var(--nv-space-2); color: var(--nv-text-muted); font-size: var(--font-lg); line-height: 1.65; }
+
+.policy-grid { display: grid; gap: var(--nv-space-4); }
+.policy-section { display: grid; gap: var(--nv-space-2); min-width: 0; }
+.section-header-row { display: flex; align-items: center; gap: var(--nv-space-2); }
+.section-icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border: 1px solid var(--nv-border-strong);
+  background-color: var(--nv-bg-dark);
+  color: var(--nv-orange);
+}
+.section-header-row h2 { min-width: 0; color: var(--nv-text-main); font-size: var(--font-lg); font-weight: 800; letter-spacing: 0.04em; line-height: 1.3; overflow-wrap: anywhere; text-transform: uppercase; }
+.section-text { min-width: 0; color: var(--nv-text-muted); }
+.section-text p,
+.section-text li { color: inherit; font-size: var(--font-md); line-height: 1.65; overflow-wrap: anywhere; }
+.section-text p + p { margin-block-start: var(--nv-space-2); }
+.data-list { display: grid; gap: var(--nv-space-1); margin-block-start: var(--nv-space-2); padding: 0; list-style: none; }
+.data-list li { position: relative; padding-inline-start: var(--nv-space-2); }
+.data-list li::before { position: absolute; inset-block-start: 0.65em; inset-inline-start: 0; inline-size: 0.375rem; block-size: 0.375rem; background-color: var(--nv-orange); content: ''; }
+.data-list strong { color: var(--nv-text-main); }
+
+.contact-card { display: grid; gap: var(--nv-space-1); margin-block-start: var(--nv-space-3); padding: var(--nv-space-2); border: 1px solid var(--nv-border-strong); border-inline-start: 0.25rem solid var(--nv-orange); background-color: var(--nv-bg-dark); }
+.contact-card p { color: var(--nv-text-muted); font-size: var(--font-sm); font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
+.industrial-link { min-width: 0; overflow-wrap: anywhere; color: var(--nv-text-main); font-size: var(--font-lg); font-weight: 800; text-decoration: underline; text-decoration-color: var(--nv-orange); text-underline-offset: 0.1875rem; }
+.industrial-link:hover { color: var(--nv-orange); }
+.industrial-link:focus-visible { outline: 0.125rem solid var(--nv-focus-ring); outline-offset: 0.1875rem; }
+
+.privacy-footer { display: flex; margin-block-start: var(--nv-space-4); padding-block-start: var(--nv-space-3); border-block-start: 1px solid var(--nv-border-subtle); }
+
+@media (min-width: 56.25rem) { .policy-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--nv-space-5) var(--nv-space-4); } }

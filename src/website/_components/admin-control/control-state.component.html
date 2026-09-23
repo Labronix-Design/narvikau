@@ -1,0 +1,13 @@
+@if (state() === 'loading') {
+  <section class="control-skeleton-grid" aria-label="Loading business data" aria-busy="true">
+    @for (item of [].constructor(skeletonCount()); track $index) {
+      <div class="control-skeleton" aria-hidden="true"><span></span><strong></strong><i></i></div>
+    }
+    <span class="sr-only">Loading business data</span>
+  </section>
+} @else {
+  <section class="control-state" [class]="'control-state state-' + state()" role="status">
+    <h2>{{ title() }}</h2>
+    @if (message()) { <p>{{ message() }}</p> }
+  </section>
+}

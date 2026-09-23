@@ -1,0 +1,65 @@
+<div class="admin-shell" [class.sidebar-open]="sidebarOpen()">
+  <!-- Mobile overlay -->
+  <div class="sidebar-overlay" (click)="closeSidebar()"></div>
+
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">NV</div>
+      <div class="brand-text">
+        <span class="brand-name">NAVRIK</span>
+        <span class="brand-sub">Business control</span>
+      </div>
+      <button class="sidebar-close" (click)="closeSidebar()">
+        <mat-icon svgIcon="close"></mat-icon>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="Admin navigation">
+      @for (section of navSections; track section.label) {
+        <div class="nav-section" [class.expanded]="isSectionExpanded(section.id)" [class.has-active-item]="isSectionActive(section)">
+          <button
+            type="button"
+            class="nav-section-toggle"
+            [attr.aria-expanded]="isSectionExpanded(section.id)"
+            [attr.aria-controls]="section.id + '-items'"
+            (click)="toggleSection(section.id)">
+            <span class="nav-section-label">{{ section.label }}</span>
+            <mat-icon class="section-chevron" [svgIcon]="isSectionExpanded(section.id) ? 'expand_less' : 'expand_more'"></mat-icon>
+          </button>
+          <div
+            class="nav-section-items"
+            [id]="section.id + '-items'"
+            [attr.aria-hidden]="!isSectionExpanded(section.id)"
+            [attr.inert]="isSectionExpanded(section.id) ? null : ''">
+            <div class="nav-section-items-inner">
+              @for (item of section.items; track item.path) {
+                <a class="nav-item" [routerLink]="item.path" [class.active]="isActive(item.path)" (click)="closeSidebar()">
+                  <mat-icon [svgIcon]="item.icon"></mat-icon>
+                  <span>{{ item.label }}</span>
+                </a>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </nav>
+
+    <button class="logout-btn" (click)="logout()">
+      <mat-icon svgIcon="logout"></mat-icon>
+      <span>Logout</span>
+    </button>
+  </aside>
+
+  <main class="admin-main">
+    <!-- Mobile topbar -->
+    <div class="mobile-topbar">
+      <button class="hamburger" (click)="toggleSidebar()">
+        <mat-icon svgIcon="menu"></mat-icon>
+      </button>
+      <span class="mobile-brand">NAVRIK <span>CONTROL</span></span>
+    </div>
+    <router-outlet></router-outlet>
+  </main>
+
+  <website-confirm-modal></website-confirm-modal>
+</div>

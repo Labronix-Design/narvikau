@@ -1,0 +1,140 @@
+<div class="adm-page">
+  <div class="adm-header">
+    <h1 class="adm-title">Contact Queries</h1>
+    <p class="adm-sub">All contact form submissions. Update status and add internal notes.</p>
+  </div>
+
+  @if (loading()) {
+    <div class="adm-loading">
+      <div class="spin"></div>
+      <span class="spin-label">Loading Queries…</span>
+    </div>
+  } @else if (error()) {
+    <div class="adm-error"><mat-icon svgIcon="error"></mat-icon> {{ error() }}</div>
+  } @else {
+
+    <!-- ── STATUS TABS ── -->
+    <div class="status-tabs">
+      @for (tab of tabs; track tab.value) {
+        <button class="status-tab" [class.active]="activeTab() === tab.value"
+                (click)="setTab(tab.value)">
+          {{ tab.label }}
+          @if (tabCount(tab.value) > 0) {
+            <span class="tab-badge">{{ tabCount(tab.value) }}</span>
+          }
+        </button>
+      }
+    </div>
+
+    @if (rows().length === 0) {
+      <div class="adm-empty">
+        <mat-icon class="empty-icon" svgIcon="inbox"></mat-icon>
+        <p class="empty-title">No queries</p>
+        <p class="empty-desc">No queries in this category.</p>
+      </div>
+    } @else {
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Name</th>
+              <th>Contact</th>
+              <th>Company</th>
+              <th>Message</th>
+              <th>Status</th>
+              <th>Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of rows(); track row.id) {
+              <tr class="query-row" [class.is-expanded]="expandedId() === row.id"
+                  [class.is-new]="row.status === 'new'">
+                <td class="mono date-cell">{{ row.created_at | date:'d MMM yy' }}</td>
+                <td>
+                  <div class="name-cell">
+                    <span class="lead-name">{{ row.name }}</span>
+                    @if (row.status === 'new') {
+                      <span class="new-badge">New</span>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <div class="contact-cell">
+                    <a [href]="'mailto:' + row.email" class="lead-email">{{ row.email }}</a>
+                    @if (row.phone) {
+                      <a [href]="'tel:' + row.phone" class="lead-phone">{{ row.phone }}</a>
+                    }
+                  </div>
+                </td>
+                <td class="company-cell">{{ row.company || '—' }}</td>
+                <td class="message-preview" (click)="toggleExpand(row.id)">
+                  <span>{{ (row.message || '') | slice:0:80 }}{{ (row.message || '').length > 80 ? '…' : '' }}</span>
+                </td>
+                <td>
+                  <select class="status-select"
+                          (change)="updateStatus(row, $any($event.target).value)">
+                    @for (s of statusOptions; track s) {
+                      <option [value]="s" [selected]="s === row.status">{{ statusLabels[s] }}</option>
+                    }
+                  </select>
+                </td>
+                <td class="notes-preview">
+                  <span>{{ row.admin_notes ? (row.admin_notes | slice:0:40) + (row.admin_notes.length > 40 ? '…' : '') : '—' }}</span>
+                </td>
+                <td>
+                  <button class="adm-btn ghost small" (click)="toggleExpand(row.id)">
+                    <mat-icon [svgIcon]="expandedId() === row.id ? 'expand_less' : 'expand_more'"></mat-icon>
+                  </button>
+                </td>
+              </tr>
+
+              @if (expandedId() === row.id) {
+                <tr class="expand-row">
+                  <td colspan="8">
+                    <div class="expand-body">
+
+                      @if (row.message) {
+                        <div class="expand-section">
+                          <div class="expand-label">Full Message</div>
+                          <div class="expand-message">{{ row.message }}</div>
+                        </div>
+                      }
+
+                      <div class="expand-section">
+                        <div class="expand-label">Internal Notes</div>
+                        <textarea class="notes-input"
+                                  rows="3"
+                                  [value]="notesMap()[row.id] ?? ''"
+                                  (input)="setNote(row.id, $any($event.target).value)">
+                        </textarea>
+                        <button class="adm-btn primary small" (click)="saveNotes(row)">
+                          <mat-icon svgIcon="save"></mat-icon> Save Notes
+                        </button>
+                      </div>
+
+                      <div class="expand-quick-actions">
+                        <a [href]="'mailto:' + row.email" class="adm-btn ghost small">
+                          <mat-icon svgIcon="email"></mat-icon> Reply via Email
+                        </a>
+                        @if (row.phone) {
+                          <a [href]="'https://wa.me/' + row.phone.replace(/\D/g, '')"
+                             target="_blank" rel="noopener" class="adm-btn ghost small">
+                            <mat-icon svgIcon="chat"></mat-icon> WhatsApp
+                          </a>
+                        }
+                      </div>
+
+                    </div>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+  }
+</div>

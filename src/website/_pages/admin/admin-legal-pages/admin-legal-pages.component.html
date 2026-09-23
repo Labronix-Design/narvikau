@@ -1,0 +1,146 @@
+<div class="adm-page">
+  <div class="adm-header">
+    <h1 class="adm-title">Legal Pages</h1>
+    <p class="adm-sub">Refund &amp; Warranty Policy and Terms of Service — changes here go live immediately, no deploy needed.</p>
+  </div>
+
+  <nav class="jump-nav">
+    @for (p of pages; track p.id) {
+      <button type="button" [class.active]="activePage() === p.id" (click)="switchPage(p.id)">
+        {{ p.label }}
+      </button>
+    }
+  </nav>
+
+  @if (loading()) {
+    <div class="adm-loading">
+      <div class="spin"></div>
+      <span class="spin-label">Loading…</span>
+    </div>
+  } @else {
+
+    @if (error()) {
+      <div class="adm-error"><mat-icon svgIcon="error"></mat-icon> {{ error() }}</div>
+    }
+
+    @if (usingDefaults()) {
+      <p class="preview-note">
+        <mat-icon svgIcon="info"></mat-icon>
+        This is the current live content — edit and Save to make it explicit.
+      </p>
+    }
+
+    <form [formGroup]="form">
+
+      <!-- ── Header ───────────────────────────────────────── -->
+      <div class="adm-form-wrap">
+        <h3>Page Header</h3>
+        <div class="adm-form-grid">
+          <div class="adm-field">
+            <label>Badge Text</label>
+            <input type="text" [formControl]="form.controls.badge">
+          </div>
+          <div class="adm-field">
+            <label>Title <span class="field-hint">Plain part</span></label>
+            <input type="text" [formControl]="form.controls.title_main">
+          </div>
+          <div class="adm-field">
+            <label>Title <span class="field-hint">Highlighted part</span></label>
+            <input type="text" [formControl]="form.controls.title_highlight">
+          </div>
+          <div class="adm-field span-full">
+            <label>Intro Paragraph</label>
+            <textarea [formControl]="form.controls.intro" rows="2"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Sections ─────────────────────────────────────── -->
+      <div class="adm-form-wrap">
+        <div class="section-actions">
+          <h3 style="margin:0">Sections</h3>
+          <button type="button" class="adm-btn ghost small" (click)="addSection()">
+            <mat-icon svgIcon="add"></mat-icon> Add Section
+          </button>
+        </div>
+
+        <div class="section-list">
+          @for (section of sections(); track $index) {
+            <div class="section-card">
+              <div class="repeater-row three-col">
+                <input type="text" placeholder="Icon name (e.g. verified)" [value]="section.icon"
+                       (input)="updateSectionField($index, 'icon', $any($event.target).value)">
+                <input type="text" placeholder="Section title" [value]="section.title"
+                       (input)="updateSectionField($index, 'title', $any($event.target).value)">
+                <input type="text" placeholder="Intro paragraph (optional)" [value]="section.intro"
+                       (input)="updateSectionField($index, 'intro', $any($event.target).value)">
+                <div class="section-card-actions">
+                  <button type="button" class="adm-btn ghost small" (click)="moveSection($index, -1)" [disabled]="$index === 0" aria-label="Move up">
+                    <mat-icon svgIcon="arrow_back"></mat-icon>
+                  </button>
+                  <button type="button" class="adm-btn ghost small" (click)="moveSection($index, 1)" [disabled]="$index === sections().length - 1" aria-label="Move down">
+                    <mat-icon svgIcon="arrow_forward"></mat-icon>
+                  </button>
+                  <button type="button" class="adm-btn danger small" (click)="removeSection($index)">
+                    <mat-icon svgIcon="delete"></mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div class="item-list">
+                @for (item of section.items; track $index; let itemIndex = $index) {
+                  <div class="repeater-row item-row">
+                    <select (change)="updateItem($index, itemIndex, 'type', $any($event.target).value)">
+                      @for (t of itemTypes; track t.value) { <option [value]="t.value" [selected]="t.value === item.type">{{ t.label }}</option> }
+                    </select>
+                    <input type="text" placeholder="Item text" [value]="item.text"
+                           (input)="updateItem($index, itemIndex, 'text', $any($event.target).value)">
+                    <button type="button" class="adm-btn danger small" (click)="removeItem($index, itemIndex)">
+                      <mat-icon svgIcon="delete"></mat-icon>
+                    </button>
+                  </div>
+                }
+              </div>
+              <button type="button" class="adm-btn ghost small" (click)="addItem($index)">
+                <mat-icon svgIcon="add"></mat-icon> Add Item
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- ── Disclaimer ───────────────────────────────────── -->
+      <div class="adm-form-wrap">
+        <div class="section-actions">
+          <h3 style="margin:0">Closing Disclaimer <span class="field-hint">Leave empty to hide this block</span></h3>
+          <button type="button" class="adm-btn ghost small" (click)="addDisclaimerParagraph()">
+            <mat-icon svgIcon="add"></mat-icon> Add Paragraph
+          </button>
+        </div>
+        <div class="adm-form-grid" style="margin-bottom:16px">
+          <div class="adm-field span-full">
+            <label>Disclaimer Title</label>
+            <input type="text" [formControl]="form.controls.disclaimer_title">
+          </div>
+        </div>
+        <div class="repeater-list">
+          @for (para of disclaimerParagraphs(); track $index) {
+            <div class="repeater-row one-col">
+              <textarea rows="2" [value]="para" (input)="updateDisclaimerParagraph($index, $any($event.target).value)"></textarea>
+              <button type="button" class="adm-btn danger small" (click)="removeDisclaimerParagraph($index)">
+                <mat-icon svgIcon="delete"></mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="adm-form-actions">
+        <button type="button" class="adm-btn primary" (click)="save()" [disabled]="saving()">
+          <mat-icon svgIcon="save"></mat-icon>
+          {{ saving() ? 'Saving…' : 'Save Page' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

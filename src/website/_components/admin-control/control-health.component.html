@@ -1,0 +1,5 @@
+@let meta = metaFor(state());
+<span class="control-health state-{{ state() }}" [matTooltip]="detail()" [matTooltipDisabled]="!detail()">
+  <mat-icon [svgIcon]="meta.icon" aria-hidden="true"></mat-icon>
+  <span>{{ meta.label }}</span>
+</span>

@@ -1,0 +1,145 @@
+@if (financePageService.unavailable()) {
+  <section class="public-content-unavailable pw-section" aria-live="polite">
+    <div class="pw-container">
+      <div class="panel-machined">
+        <h1>Finance information is refreshing</h1>
+        <p>We are refreshing this information. Please try again shortly.</p>
+      </div>
+    </div>
+  </section>
+} @else {
+<div class="fin-wrapper">
+
+  <!-- ====== HERO ====== -->
+  <section class="fin-hero texture-hex section-block">
+    <div class="pw-container">
+      <div class="fin-hero-inner">
+        <div class="fin-hero-badge">
+          <mat-icon svgIcon="account_balance"></mat-icon>
+          {{ content().hero_badge }}
+        </div>
+        <h1 class="fin-hero-title">{{ content().hero_title }}</h1>
+        <p class="fin-hero-subtitle">
+          {{ content().hero_subtitle }}
+        </p>
+        <div class="fin-hero-actions">
+          <a [href]="content().apply_url" target="_blank" rel="noopener noreferrer" class="btn-primary-link">
+            <mat-icon svgIcon="open_in_new"></mat-icon> Open finance application
+          </a>
+          <website-button routerLink="/products">
+            <mat-icon svgIcon="explore"></mat-icon> Browse products
+          </website-button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== WHY FINANCE ====== -->
+  <section class="pw-section texture-sand section-block">
+    <div class="pw-container">
+      <div class="section-header">
+        <h2 class="section-title">Why <span class="highlight-orange">Finance?</span></h2>
+        <p class="section-subtitle">Preserve working capital while equipping your bakkie with the right gear from day one.</p>
+      </div>
+
+      <div class="fin-benefits-grid">
+        @for (b of content().benefits; track b.title) {
+          <div class="fin-benefit-card panel-machined">
+            <div class="benefit-icon">
+              <mat-icon [svgIcon]="b.icon"></mat-icon>
+            </div>
+            <h3 class="benefit-title">{{ b.title }}</h3>
+            <p class="benefit-desc">{{ b.desc }}</p>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== HOW IT WORKS ====== -->
+  <section class="pw-section texture-hex section-block">
+    <div class="pw-container">
+      <div class="section-header">
+        <h2 class="section-title">How It <span class="highlight-orange">Works.</span></h2>
+        <p class="section-subtitle">From configuration to installation — a simple four-step process.</p>
+      </div>
+
+      <div class="fin-steps">
+        @for (s of content().steps; track s.num) {
+          <div class="fin-step panel-machined">
+            <span class="step-num">{{ s.num }}</span>
+            <div class="step-body">
+              <h3 class="step-title">{{ s.title }}</h3>
+              <p class="step-desc">{{ s.desc }}</p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== REQUIREMENTS ====== -->
+  <section class="pw-section texture-sand section-block">
+    <div class="pw-container">
+      <div class="fin-req-wrap">
+
+        <div class="fin-req-text">
+          <h2 class="section-title">What You'll <span class="highlight-orange">Need.</span></h2>
+          <p class="section-subtitle">Standard ABSA Vehicle and Asset Finance documentation.</p>
+          <ul class="fin-req-list">
+            @for (r of content().requirements; track r) {
+              <li>
+                <mat-icon svgIcon="check_circle"></mat-icon>
+                <span>{{ r }}</span>
+              </li>
+            }
+          </ul>
+          <p class="fin-req-note">
+            <mat-icon svgIcon="info"></mat-icon>
+            {{ content().requirements_note }}
+          </p>
+        </div>
+
+        <div class="fin-cta-card panel-machined">
+          <div class="cta-card-logo">
+            <div class="absa-logo-wrap">
+              <img [src]="content().partner_logo_url" alt="Finance partner logo" class="absa-logo-img" loading="lazy" decoding="async"/>
+            </div>
+          </div>
+          <h3 class="cta-card-title">{{ content().cta_title }}</h3>
+          <p class="cta-card-body">
+            {{ content().cta_body }}
+          </p>
+          <div class="cta-card-actions">
+            <website-button routerLink="/products" class="full-width">
+              <mat-icon svgIcon="explore"></mat-icon> Browse products
+            </website-button>
+            <a [href]="content().apply_url" target="_blank" rel="noopener noreferrer" class="absa-apply-link">
+              <mat-icon svgIcon="open_in_new"></mat-icon> Open finance application
+            </a>
+          </div>
+          <p class="cta-disclaimer">
+            {{ content().cta_disclaimer }}
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ====== TRUST BAR ====== -->
+  <section class="fin-trust-bar">
+    <div class="pw-container">
+      <div class="trust-items">
+        @for (t of content().trust_items; track t.label) {
+          <div class="trust-item">
+            <mat-icon [svgIcon]="t.icon"></mat-icon>
+            <span>{{ t.label }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+</div>
+}

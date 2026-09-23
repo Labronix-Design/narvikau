@@ -1,0 +1,263 @@
+<div class="adm-page">
+  <div class="adm-header">
+    <h1 class="adm-title">Site Settings</h1>
+    <p class="adm-sub">Logo, theme, hero carousel, and the homepage's "Universal Compatibility" brand logos — changes here go live on the storefront immediately, no deploy needed.</p>
+  </div>
+
+  @if (!loading()) {
+    <nav class="jump-nav">
+      @for (s of sections; track s.id) {
+        <button type="button" [class.active]="activeSection() === s.id" (click)="activeSection.set(s.id)">
+          {{ s.label }}
+        </button>
+      }
+    </nav>
+  }
+
+  @if (loading()) {
+    <div class="adm-loading">
+      <div class="spin"></div>
+      <span class="spin-label">Loading Settings…</span>
+    </div>
+  } @else {
+
+    @if (error()) {
+      <div class="adm-error"><mat-icon svgIcon="error"></mat-icon> {{ error() }}</div>
+    }
+
+    <form [formGroup]="form">
+
+      <!-- ── Branding ─────────────────────────────────────── -->
+      @if (activeSection() === 'branding') {
+      <div class="adm-form-wrap" id="branding">
+        <h3>Branding</h3>
+        <div class="adm-form-grid">
+          <div class="adm-field span-full">
+            <label>Logo <span class="field-hint">Shown in navbar &amp; footer — leave empty to use the NAVRIK wordmark</span></label>
+            <website-image-upload
+              [url]="form.value.logo_url"
+              (urlChange)="form.patchValue({ logo_url: $event }); previewTheme()">
+            </website-image-upload>
+          </div>
+
+          <div class="adm-field">
+            <label>Font Family</label>
+            <select [formControl]="form.controls.font_family" (change)="previewTheme()">
+              @for (f of fontOptions; track f) { <option [value]="f">{{ f }}</option> }
+            </select>
+          </div>
+
+          <div class="adm-field">
+            <label>Primary / Accent Colour</label>
+            <div class="color-field-row">
+              <input type="color" [formControl]="form.controls.primary_color" (input)="previewTheme()">
+              <input type="text" [formControl]="form.controls.primary_color" (input)="previewTheme()" placeholder="#ea580c">
+            </div>
+            @if (form.controls.primary_color.touched && form.controls.primary_color.invalid) {
+              <span class="field-err">Must be a 6-digit hex colour</span>
+            }
+          </div>
+        </div>
+        <p class="preview-note">
+          <mat-icon svgIcon="visibility"></mat-icon>
+          Changes preview live across the site as you edit — nothing is saved until you click "Save Settings" below.
+        </p>
+      </div>
+      }
+
+      <!-- ── Contact Info ─────────────────────────────────── -->
+      @if (activeSection() === 'contact') {
+      <div class="adm-form-wrap" id="contact">
+        <h3>Contact Info</h3>
+        <p class="adm-sub" style="margin-bottom:16px">Used in the footer, contact page, cart, quote form, and legal pages.</p>
+
+        @if (usingDefaultContact()) {
+          <p class="preview-note">
+            <mat-icon svgIcon="info"></mat-icon>
+            These are the current live defaults — edit and Save to make them explicit.
+          </p>
+        }
+
+        <div class="adm-form-grid">
+          <div class="adm-field">
+            <label>Email *</label>
+            <input type="email" [formControl]="form.controls.contact_email">
+            @if (form.controls.contact_email.touched && form.controls.contact_email.invalid) {
+              <span class="field-err">A valid email is required</span>
+            }
+          </div>
+          <div class="adm-field">
+            <label>Phone <span class="field-hint">Optional — shown if set</span></label>
+            <input type="text" [formControl]="form.controls.contact_phone" placeholder="+27 82 000 0000">
+          </div>
+          <div class="adm-field">
+            <label>WhatsApp <span class="field-hint">Optional</span></label>
+            <input type="text" [formControl]="form.controls.contact_whatsapp" placeholder="+27 82 000 0000">
+          </div>
+          <div class="adm-field">
+            <label>Location</label>
+            <input type="text" [formControl]="form.controls.contact_location" placeholder="Johannesburg South, Gauteng">
+          </div>
+        </div>
+
+        <div class="section-actions" style="margin-top:20px">
+          <span class="adm-section-title">Business Hours</span>
+          <button type="button" class="adm-btn ghost small" (click)="addHoursRow()">
+            <mat-icon svgIcon="add"></mat-icon> Add Row
+          </button>
+        </div>
+
+        <div class="hours-rows">
+          @for (row of businessHours(); track $index) {
+            <div class="hours-edit-row">
+              <input type="text" placeholder="Days (e.g. Monday – Friday)" [value]="row.label"
+                     (input)="updateHoursField($index, 'label', $any($event.target).value)">
+              <input type="text" placeholder="Hours (e.g. 08:00 – 17:00)" [value]="row.hours" [disabled]="row.closed"
+                     (input)="updateHoursField($index, 'hours', $any($event.target).value)">
+              <label class="closed-toggle">
+                <input type="checkbox" [checked]="row.closed" (change)="toggleHoursClosed($index)">
+                Closed
+              </label>
+              <button type="button" class="adm-btn danger small" (click)="removeHoursRow($index)">
+                <mat-icon svgIcon="delete"></mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+      }
+
+      <!-- ── Hero Carousel ────────────────────────────────── -->
+      @if (activeSection() === 'hero') {
+      <div class="adm-form-wrap" id="hero">
+        <div class="section-actions">
+          <h3 style="margin:0">Hero Carousel</h3>
+          <button type="button" class="adm-btn ghost small" (click)="addHeroSlide()">
+            <mat-icon svgIcon="add"></mat-icon> Add Slide
+          </button>
+        </div>
+        <p class="adm-sub" style="margin-bottom:16px">Remove all slides to fall back to the default launch photos.</p>
+
+        @if (usingDefaultSlides()) {
+          <p class="preview-note">
+            <mat-icon svgIcon="info"></mat-icon>
+            These are the default photos currently live on the homepage — edit, reorder, or remove them, then Save to make it explicit.
+          </p>
+        }
+
+        <div class="repeater-list">
+          @for (slide of heroSlides(); track $index) {
+            <div class="repeater-row-media">
+              <website-image-upload
+                [compact]="true"
+                [url]="slide.image_url"
+                (urlChange)="updateHeroSlideImage($index, $event)">
+              </website-image-upload>
+              <div class="row-fields">
+                <input type="text" placeholder="Alt text (for accessibility)" [value]="slide.alt"
+                       (input)="updateHeroSlideAlt($index, $any($event.target).value)">
+              </div>
+              <div class="row-actions">
+                <button type="button" class="adm-btn ghost small" (click)="moveHeroSlide($index, -1)" [disabled]="$index === 0" aria-label="Move up">
+                  <mat-icon svgIcon="arrow_back"></mat-icon>
+                </button>
+                <button type="button" class="adm-btn ghost small" (click)="moveHeroSlide($index, 1)" [disabled]="$index === heroSlides().length - 1" aria-label="Move down">
+                  <mat-icon svgIcon="arrow_forward"></mat-icon>
+                </button>
+                <button type="button" class="adm-btn danger small" (click)="removeHeroSlide($index)">
+                  <mat-icon svgIcon="delete"></mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="section-actions" style="margin-top:28px">
+          <span class="adm-section-title">Trust Bar <span class="field-hint">Shown directly below the hero image</span></span>
+          <button type="button" class="adm-btn ghost small" (click)="addTrustBarItem()">
+            <mat-icon svgIcon="add"></mat-icon> Add Item
+          </button>
+        </div>
+
+        @if (usingDefaultTrustBar()) {
+          <p class="preview-note">
+            <mat-icon svgIcon="info"></mat-icon>
+            These are the current live defaults — edit and Save to make them explicit.
+          </p>
+        }
+
+        <div class="hours-rows">
+          @for (item of trustBar(); track $index) {
+            <div class="hours-edit-row trust-bar-row">
+              <input type="text" placeholder="Icon name (e.g. build, verified, shield)" [value]="item.icon"
+                     (input)="updateTrustBarField($index, 'icon', $any($event.target).value)">
+              <input type="text" placeholder="Label (e.g. 2.5mm Aluminium Alloy)" [value]="item.label"
+                     (input)="updateTrustBarField($index, 'label', $any($event.target).value)">
+              <button type="button" class="adm-btn danger small" (click)="removeTrustBarItem($index)">
+                <mat-icon svgIcon="delete"></mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+      }
+
+      <!-- ── Universal Compatibility ──────────────────────── -->
+      @if (activeSection() === 'compatibility') {
+      <div class="adm-form-wrap" id="compatibility">
+        <div class="section-actions">
+          <h3 style="margin:0">Universal Compatibility (Brand Logos)</h3>
+          <button type="button" class="adm-btn ghost small" (click)="addBrandLogo()">
+            <mat-icon svgIcon="add"></mat-icon> Add Brand
+          </button>
+        </div>
+        <p class="adm-sub" style="margin-bottom:16px">Shown in the "Universal Compatibility" section on the home page. Remove all brands to fall back to the default lineup.</p>
+
+        @if (usingDefaultBrands()) {
+          <p class="preview-note">
+            <mat-icon svgIcon="info"></mat-icon>
+            This is the default lineup currently live on the homepage — edit, remove, or add brands, then Save to make it explicit.
+          </p>
+        }
+
+        <div class="repeater-list">
+          @for (b of brandLogos(); track $index) {
+            <div class="repeater-row-media">
+              <website-image-upload
+                [compact]="true"
+                [url]="b.logo_url"
+                (urlChange)="updateBrandLogoImage($index, $event)">
+              </website-image-upload>
+              <div class="row-fields">
+                <div class="row-fields-inline">
+                  <input type="text" placeholder="Brand (e.g. Toyota)" [value]="b.brand"
+                         (input)="updateBrandLogoField($index, 'brand', $any($event.target).value)">
+                  <input type="text" placeholder="Model (e.g. Hilux)" [value]="b.model"
+                         (input)="updateBrandLogoField($index, 'model', $any($event.target).value)">
+                </div>
+              </div>
+              <div class="row-actions">
+                <button type="button" class="adm-btn danger small" (click)="removeBrandLogo($index)" aria-label="Remove">
+                  <mat-icon svgIcon="delete"></mat-icon>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="adm-field span-full" style="margin-top:20px">
+          <label>Fitment Note <span class="field-hint">Shown under the brand logos on the homepage</span></label>
+          <input type="text" [formControl]="form.controls.compat_note">
+        </div>
+      </div>
+      }
+
+      <div class="adm-form-actions">
+        <button type="button" class="adm-btn primary" (click)="save()" [disabled]="saving()">
+          <mat-icon svgIcon="save"></mat-icon>
+          {{ saving() ? 'Saving…' : 'Save Settings' }}
+        </button>
+      </div>
+    </form>
+  }
+</div>

@@ -1,0 +1,32 @@
+:host { display: block; min-width: 0; }
+
+.control-metric {
+  min-height: 148px;
+  padding: 1.1rem;
+  border: 1px solid var(--control-line, var(--nv-metal, #343434));
+  border-radius: 0;
+  background: var(--control-surface, var(--nv-bg-panel, #141414));
+  box-shadow: var(--control-shadow, inset 0 1px 0 rgba(255, 255, 255, .045));
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+  min-width: 0;
+}
+
+.is-linked { color: inherit; cursor: pointer; text-decoration: none; }
+.is-linked:hover, .is-linked:focus-visible { border-color: var(--control-accent, var(--nv-orange, #ea580c)); outline: 2px solid var(--control-accent, var(--nv-orange, #ea580c)); outline-offset: 2px; }
+
+.metric-head { display: flex; align-items: start; justify-content: space-between; gap: .75rem; }
+.metric-label, .metric-context { margin: 0; }
+.metric-label { color: var(--control-muted, var(--nv-text-muted, #a3a3a3)); font-size: .71rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.metric-icon { width: 28px; height: 28px; display: grid; place-items: center; flex: 0 0 auto; border: 1px solid var(--control-line, var(--nv-metal, #343434)); color: var(--control-accent, var(--nv-orange, #ea580c)); background: rgba(234, 88, 12, .08); }
+.metric-icon mat-icon { width: 16px; height: 16px; font-size: 16px; }
+.metric-value { color: var(--control-ink, var(--nv-text-main, #f3f4f6)); font-size: clamp(1.45rem, 2.5vw, 2rem); line-height: 1.1; letter-spacing: -.04em; }
+.metric-value.unavailable { color: var(--control-muted, var(--nv-text-muted, #a3a3a3)); font-size: 1.05rem; letter-spacing: -.01em; }
+.metric-context { color: var(--control-subtle, var(--nv-aluminum, #b6b6b6)); font-size: .78rem; line-height: 1.45; }
+.metric-trend { color: var(--control-success, #57b982); font-size: .74rem; font-weight: 700; margin-top: auto; }
+.tone-accent { border-top: 3px solid var(--control-accent, var(--nv-orange, #ea580c)); }
+.tone-success { border-top: 3px solid var(--control-success, #57b982); }
+.tone-warning { border-top: 3px solid var(--control-warning, #f0ad4e); }
+
+@media (max-width: 560px) { .control-metric { min-height: 132px; padding: 1rem; } }

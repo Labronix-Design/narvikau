@@ -1,0 +1,143 @@
+<div class="adm-page">
+  <div class="adm-header">
+    <h1 class="adm-title">Accessories</h1>
+    <p class="adm-sub">Manage active toolboxes, drop sides, LEDs, rear guards, and canopy accessories. Secure checkout validates current accessory availability and amounts from this server-side catalogue.</p>
+  </div>
+
+  @if (error()) {
+    <div class="adm-error"><mat-icon svgIcon="error"></mat-icon> {{ error() }}</div>
+  }
+
+  @if (showForm()) {
+    <div class="adm-form-wrap">
+      <h3>{{ editingId() ? 'Edit Accessory' : 'New Accessory' }}</h3>
+      <form [formGroup]="form">
+        <div class="adm-form-grid">
+          <div class="adm-field">
+            <label>Name *</label>
+            <input formControlName="name" (blur)="autoSlug()">
+          </div>
+          <div class="adm-field">
+            <label>Slug *</label>
+            <input formControlName="slug">
+          </div>
+          <div class="adm-field">
+            <label>Category *</label>
+            <select formControlName="category" (change)="autoSlug()">
+              <option value="" disabled>Select category…</option>
+              @for (c of categories; track c) { <option [value]="c">{{ c | titlecase }}</option> }
+            </select>
+          </div>
+          <div class="adm-field">
+            <label>Price (ZAR)</label>
+            <input type="number" formControlName="price" min="0" step="50">
+          </div>
+          <div class="adm-field">
+            <label>Sort Order</label>
+            <input type="number" formControlName="sort_order" min="0">
+          </div>
+          <div class="adm-field">
+            <label>Is Active</label>
+            <div class="toggle-row">
+              <input type="checkbox" formControlName="is_active">
+              <span>Visible in catalog</span>
+            </div>
+          </div>
+          <div class="adm-field span-full">
+            <label>Accessory Image</label>
+            <website-image-upload
+              [url]="form.value.image_url"
+              (urlChange)="form.patchValue({ image_url: $event })"
+            ></website-image-upload>
+          </div>
+          <div class="adm-field span-full">
+            <label>Description</label>
+            <textarea formControlName="description"></textarea>
+          </div>
+        </div>
+        <div class="adm-form-actions">
+          <button type="button" class="adm-btn primary" (click)="save()" [disabled]="saving()">
+            <mat-icon svgIcon="save"></mat-icon> {{ saving() ? 'Saving…' : 'Save Accessory' }}
+          </button>
+          <button type="button" class="adm-btn ghost" (click)="cancelForm()">
+            <mat-icon svgIcon="close"></mat-icon> Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="adm-loading">
+      <div class="spin"></div>
+      <span class="spin-label">Loading Accessories…</span>
+    </div>
+  } @else {
+
+    <div class="section-actions">
+      <h2 class="adm-section-title">{{ accessories().length }} Accessories</h2>
+      @if (!showForm()) {
+        <button class="adm-btn primary" (click)="openCreate()">
+          <mat-icon svgIcon="add"></mat-icon> Add Accessory
+        </button>
+      }
+    </div>
+
+    @if (accessories().length === 0) {
+      <div class="adm-empty">
+        <mat-icon class="empty-icon" svgIcon="extension"></mat-icon>
+        <p class="empty-title">No accessories yet</p>
+        <p class="empty-desc">Click "Add Accessory" to create your first catalog entry.</p>
+      </div>
+    } @else {
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th class="hide-mobile">Sort</th>
+              <th>Active</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of accessories(); track a.id) {
+              <tr>
+                <td class="mono">{{ a.id }}</td>
+                <td>
+                  <div class="acc-name-cell">
+                    <span>{{ a.name }}</span>
+                    <span class="slug-tag">{{ a.slug }}</span>
+                  </div>
+                </td>
+                <td><span class="cat-badge" [class]="a.category">{{ a.category | titlecase }}</span></td>
+                <td class="mono">
+                  @if (+a.price > 0) {
+                    R {{ a.price | number:'1.0-0' }}
+                  } @else {
+                    <span class="quote-only">Quote only</span>
+                  }
+                </td>
+                <td class="mono hide-mobile">{{ a.sort_order }}</td>
+                <td><span class="bool-dot" [class.on]="a.is_active"></span></td>
+                <td>
+                  <div class="row-actions">
+                    <button class="adm-btn ghost small" (click)="openEdit(a)">
+                      <mat-icon svgIcon="edit"></mat-icon> Edit
+                    </button>
+                    <button class="adm-btn danger small" (click)="remove(a)">
+                      <mat-icon svgIcon="delete"></mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</div>

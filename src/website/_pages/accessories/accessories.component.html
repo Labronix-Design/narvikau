@@ -1,0 +1,162 @@
+<div class="acc-page">
+
+  <!-- ── Hero ── -->
+  <header class="acc-hero texture-hex">
+    <div class="pw-container">
+      <nav class="breadcrumb" aria-label="breadcrumb">
+        <a routerLink="/">Home</a>
+        <span>/</span>
+        <span>Accessories</span>
+      </nav>
+      <p class="acc-eyebrow">Navrik Accessories</p>
+      <h1 class="acc-title">Accessories</h1>
+      <p class="acc-subtitle">Browse the current accessories catalogue for product details, availability and quote requests.</p>
+      <div class="acc-hero-actions">
+        <a routerLink="/products" class="btn-outline">
+          <mat-icon svgIcon="build"></mat-icon>
+          View Products
+        </a>
+        <a routerLink="/contact" class="btn-ghost">
+          <mat-icon svgIcon="forum"></mat-icon>
+          Get a Quote
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Loading skeleton ── -->
+  @if (accessoryService.loading()) {
+    <div class="pw-container">
+      <div class="skeleton-grid">
+        @for (s of skeletons; track s) {
+          <div class="acc-card skeleton-card">
+            <div class="skeleton-img"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line w-60"></div>
+              <div class="skeleton-line w-40"></div>
+              <div class="skeleton-line w-80"></div>
+              <div class="skeleton-btn-placeholder"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ── Error ── -->
+  @if (accessoryService.error()) {
+    <div class="pw-container">
+      <div class="error-state">
+        <mat-icon svgIcon="warning"></mat-icon>
+        <div>
+          <h3>Catalogue information is refreshing</h3>
+          <p>We are refreshing this information. Please try again shortly.</p>
+          <a routerLink="/contact" class="btn-outline">Contact Sales</a>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── Empty ── -->
+  @if (isEmpty()) {
+    <div class="pw-container">
+      <div class="empty-state">
+        <mat-icon svgIcon="inventory_2"></mat-icon>
+        <h3>No accessories are listed yet</h3>
+        <p>This catalogue does not currently have published accessories. Contact our team for product guidance or a tailored quote.</p>
+        <a routerLink="/contact" class="btn-outline">Contact Navrik</a>
+      </div>
+    </div>
+  }
+
+  <!-- ── Accessory groups ── -->
+  @if (hasAny()) {
+    <div class="pw-container acc-body">
+
+      @for (group of groups(); track group.category) {
+        <section class="acc-section">
+          <div class="acc-section-header">
+            <div class="section-icon">
+              <mat-icon [svgIcon]="group.icon"></mat-icon>
+            </div>
+            <div>
+              <span class="section-eyebrow">{{ group.eyebrow }}</span>
+              <h2 class="section-name">{{ group.label }}</h2>
+            </div>
+          </div>
+
+          <div class="acc-grid">
+            @for (acc of group.items; track acc.id) {
+              <article class="acc-card panel-machined">
+
+                <div class="acc-img-wrap">
+                  @if (acc.image_url) {
+                    <img [src]="acc.image_url" [alt]="acc.name" class="acc-img" loading="lazy" decoding="async" />
+                  } @else {
+                    <div class="acc-img-placeholder">
+                      <mat-icon [svgIcon]="categoryIcon(acc.category)"></mat-icon>
+                    </div>
+                  }
+                </div>
+
+                <div class="acc-body">
+                  <h3 class="acc-name">{{ acc.name }}</h3>
+                  @if (acc.description) {
+                    <p class="acc-desc">{{ acc.description }}</p>
+                  }
+
+                  <div class="acc-footer">
+                    <div class="acc-price">
+                      @if (purchaseMode(acc) === 'online_checkout') {
+                        @if (listedPriceCents(acc); as cents) { <span class="price-label">Listed price</span><span class="price-amount">R{{ cents / 100 | number:'1.2-2' }}</span> }
+                        @else { <span class="price-label">Online checkout available</span> }
+                      } @else { <span class="price-label">Tailored quote</span> }
+                    </div>
+                    @if (purchaseMode(acc) === 'online_checkout') {
+                      <button class="add-btn" [class.added]="isAdded(acc.slug)" (click)="addToCart(acc)">
+                        @if (isAdded(acc.slug)) {
+                          <mat-icon svgIcon="check"></mat-icon>
+                          Added
+                        } @else {
+                          <mat-icon svgIcon="add_shopping_cart"></mat-icon>
+                          Add to Cart
+                        }
+                      </button>
+                    } @else {
+                      <button type="button"
+                              class="add-btn quote-btn"
+                              [attr.data-quote-accessory]="acc.slug"
+                              [attr.aria-label]="'Request a quote for ' + acc.name"
+                              (click)="openQuoteModal(acc)">
+                        <mat-icon svgIcon="forum"></mat-icon>
+                        Request a quote
+                      </button>
+                    }
+                  </div>
+                </div>
+
+              </article>
+  }
+</div>
+
+        </section>
+      }
+
+      <!-- Cart note -->
+      @if (hasOnlineCheckoutItems()) {
+      <div class="cart-note">
+        <mat-icon svgIcon="info"></mat-icon>
+        <span>Online checkout items are checked against the current catalogue before payment.</span>
+      </div>
+      }
+
+    </div>
+  }
+
+</div>
+
+<website-quote-modal
+  [isOpen]="quoteModalOpen()"
+  [preSelectedProduct]="quoteModalProduct()"
+  (closeModal)="closeQuoteModal()">
+</website-quote-modal>

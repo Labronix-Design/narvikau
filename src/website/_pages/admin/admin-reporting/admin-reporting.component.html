@@ -1,0 +1,54 @@
+<div class="control-page">
+  <header class="control-page-header">
+    <div><p class="eyebrow">Reporting</p><h1>Keep the business picture together.</h1><p>Internal report status and measurement coverage. Reports do not replace customer invoices.</p></div>
+  </header>
+
+  @if (loading()) {
+    <website-control-state state="loading" [skeletonCount]="3" />
+  } @else {
+    <section class="monthly-panel" aria-labelledby="monthly-report-heading">
+      <div class="panel-heading"><div><p class="eyebrow">Monthly business report</p><h2 id="monthly-report-heading">An internal view of recorded business measures.</h2></div><mat-icon svgIcon="summarize" aria-hidden="true"></mat-icon></div>
+      @if (monthlyError()) {
+        <website-control-state state="error" title="Monthly report unavailable" [message]="monthlyError()" />
+      } @else if (!monthlyReport()) {
+        <website-control-state state="setup" title="Monthly report setup is incomplete" message="An administrator must complete the secure internal reporting configuration before a report can be prepared." />
+      } @else {
+        <div class="monthly-summary">
+          <div><span class="label">Reporting period</span><strong>{{ monthlyReport()?.period?.label }}</strong><small>Completed calendar month</small></div>
+          <div><span class="label">Internal delivery</span>@if (configuredRecipient()) { <strong>{{ configuredRecipient() }}</strong><small>Configured internal recipient</small> } @else { <strong>Setup required</strong><small>An administrator must configure the internal recipient securely.</small> }</div>
+          <div><span class="label">Measurement coverage</span><strong>Server-side snapshot</strong><small>Only recorded measures are included.</small></div>
+        </div>
+
+        <div class="section-list" aria-label="Report sections included">
+          @for (section of reportSections(); track section.key) {
+            <article><website-control-health [state]="sectionHealth(monthlyReport()?.report, section.key)" [detail]="section.status" /><div><h3>{{ section.title }}</h3><p>{{ section.detail }}</p><small>{{ section.status }}</small></div></article>
+          }
+        </div>
+
+        <div class="delivery-action">
+          @if (deliveryResult(); as result) {
+            <p class="delivery-success"><mat-icon svgIcon="check_circle"></mat-icon>@if (result.status === 'already_sent') { Already sent internally } @else { Sent internally } to {{ result.delivery.recipient }}@if (result.delivery.sentAt; as sentAt) { on {{ sentAt | date:'d MMM yyyy, HH:mm' }} }.</p>
+          } @else if (sendState() === 'confirming') {
+            <div class="confirmation" role="status"><div><strong>Send this month-to-date report internally?</strong><p>It will go only to {{ configuredRecipient() }}. Client invoices and external emails are not sent.</p></div><div class="confirmation-actions"><button type="button" class="secondary-button" (click)="cancelSend()">Cancel</button><button type="button" class="primary-button" data-testid="send-monthly-report" (click)="sendMonthlyReport()" [disabled]="sendState() === 'sending'">{{ sendState() === 'sending' ? 'Sending…' : 'Confirm send' }}</button></div></div>
+          } @else {
+            <button type="button" class="primary-button" data-testid="send-monthly-report" (click)="sendMonthlyReport()" [disabled]="!canSendMonthlyReport()"><mat-icon svgIcon="send"></mat-icon>Send completed month report</button>
+          }
+          @if (sendError()) { <p class="inline-error">{{ sendError() }}</p> }
+          @if (!configuredRecipient()) { <p class="setup-note">Delivery stays disabled until the server confirms a configured internal recipient.</p> }
+        </div>
+      }
+    </section>
+
+    <section class="history-section" aria-labelledby="report-history-heading">
+      <div class="history-heading"><div><p class="eyebrow">Report history</p><h2 id="report-history-heading">Internal snapshots</h2></div></div>
+      @if (error() && !model()) {
+        <website-control-state state="error" title="Report history is unavailable" [message]="error()" />
+      } @else if (!(model()?.reports?.length)) {
+        <website-control-state state="empty" title="No internal snapshots yet" message="The first scheduled snapshot will appear here. It does not send an external email." />
+      } @else {
+        @if (error()) { <p class="inline-error">{{ error() }}</p> }
+        <section class="report-list">@for (report of model()?.reports || []; track report.id || report.createdAt) {<article [class.reminder]="report.reminder"><div class="report-icon"><mat-icon [svgIcon]="report.reminder ? 'event' : 'summarize'" aria-hidden="true"></mat-icon></div><div><p class="date">{{ report.reportDate || report.createdAt | date:'EEEE, d MMM yyyy, HH:mm' }}</p><h3>{{ report.title || 'Business control snapshot' }}</h3><p>{{ report.summary || 'Search visibility, sales performance and measurement coverage.' }}</p><dl><div><dt>Measurement coverage</dt><dd>{{ report.measurementCoverage || 'Not measured yet' }}</dd></div><div><dt>Invoice readiness</dt><dd>{{ report.invoiceReadiness || 'Not measured yet' }}</dd></div></dl></div></article>}</section>
+      }
+    </section>
+  }
+</div>

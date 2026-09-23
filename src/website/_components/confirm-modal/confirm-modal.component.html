@@ -1,0 +1,25 @@
+@if (modal.state(); as m) {
+  <div class="cm-overlay" (click)="onCancel()">
+    <div class="cm-dialog cm-{{ m.variant || 'default' }}" (click)="$event.stopPropagation()" role="alertdialog" aria-modal="true">
+      <div class="cm-icon">
+        <mat-icon [svgIcon]="iconFor(m.variant)"></mat-icon>
+      </div>
+
+      <h3 class="cm-title">{{ m.title }}</h3>
+      <p class="cm-message">{{ m.message }}</p>
+
+      <div class="cm-actions">
+        @if (m.kind === 'confirm') {
+          <button type="button" class="cm-btn cm-btn--ghost" (click)="onCancel()">{{ m.cancelLabel || 'Cancel' }}</button>
+          <button type="button" class="cm-btn" [class.cm-btn--danger]="m.variant === 'danger'" (click)="onConfirm()">
+            {{ m.confirmLabel || 'Confirm' }}
+          </button>
+        } @else {
+          <button type="button" class="cm-btn" [class.cm-btn--danger]="m.variant === 'danger'" (click)="onConfirm()">
+            {{ m.okLabel || 'OK' }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

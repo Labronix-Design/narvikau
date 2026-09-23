@@ -1,0 +1,120 @@
+:host {
+  display: inline-flex;
+  vertical-align: middle;
+
+  &.full-width {
+    display: flex;
+    width: 100%;
+  }
+}
+
+button {
+  /* --- NAVRIK DESIGN TOKENS --- */
+  --btn-orange: var(--nv-orange, #ea580c);
+  --btn-bg: #111;
+  --btn-border: #5a6068;
+  --btn-text: #ffffff;
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 0 40px;
+  width: 100%;
+
+  font-family: 'Inter', 'Arial', sans-serif;
+  font-size: 1rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--btn-text);
+
+  /* Sweep via background-position — no z-index/pseudo-element tricks needed */
+  background-image: linear-gradient(to right, var(--btn-orange) 50%, var(--btn-bg) 50%);
+  background-size: 200% 100%;
+  background-position: right center; /* idle: shows dark right half */
+
+  /* Orange left-rail marks it as interactive at a glance */
+  border: 2px solid var(--btn-border);
+  border-left: 3px solid var(--btn-orange);
+  border-radius: 2px;
+
+  box-shadow: 5px 5px 0 #000, inset 0 1px 0 rgba(190, 195, 200, 0.06);
+
+  cursor: pointer;
+  z-index: 1;
+  overflow: hidden;
+
+  transition: background-position 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.2s ease,
+              color 0.2s ease,
+              box-shadow 0.1s ease,
+              transform 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+
+  user-select: none;
+
+  ::ng-deep mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+    transition: color 0.2s ease;
+  }
+
+  span {
+    position: relative;
+    transform: translateY(1px);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* --- HOVER: orange sweeps in from left, text flips to black --- */
+  &:hover:not(:disabled) {
+    background-position: left center;
+    border-color: var(--btn-orange);
+    color: #000;
+    box-shadow: 7px 7px 0 #000;
+    ::ng-deep mat-icon { color: #000; }
+  }
+
+  /* --- PRESS: physically drops to meet the shadow --- */
+  &.button-animate, &:active:not(:disabled) {
+    transform: translate(5px, 5px);
+    box-shadow: 0 0 0 #000;
+  }
+
+  /* --- DISABLED --- */
+  &:disabled {
+    background-image: none;
+    background-color: #0c0c0c;
+    border-color: #222;
+    border-left-color: #333;
+    color: #3a3a3a;
+    box-shadow: none;
+    transform: translate(5px, 5px);
+    cursor: not-allowed;
+    ::ng-deep mat-icon { color: #3a3a3a; }
+  }
+
+  /* --- LOADING STATE --- */
+  .button-loader-text {
+    font-size: 0.95rem;
+    letter-spacing: 0.25em;
+    animation: blinkHeavy 1s infinite steps(2, start);
+  }
+
+  .spinner-icon {
+    animation: wrenchTurn 0.8s infinite alternate cubic-bezier(0.68, -0.55, 0.27, 1.55);
+  }
+}
+
+@keyframes blinkHeavy {
+  0%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes wrenchTurn {
+  0%   { transform: rotate(-25deg); }
+  100% { transform: rotate(50deg); }
+}

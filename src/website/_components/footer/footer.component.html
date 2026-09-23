@@ -1,0 +1,72 @@
+<footer class="app-footer">
+  <div class="footer-content">
+    
+    <div class="footer-grid">
+      
+      <div class="footer-col brand-col">
+        <div class="brand-logo">
+          <a routerLink="/" class="brand-logo-img-link" aria-label="Navrik home">
+            @if (siteSettings.settings().logo_url; as logoUrl) {
+              <img [src]="siteSettings.uploadVariantUrl(logoUrl, 384)"
+                   [attr.srcset]="siteSettings.uploadVariantUrl(logoUrl, 384) + ' 1x, ' + siteSettings.uploadVariantUrl(logoUrl, 768) + ' 2x'"
+                   alt="Navrik — Trays & Accessories"
+                   class="brand-logo-img">
+            } @else {
+              <span class="brand-logo-fallback" aria-hidden="true">Navrik</span>
+            }
+          </a>
+        </div>
+        <p class="brand-subline">Premium Trays, Canopies & Accessories for Bakkies. Partner with the exclusive fitment experts.</p>
+        
+        <div class="contact-block">
+          <a [href]="'mailto:' + siteSettings.settings().contact.email" class="contact-link group">
+            <div class="icon-box"><mat-icon svgIcon="email"></mat-icon></div>
+            <span>{{ siteSettings.settings().contact.email }}</span>
+          </a>
+          @if (siteSettings.settings().contact.phone; as phone) {
+            <a [href]="'tel:' + phone" class="contact-link group">
+              <div class="icon-box"><mat-icon svgIcon="call"></mat-icon></div>
+              <span>{{ phone }}</span>
+            </a>
+          }
+        </div>
+      </div>
+
+      <div class="footer-col links-col">
+        <h2 class="col-header">Products & Partners</h2>
+        <ul class="link-list">
+          <li><a routerLink="/products">Bakkie Trays</a></li>
+          <li><a routerLink="/accessories">Accessories</a></li>
+          <li><a routerLink="/contact">Partner enquiries</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col links-col">
+        <h2 class="col-header">Information</h2>
+        <ul class="link-list">
+          <li><a routerLink="/finance">Finance options</a></li>
+          <li><a routerLink="/terms">Terms of Use</a></li>
+          <li><a routerLink="/privacy">Privacy Policy</a></li>
+          <li><a routerLink="/refund-policy">Refund &amp; Warranty</a></li>
+          <li><a routerLink="/register-warranty">Register your warranty</a></li>
+        </ul>
+      </div>
+
+      </div>
+
+    <div class="footer-divider"></div>
+
+    <div class="footer-bottom">
+      <p class="copyright">&copy; {{ currentYear || '2026' }} <strong>NAVRIK TRAYS, CANOPIES & ACCESSORIES</strong>. All Rights Reserved.</p>
+      
+      <div class="legal-links">
+        <a routerLink="/privacy">Privacy</a>
+        <span class="dot">|</span>
+        <a routerLink="/terms">Terms</a>
+        <span class="dot">|</span>
+        <a routerLink="/refund-policy">Refund Policy</a>
+      </div>
+    </div>
+
+  </div>
+</footer>

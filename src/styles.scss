@@ -1,0 +1,463 @@
+/* --- 1. CORE PROPERTIES & FONTS --- */
+/* Google Fonts loaded via <link> in index.html — no duplicate @import needed */
+
+/* --- 2. SYSTEM CONSTANTS & NAVRIK BRANDING --- */
+:root {
+  /* PERFORMANCE MODES */
+  --gpu-layer: translateZ(0); 
+  --backface-fix: hidden;
+
+  /* TYPOGRAPHY SCALE */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sm: 0.875rem;
+  --font-md: 1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.5rem;
+
+  /* LAYOUT & SPACING */
+  --padding-unit: 1rem;
+  --border-radius: 2px; /* Machined, sharp edges - not 4px */
+
+  /* MOTION: Smooth, mechanical easing */
+  --system-motion-duration: 0.3s;
+  --system-motion-curve: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --system-transition: all var(--system-motion-duration) var(--system-motion-curve);
+
+  /* NAVRIK'S MATTE-METAL SHELL
+     Four neutral tones give the configured orange a single, deliberate job:
+     it is an accent, not a second background. Existing semantic aliases keep
+     older pages on the same system while their component CSS is modernised. */
+  --nv-ink: #0a0908;               /* Matte logo black / shell foundation */
+  --nv-carbon: #171513;            /* Raised structural surface */
+  --nv-gunmetal: #292622;          /* Warm graphite edges, wells and controls */
+  --nv-alloy: #c1bbb3;             /* Warm-machined highlight / chrome */
+  --nv-alloy-muted: #8e8981;       /* Secondary warm-metal detail */
+  --nv-bg-dark: var(--nv-ink);
+  --nv-bg-panel: var(--nv-carbon);
+  --nv-orange: #ea580c;            /* Core Brand Orange */
+  --nv-orange-hover: #c2410c;
+  --nv-orange-rgb: 234, 88, 12;    /* Same colour as --nv-orange, as R,G,B for rgba() glows/tints */
+  --nv-metal: var(--nv-gunmetal);
+  --nv-metal-light: var(--nv-alloy-muted);
+  --nv-aluminum: #9e9991;          /* Raw aluminium — warm neutral steel */
+  --nv-aluminum-light: var(--nv-alloy);
+  --nv-aluminum-dark: #514c46;     /* Anodised / shadow aluminium — warm charcoal */
+  --nv-text-main: #f2ede7;         /* Off-white — easier on eyes than pure white */
+  --nv-text-muted: #c4bdb4;        /* Lifted warm grey — WCAG AA contrast on dark panels */
+
+  /* SHARED PUBLIC SHELL */
+  /* Public layouts use one gutter system. Keep the reading edge at 18–40px,
+     but let catalogue grids use the available space on wide desktops. The
+     former 90rem cap created a 280px visual inset on a 1920px viewport. */
+  --nv-content-max: 112rem;
+  /* One safe edge across every public page: 20px phones, 28px tablets,
+     48px desktop. Components must use this token instead of ad-hoc edges. */
+  --nv-page-gutter: clamp(1.5rem, 3.5vw, 3rem);
+  --nv-nav-height: 4.5rem;
+  --nv-space-1: 0.5rem;
+  --nv-space-2: 1rem;
+  --nv-space-3: 1.5rem;
+  --nv-space-4: 2rem;
+  --nv-space-5: 3rem;
+  --nv-surface-raised: var(--nv-carbon);
+  --nv-border-subtle: rgba(193, 187, 179, 0.16);
+  --nv-border-strong: rgba(193, 187, 179, 0.32);
+  --nv-scrim: rgba(0, 0, 0, 0.72);
+  --nv-shell-inset: inset 0 1px 0 rgba(255, 250, 244, 0.055), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
+  --nv-shell-elevation: 0 1.25rem 2.75rem rgba(0, 0, 0, 0.44), 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
+  /* The administrator controls the sole orange accent at runtime. */
+  --nv-text-on-accent: #ffffff;
+  /* Never force a configurable orange into small body text. Alloy remains
+     legible on matte surfaces; the live orange is used by rails and icons. */
+  --nv-accent-readable: var(--nv-alloy);
+  --nv-cta-surface: var(--nv-carbon);
+  --nv-focus-ring: var(--nv-aluminum-light);
+  --nv-focus-outline: 0 0 0 0.1875rem var(--nv-bg-dark), 0 0 0 0.3125rem var(--nv-focus-ring);
+  --nv-link-decoration: color-mix(in srgb, var(--nv-orange) 72%, var(--nv-alloy));
+  --nv-link-decoration-muted: color-mix(in srgb, var(--nv-orange) 46%, transparent);
+
+  /* Solid Industrial Shadows */
+  --system-shadow: 8px 8px 0 rgba(0, 0, 0, 0.8);
+}
+
+/* --- 3. GLOBAL RESET & BASE --- */
+*, *::before, *::after {
+  margin: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overflow-anchor: none;
+  scroll-behavior: auto;
+  overscroll-behavior-y: auto;
+  max-width: 100%;
+  scroll-padding-top: var(--nv-nav-height);
+}
+
+body {
+  color: var(--nv-text-main);
+  background-color: var(--nv-bg-dark);
+  font-family: var(--font-family-base);
+  font-size: var(--font-md);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  max-width: 100%;
+  min-height: 100dvh;
+}
+
+/* ── iOS Safari input-zoom prevention: all inputs must be ≥ 16px ── */
+input, textarea, select {
+  font-size: 16px;
+}
+
+/* ── Touch tap optimisation: disable 300ms delay on all interactive elements ── */
+button, a, [role="button"], [type="submit"] {
+  touch-action: manipulation;
+}
+
+:where(a, button, input, select, textarea, [role="button"]):focus-visible {
+  outline: 0.125rem solid var(--nv-focus-ring);
+  outline-offset: 0.1875rem;
+  box-shadow: var(--nv-focus-outline);
+}
+
+/* Public text links remain recognisable without borrowing button or card
+   styling. The configured accent is carried by the underline, keeping the
+   link text readable even when an administrator selects a lighter accent. */
+website-root .main-content a:not(:where(
+  [class*='btn'],
+  [class*='card'],
+  [class*='cta'],
+  .cat-pill,
+  .info-link,
+  .back-link,
+  .absa-apply-link
+)),
+website-footer a:not(.brand-logo-img-link) {
+  text-decoration-line: underline;
+  text-decoration-color: var(--nv-link-decoration-muted);
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.22em;
+  transition: color 180ms ease-out, text-decoration-color 180ms ease-out, opacity 180ms ease-out;
+}
+
+website-root .main-content a:not(:where(
+  [class*='btn'],
+  [class*='card'],
+  [class*='cta'],
+  .cat-pill,
+  .info-link,
+  .back-link,
+  .absa-apply-link
+)):is(:hover, :focus-visible),
+website-footer a:not(.brand-logo-img-link):is(:hover, :focus-visible) {
+  color: var(--nv-text-main);
+  /* Angular's emulated component styles can set `text-decoration: none`
+     with an added scope attribute. Keep this narrowly scoped to public
+     text-link interaction states so that shorthand cannot hide the cue. */
+  text-decoration-line: underline !important;
+  text-decoration-color: var(--nv-link-decoration) !important;
+  text-decoration-thickness: 0.14em !important;
+  text-underline-offset: 0.22em !important;
+}
+
+/* Footer component rules intentionally set their own link colours. Match
+   their specificity so the shared interaction cue remains visible there. */
+website-root website-footer .app-footer :where(.contact-link, .link-list a, .legal-links a):is(:hover, :focus-visible) {
+  color: var(--nv-text-main);
+  text-decoration-line: underline !important;
+  text-decoration-color: var(--nv-link-decoration) !important;
+  text-decoration-thickness: 0.14em !important;
+  text-underline-offset: 0.22em !important;
+}
+
+/* --- 4. UTILITY CLASSES --- */
+.gpu-accelerate {
+  will-change: transform, opacity;
+  transform: var(--gpu-layer);
+  backface-visibility: var(--backface-fix);
+}
+
+.reveal-entry {
+  opacity: 0;
+  transform: translateY(15px) var(--gpu-layer);
+  transition: var(--system-transition);
+
+  &.active {
+    opacity: 1;
+    transform: translateY(0) var(--gpu-layer);
+  }
+}
+
+/* =========================================================
+   SHARED LAYOUT UTILITIES (used across multiple components)
+   ========================================================= */
+
+.pw-container {
+  /* The Angular runtime used by the deployed site retains this global class
+     but ignores its computed padding in some browsers. Express the gutter as
+     a real content width instead: that gives every public page the same
+     physical edge without relying on an affected padding calculation. */
+  width: calc(100% - 48px);
+  max-width: var(--nv-content-max);
+  margin: 0 auto;
+}
+
+@media (min-width: 48rem) {
+  .pw-container {
+    width: calc(100% - 64px);
+  }
+}
+
+@media (min-width: 75rem) {
+  .pw-container {
+    width: calc(100% - 96px);
+  }
+}
+
+/* Full-bleed sections may own their background, never their text edge. */
+website-root .main-content > :where(section, main, header, article) {
+  min-inline-size: 0;
+}
+
+@media (max-width: 30rem) {
+  .pw-section { padding-block: 3rem; }
+}
+
+.pw-section {
+  padding: clamp(3.5rem, 6vw, 5.5rem) 0;
+  position: relative;
+}
+
+/* Settings are safe to render with the static theme while loading, but a
+   failed public read must remain visible rather than resembling live config. */
+.site-settings-unavailable {
+  width: min(calc(100% - (var(--nv-page-gutter) * 2)), var(--nv-content-max));
+  margin: calc(var(--nv-nav-height) + 0.75rem) auto 0.75rem;
+  padding: 0.65rem 0.85rem;
+  color: var(--nv-text-main);
+  background: color-mix(in srgb, var(--nv-orange) 16%, var(--nv-carbon));
+  border: 1px solid color-mix(in srgb, var(--nv-orange) 65%, var(--nv-border-strong));
+  border-radius: var(--border-radius);
+  font-size: var(--font-sm);
+  line-height: 1.4;
+}
+
+/* Prevent the alert's top margin collapsing through the route shell and
+   placing it beneath the fixed navigation on a failed settings read. */
+website-root .main-content.has-settings-alert { display: flow-root; }
+
+.public-content-unavailable .panel-machined {
+  max-width: 42rem;
+  margin-inline: auto;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  text-align: center;
+}
+
+.public-content-unavailable h1 {
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.1rem, 2.5vw, 1.45rem);
+  text-transform: uppercase;
+}
+
+.public-content-unavailable p {
+  margin: 0;
+  color: var(--nv-text-muted);
+}
+
+.panel-machined {
+  background-color: var(--nv-bg-panel);
+  border: 1px solid var(--nv-metal);
+  box-shadow: inset 0 1px 0 rgba(255, 250, 244, 0.06);
+  border-radius: 2px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    border-color: rgba(234, 88, 12, 0.5);
+    box-shadow: 0 0 0 1px rgba(var(--nv-orange-rgb), 0.15), inset 0 1px 0 rgba(255, 250, 244, 0.1);
+  }
+
+  &.border-orange { border-color: var(--nv-orange); }
+}
+
+.section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1.75rem, 3vw, 2.65rem);
+  font-weight: 850;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--nv-text-main);
+  margin-bottom: 16px;
+  padding-top: 18px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 28px; height: 2px;
+    background: var(--nv-orange);
+    opacity: 0.7;
+  }
+}
+
+.text-center .section-title::before {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.section-subtitle {
+  font-size: 1.05rem;
+  line-height: 1.75;
+  color: var(--nv-text-muted);
+  max-width: 640px;
+}
+
+.section-header {
+  margin-bottom: clamp(1.75rem, 4vw, 2.5rem);
+  &.text-center { text-align: center; }
+  &.center-children { display: flex; flex-direction: column; align-items: center; }
+}
+
+.highlight-orange { color: var(--nv-text-main); }
+.highlight-metal  { color: var(--nv-metal-light); }
+.text-center { text-align: center; }
+.full-width  { width: 100%; display: block; }
+.mx-auto     { margin-left: auto; margin-right: auto; }
+
+/* Content is visible by default. Hiding whole sections until an observer runs
+   causes real blank bands on slower devices and prevents visual content from
+   being captured reliably by accessibility and performance tools. */
+.scroll-reveal { opacity: 1; }
+
+.texture-hex {
+  background-color: #0d0d0d;
+  background-image: url("data:image/svg+xml,%3Csvg width='28' height='49' viewBox='0 0 28 49' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23222222' fill-opacity='0.35' fill-rule='evenodd'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/svg%3E");
+  border-top: 1px solid rgba(81, 76, 70, 0.5);
+  border-bottom: 1px solid rgba(81, 76, 70, 0.5);
+}
+
+.texture-sand {
+  background-color: #111;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
+  border-top: 1px solid rgba(81, 76, 70, 0.4);
+  border-bottom: 1px solid rgba(81, 76, 70, 0.4);
+}
+
+/* ── Brushed-aluminum surface texture — fine directional lines, neutral silver ── */
+.brushed-al {
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      rgba(213, 205, 196, 0.04) 0px,
+      rgba(213, 205, 196, 0.07) 1px,
+      transparent 1px,
+      transparent 5px
+    ),
+    linear-gradient(
+      175deg,
+      rgba(81, 76, 70, 0.2) 0%,
+      rgba(12, 12, 14, 0.35) 50%,
+      rgba(81, 76, 70, 0.12) 100%
+    );
+}
+
+/* ── Standard Navrik Spinner (consistent across all components) ── */
+.nv-spinner {
+  width: 44px; height: 44px;
+  border: 3px solid var(--nv-aluminum-dark);
+  border-top-color: var(--nv-orange);
+  border-radius: 50%;
+  animation: nv-spin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+.nv-spinner-sm {
+  width: 28px; height: 28px;
+  border: 2px solid var(--nv-aluminum-dark);
+  border-top-color: var(--nv-orange);
+  border-radius: 50%;
+  animation: nv-spin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes nv-spin { to { transform: rotate(360deg); } }
+
+/* Brand logo colour accents on compat cards */
+.brand-color-toyota     { color: #EB0A1E !important; }
+.brand-color-ford       { color: #1877F2 !important; }
+.brand-color-nissan     { color: #C3002F !important; }
+.brand-color-isuzu      { color: #E2001A !important; }
+.brand-color-mitsubishi { color: #ED0000 !important; }
+.brand-color-mazda      { color: #D62027 !important; }
+
+/* Prevent SVG icon content from being clipped at small render sizes */
+mat-icon {
+  overflow: visible !important;
+  svg { overflow: visible; display: block; }
+}
+
+/* Angular Material renders tooltips in the document overlay, outside a page
+   component's style scope. Give every dashboard tooltip a readable surface
+   with a clear edge rather than leaving bare text over live content. */
+.cdk-overlay-container .mat-mdc-tooltip {
+  --mdc-plain-tooltip-container-color: var(--admin-surface-raised, #1b1b1b);
+  --mdc-plain-tooltip-supporting-text-color: var(--admin-text, #f7f5f2);
+  max-width: min(20rem, calc(100vw - 2rem));
+}
+
+.cdk-overlay-container .mat-mdc-tooltip .mdc-tooltip__surface {
+  background: var(--admin-surface-raised, #1b1b1b);
+  border: 1px solid var(--admin-border, rgba(255, 255, 255, .22));
+  border-radius: .35rem;
+  box-shadow: 0 .75rem 1.8rem rgba(0, 0, 0, .35);
+  color: var(--admin-text, #f7f5f2);
+  font-family: var(--font-family-base, Inter, sans-serif);
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  padding: .55rem .7rem;
+}
+
+/* Data Saver and reduced-motion visitors get the same content without the
+   paint-heavy texture filters and perpetual skeleton motion. This applies to
+   every customer page, not only the landing page. */
+html[data-perf='eco'] {
+  .texture-hex,
+  .texture-sand {
+    background-image: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .texture-hex,
+  .texture-sand {
+    background-image: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

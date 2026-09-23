@@ -1,0 +1,47 @@
+<div class="form-group">
+  <label [for]="id">
+    {{ label }}
+    @if (isRequired) {
+      <span class="required-asterisk" aria-hidden="true">*</span>
+    }
+  </label>
+
+  <div class="input-wrapper">
+    @if (formControl) {
+      <input
+        [id]="id"
+        [type]="type"
+        [formControl]="formControl"
+        [placeholder]="placeholder"
+        [attr.autocomplete]="autocomplete"
+        [attr.aria-invalid]="(ngControl.touched || submitted) && ngControl.invalid"
+        [ngClass]="{
+          'v-error': (ngControl.touched || submitted) && ngControl.invalid,
+          'v-success': ngControl.valid && (ngControl.touched || submitted || hasValue)
+        }" />
+    }
+
+    @if ((ngControl.touched || submitted || (hasValue && ngControl.valid))) {
+      <mat-icon
+        aria-hidden="true"
+        class="status-icon"
+        [ngClass]="ngControl.invalid ? 'error-icon' : 'success-icon'"
+        [svgIcon]="ngControl.invalid ? 'error' : 'check_circle'">
+      </mat-icon>
+    }
+  </div>
+
+  @if ((ngControl.touched || submitted) && ngControl.invalid) {
+    <div [id]="id + '-error'" class="error-wrapper" role="alert">
+      @if (formControl?.errors?.['required']) {
+        <p class="error-text">{{ label }} is required</p>
+      }
+      @if (formControl?.errors?.['email']) {
+        <p class="error-text">Invalid email address</p>
+      }
+      @if (formControl?.errors?.['pattern']) {
+        <p class="error-text">Invalid format</p>
+      }
+    </div>
+  }
+</div>

@@ -1,0 +1,44 @@
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="brand-mark">NV</div>
+      <div>
+        <div class="brand-name">NAVRIK</div>
+        <div class="brand-sub">Admin Portal</div>
+      </div>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <div class="field-wrap">
+        <label class="field-label">Admin Password</label>
+        <div class="pw-input-row">
+          <mat-icon svgIcon="lock"></mat-icon>
+          <input
+            class="pw-input"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password">
+          <button type="button" class="pw-toggle" (click)="showPassword.set(!showPassword())" tabindex="-1">
+            <mat-icon [svgIcon]="showPassword() ? 'visibility_off' : 'visibility'"></mat-icon>
+          </button>
+        </div>
+      </div>
+
+      @if (error()) {
+        <div class="error-msg">
+          <mat-icon svgIcon="error"></mat-icon>
+          {{ error() }}
+        </div>
+      }
+
+      <button type="submit" class="login-btn" [disabled]="loading()">
+        @if (loading()) { Authenticating… } @else { Sign In }
+      </button>
+    </form>
+
+    <p class="login-note">
+      <mat-icon svgIcon="security"></mat-icon>
+      Access restricted to authorised Navrik administrators.
+    </p>
+  </div>
+</div>

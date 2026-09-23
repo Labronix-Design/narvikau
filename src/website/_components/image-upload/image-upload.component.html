@@ -1,0 +1,43 @@
+<div class="img-upload" [class.compact]="compact">
+  <label
+    class="drop-zone"
+    [class.dragging]="isDragging()"
+    [class.has-image]="previewSrc"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+  >
+    <input type="file" accept="image/*" (change)="onFileInputChange($event)" hidden />
+
+    @if (previewSrc && !isUploading()) {
+      <img [src]="previewSrc" alt="Product image preview" class="preview-img" />
+      <div class="preview-overlay">
+        <mat-icon svgIcon="edit"></mat-icon>
+        @if (!compact) { <span>Replace image</span> }
+      </div>
+      <button type="button" class="clear-btn" (click)="clearImage(); $event.preventDefault()" aria-label="Remove image">
+        <mat-icon svgIcon="close"></mat-icon>
+      </button>
+    } @else if (isUploading()) {
+      <div class="upload-state">
+        <div class="spin"></div>
+        @if (!compact) { <span>Uploading…</span> }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <mat-icon svgIcon="cloud_upload"></mat-icon>
+        @if (!compact) {
+          <span class="primary-txt">Click or drag an image here</span>
+          <span class="hint-txt">JPEG, PNG, WebP, GIF, SVG — up to 4MB</span>
+        }
+      </div>
+    }
+  </label>
+
+  @if (error()) {
+    <div class="upload-err">
+      <mat-icon svgIcon="error"></mat-icon>
+      <span>{{ error() }}</span>
+    </div>
+  }
+</div>

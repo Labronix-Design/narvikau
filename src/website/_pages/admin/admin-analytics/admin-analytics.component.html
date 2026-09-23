@@ -1,0 +1,21 @@
+<div class="sales-page">
+  <header class="page-header">
+    <div><p class="eyebrow">Measured sales analysis</p><h1>Sales performance</h1><p>Paid or confirmed sales from the latest server-side snapshot. Pending and test orders are not treated as revenue.</p></div>
+    @if (model()?.cache?.updatedAt; as updatedAt) { <span class="updated">Last updated {{ updatedAt | date:'d MMM, HH:mm' }}</span> }
+  </header>
+
+  @if (loading()) {
+    <website-control-state state="loading" [skeletonCount]="3" />
+  } @else if (error() && !model()) {
+    <website-control-state state="error" title="Sales performance unavailable" [message]="error()" />
+  } @else if (model()?.status !== 'ready') {
+    <website-control-state state="setup" title="Sales performance is not measured" [message]="model()?.explanation || 'The server has not produced a sales-performance snapshot yet.'" />
+  } @else {
+    @if (error()) { <p class="inline-error" role="alert">{{ error() }}</p> }
+    @if (snapshot(); as sales) {
+      <section class="health-line" aria-label="Sales performance health"><website-control-health [state]="sales.health.state" [detail]="sales.health.explanation" /></section>
+      <section class="metric-grid" aria-label="Sales performance totals">@for (metric of metrics(); track metric.label) { <website-control-metric [label]="metric.label" [icon]="metric.icon" [value]="metric.value" [format]="metric.format || 'number'" [context]="metric.context || ''" [tone]="metric.tone || 'default'" /> }</section>
+      <section class="panel comparison-panel" aria-labelledby="comparison-heading"><div class="panel-heading"><div><p class="eyebrow">Period comparison</p><h2 id="comparison-heading">What this snapshot can compare</h2></div><mat-icon svgIcon="compare_arrows" aria-hidden="true"></mat-icon></div><website-control-health [state]="sales.comparison.status === 'ready' ? 'ready' : 'not-measured'" [detail]="sales.comparison.explanation" /><p>{{ sales.comparison.explanation }}</p></section>
+    }
+  }
+</div>

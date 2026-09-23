@@ -1,0 +1,67 @@
+<div class="control-page">
+  <header class="control-page-header">
+    <div>
+      <p class="eyebrow">Business overview</p>
+      <h1>What needs your attention today?</h1>
+      <p class="lede">A decision view of sales, enquiries and the data behind them. Open a total to work in its dedicated queue.</p>
+    </div>
+    <div class="header-actions">
+      @if (model()?.cache?.updatedAt; as updatedAt) { <span class="updated">Last updated {{ updatedAt | date:'d MMM, HH:mm' }}</span> }
+      <button type="button" class="refresh-button" (click)="refresh()" [disabled]="refreshing()">
+        <mat-icon svgIcon="refresh" aria-hidden="true"></mat-icon>{{ refreshing() ? 'Refreshing overview' : 'Refresh overview' }}
+      </button>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <website-control-state state="loading" [skeletonCount]="4" />
+  } @else if (error() && !model()) {
+    <website-control-state state="error" title="Business view unavailable" [message]="error()" />
+  } @else if (business()?.status !== 'ready') {
+    <website-control-state state="setup" title="Business overview is not measured" [message]="businessNotMeasuredReason()" />
+  } @else {
+    @if (error()) { <p class="inline-error">{{ error() }}</p> }
+    <section class="metric-grid" aria-label="Business totals">
+      @for (metric of metrics(); track metric.label) {
+        <website-control-metric [label]="metric.label" [icon]="metric.icon" [value]="metric.value" [format]="metric.format || 'number'" [context]="metric.context || ''" [trend]="metric.trend || ''" [tone]="metric.tone || 'default'" [routerLink]="metric.route" [unavailableReason]="metric.unavailableReason || 'This is not measured in the current data source.'" />
+      } @empty {
+        <website-control-state state="empty" title="Not measured yet" message="This account does not have enough connected business data to calculate a reliable overview." />
+      }
+    </section>
+
+    <section class="integration-section" aria-labelledby="integration-title">
+      <div class="section-heading">
+        <div><p class="eyebrow">Data health</p><h2 id="integration-title">What is measured</h2></div>
+        <p>Each status reflects the latest server-side snapshot. It does not estimate a result when a measurement is missing.</p>
+      </div>
+      <div class="integration-grid">
+        @for (integration of integrationCards(); track integration.id) {
+          <a class="integration-card" [routerLink]="integration.route" [class.is-connected]="integration.health === 'ready'" [class.is-setup]="integration.health === 'action-required'" [class.is-stale]="integration.health === 'attention'">
+            <span class="integration-icon"><mat-icon [svgIcon]="integration.icon" aria-hidden="true"></mat-icon></span>
+            <span class="integration-copy"><span class="integration-provider">{{ integration.provider }}</span><strong>{{ integration.label }}</strong><span>{{ integration.detail }}</span></span>
+            <span class="integration-footer"><website-control-health [state]="integration.health" [detail]="integration.detail" /><span class="integration-action">{{ integration.action }} <mat-icon svgIcon="north_east" aria-hidden="true"></mat-icon></span></span>
+          </a>
+        }
+      </div>
+    </section>
+
+    <section class="control-grid">
+      <article class="control-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Action queue</p><h2>Next business actions</h2></div><mat-icon svgIcon="north_east" aria-hidden="true"></mat-icon></div>
+        <div class="action-list">
+          @for (action of actions(); track action.title) {
+            @if (action.route) { <a class="action" [routerLink]="action.route" [class.high]="action.priority === 'high'"><strong>{{ action.title }}</strong><span>{{ action.detail }}</span></a> }
+            @else { <div class="action" [class.high]="action.priority === 'high'"><strong>{{ action.title }}</strong><span>{{ action.detail }}</span></div> }
+          } @empty { <p class="quiet">There are no recommended actions from the available measurements.</p> }
+        </div>
+      </article>
+      <article class="control-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Latest comparison</p><h2>What the data can compare</h2></div><mat-icon svgIcon="compare_arrows" aria-hidden="true"></mat-icon></div>
+        @if (businessSnapshot()?.comparison; as comparison) {
+          <website-control-health [state]="comparison.status === 'ready' ? 'ready' : 'not-measured'" [detail]="comparison.explanation" />
+          <p class="quiet comparison-detail">{{ comparison.explanation }}</p>
+        }
+      </article>
+    </section>
+  }
+</div>

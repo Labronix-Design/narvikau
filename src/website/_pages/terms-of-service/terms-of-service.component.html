@@ -1,0 +1,61 @@
+@if (legalPageService.unavailable()) {
+  <section class="public-content-unavailable pw-section" aria-live="polite">
+    <div class="pw-container">
+      <div class="panel-machined">
+        <h1>Terms information is refreshing</h1>
+        <p>We are refreshing this information. Please try again shortly.</p>
+      </div>
+    </div>
+  </section>
+} @else {
+<div class="navrik-terms-wrapper">
+
+  <main class="navrik-terms-card fade-in-up">
+
+    <header class="terms-header">
+      <div class="spec-badge">
+        <span class="badge-text">{{ content().badge }}</span>
+      </div>
+      <div class="header-content">
+        <h1>{{ content().title_main }} <span class="highlight-orange">{{ content().title_highlight }}</span></h1>
+        <p class="subtitle">{{ content().intro }}</p>
+      </div>
+    </header>
+
+    <div class="terms-grid">
+      @for (section of content().sections; track section.title; let last = $last) {
+        <section class="term-section">
+          <div class="section-header-row">
+            <div class="section-icon"><mat-icon [svgIcon]="section.icon"></mat-icon></div>
+            <h2>{{ section.title }}</h2>
+          </div>
+          <div class="section-text">
+            @if (section.intro) {
+              <p>{{ section.intro }}</p>
+            }
+            @if (section.items.length) {
+              <ul class="data-list">
+                @for (item of section.items; track item.text) {
+                  <li>{{ item.text }}</li>
+                }
+              </ul>
+            }
+            @if (last) {
+              <div class="contact-card">
+                <p>Contact us</p>
+                <a aria-label="Email Navrik" [href]="'mailto:' + siteSettings.settings().contact.email" class="industrial-link">{{ siteSettings.settings().contact.email }}</a>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </div>
+
+    <footer class="terms-footer">
+      <website-button class="large-btn" [id]="'TermsToHome'" routerLink="/">
+        Back to home
+      </website-button>
+    </footer>
+  </main>
+</div>
+}

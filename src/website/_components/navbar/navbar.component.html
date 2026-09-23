@@ -1,0 +1,164 @@
+<nav class="nv-navbar" #navElement aria-label="Main Navigation">
+  <div class="nv-nav-wrapper">
+
+    <!-- Mobile: hamburger (left) -->
+    <button class="nv-burger" type="button" [class.is-open]="isMenuOpen" (click)="toggleNavbar()" aria-label="Toggle navigation" aria-controls="nav-menu" [attr.aria-expanded]="isMenuOpen">
+      <span class="line"></span>
+      <span class="line"></span>
+      <span class="line"></span>
+    </button>
+
+    <!-- Brand -->
+    <div class="nv-brand">
+      <a routerLink="/" aria-label="Navrik home" class="nv-brand-logo-link">
+        @if (siteSettings.settings().logo_url; as logoUrl) {
+          <img [src]="siteSettings.uploadVariantUrl(logoUrl, 320)"
+               [attr.srcset]="siteSettings.uploadVariantUrl(logoUrl, 320) + ' 1x, ' + siteSettings.uploadVariantUrl(logoUrl, 640) + ' 2x'"
+               alt="Navrik — Trays & Accessories"
+               class="nv-brand-logo-img">
+        } @else {
+          <span class="nv-brand-fallback" aria-hidden="true">Navrik</span>
+        }
+      </a>
+    </div>
+
+    <!-- Desktop + Mobile nav links -->
+    <ul id="nav-menu" class="nv-nav-links" [class.is-open]="isMenuOpen">
+
+      <li>
+        <a routerLink="/"
+           [class.active]="router.url === '/'"
+           [attr.aria-current]="router.url === '/' ? 'page' : null"
+           (click)="closeNavbar()">Home</a>
+      </li>
+
+      <!-- Shop dropdown -->
+      <li class="has-dropdown" [class.dropdown-open]="shopOpen">
+        <button class="nv-drop-trigger" type="button" id="shop-trigger"
+                [class.active]="isShopActive()"
+                (click)="toggleShop($event)"
+                [attr.aria-controls]="'shop-categories'"
+                [attr.aria-expanded]="shopOpen">
+          Shop
+          <svg class="drop-chevron" viewBox="0 0 10 6" fill="none">
+            <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </button>
+
+        <div id="shop-categories"
+             class="nv-dropdown"
+             aria-labelledby="shop-trigger"
+             [attr.aria-hidden]="!shopOpen"
+             [attr.inert]="shopOpen ? null : ''">
+          <div class="dropdown-inner">
+
+            <ul class="drop-grid" aria-label="Shop categories">
+              <li>
+                <a routerLink="/products" [queryParams]="{category: 'canopy'}"
+                   class="drop-item" (click)="closeAll()">
+                  <span class="drop-thumb-wrap" [class.has-image]="!!shopPreview('canopy')">
+                    @if (shopPreview('canopy'); as canopyPreview) {
+                      <img [src]="canopyPreview.url" [alt]="canopyPreview.alt" loading="lazy" decoding="async" (error)="onPreviewImageError(canopyPreview.url)">
+                    } @else {
+                      <mat-icon class="drop-thumb-fallback" svgIcon="inventory_2" aria-hidden="true"></mat-icon>
+                    }
+                  </span>
+                  <span class="drop-text">
+                    <span class="drop-name">Canopies</span>
+                    <span class="drop-desc">{{ shopSummary('canopy') }}</span>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/products" [queryParams]="{category: 'tray'}"
+                   class="drop-item" (click)="closeAll()">
+                  <span class="drop-thumb-wrap" [class.has-image]="!!shopPreview('tray')">
+                    @if (shopPreview('tray'); as trayPreview) {
+                      <img [src]="trayPreview.url" [alt]="trayPreview.alt" loading="lazy" decoding="async" (error)="onPreviewImageError(trayPreview.url)">
+                    } @else {
+                      <mat-icon class="drop-thumb-fallback" svgIcon="inventory_2" aria-hidden="true"></mat-icon>
+                    }
+                  </span>
+                  <span class="drop-text">
+                    <span class="drop-name">Trays</span>
+                    <span class="drop-desc">{{ shopSummary('tray') }}</span>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/products" [queryParams]="{category: 'custom-made-tray-and-canopy-combo'}"
+                   class="drop-item" (click)="closeAll()">
+                  <span class="drop-thumb-wrap" [class.has-image]="!!shopPreview('custom-made-tray-and-canopy-combo')">
+                    @if (shopPreview('custom-made-tray-and-canopy-combo'); as comboPreview) {
+                      <img [src]="comboPreview.url" [alt]="comboPreview.alt" loading="lazy" decoding="async" (error)="onPreviewImageError(comboPreview.url)">
+                    } @else {
+                      <mat-icon class="drop-thumb-fallback" svgIcon="inventory_2" aria-hidden="true"></mat-icon>
+                    }
+                  </span>
+                  <span class="drop-text">
+                    <span class="drop-name">Custom Made Tray and Canopy Combo</span>
+                    <span class="drop-desc">{{ shopSummary('custom-made-tray-and-canopy-combo') }}</span>
+                  </span>
+                </a>
+              </li>
+              <li>
+                <a routerLink="/accessories"
+                   class="drop-item" (click)="closeAll()">
+                  <span class="drop-thumb-wrap" [class.has-image]="!!shopPreview('accessory')">
+                    @if (shopPreview('accessory'); as accessoryPreview) {
+                      <img [src]="accessoryPreview.url" [alt]="accessoryPreview.alt" loading="lazy" decoding="async" (error)="onPreviewImageError(accessoryPreview.url)">
+                    } @else {
+                      <mat-icon class="drop-thumb-fallback" svgIcon="inventory_2" aria-hidden="true"></mat-icon>
+                    }
+                  </span>
+                  <span class="drop-text">
+                    <span class="drop-name">Accessories</span>
+                    <span class="drop-desc">{{ shopSummary('accessory') }}</span>
+                  </span>
+                </a>
+              </li>
+            </ul>
+
+            <div class="drop-footer">
+              <a routerLink="/products" class="drop-view-all" (click)="closeAll()">
+                View all products
+                <mat-icon svgIcon="arrow_forward"></mat-icon>
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </li>
+
+      <li>
+        <a routerLink="/finance"
+           [class.active]="router.url.startsWith('/finance')"
+           [attr.aria-current]="router.url.startsWith('/finance') ? 'page' : null"
+           (click)="closeNavbar()">Finance</a>
+      </li>
+      <li>
+        <a routerLink="/contact"
+           [class.active]="router.url.startsWith('/contact')"
+           [attr.aria-current]="router.url.startsWith('/contact') ? 'page' : null"
+           (click)="closeNavbar()">Contact</a>
+      </li>
+    </ul>
+
+    <!-- Cart -->
+    <button class="nv-cart-btn" aria-label="View Cart" (click)="closeNavbar(); cartService.openCart()">
+      <mat-icon svgIcon="shopping_cart"></mat-icon>
+      <span class="cart-label" aria-hidden="true">Cart</span>
+      @if ((cartCount$ | async)! > 0) {
+        <span class="cart-badge" aria-live="polite">
+          <span class="badge-text">{{ cartCount$ | async }}</span>
+        </span>
+      }
+    </button>
+
+  </div>
+
+  <!-- Mobile backdrop -->
+  @if (isMenuOpen || shopOpen) {
+    <div class="nv-drawer-backdrop" (click)="closeAll()" aria-hidden="true"></div>
+  }
+</nav>

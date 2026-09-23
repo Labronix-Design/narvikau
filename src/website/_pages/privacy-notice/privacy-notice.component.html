@@ -1,0 +1,78 @@
+<div class="navrik-privacy-wrapper">
+  <main class="navrik-privacy-card fade-in-up">
+    
+    <header class="privacy-header">
+      <div class="spec-badge">
+        <span class="badge-text">Privacy notice</span>
+      </div>
+      <div class="header-content">
+        <h1>Privacy & <span class="highlight-orange">Data.</span></h1>
+        <p class="subtitle">How we collect, use, and protect your information.</p>
+      </div>
+    </header>
+
+    <div class="policy-grid">
+      
+      <section class="policy-section">
+        <div class="section-header-row">
+            <div class="section-icon"><mat-icon svgIcon="inventory_2"></mat-icon></div>
+            <h2>1. Freight & Order Data</h2>
+        </div>
+        <div class="section-text">
+          <p>When you purchase Navrik bakkie trays or accessories, we collect strictly what is necessary to fulfill your hardware orders and comply with the South African POPIA Act.</p>
+          <ul class="data-list">
+            <li><strong>Order Fulfillment:</strong> We collect your Name, Dealership/Business Name, Freight Delivery Address, and Contact Number to ensure your cargo arrives safely.</li>
+            <li><strong>Communication:</strong> Your email address is used exclusively to send order invoices, dispatch tracking details, and support responses.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="policy-section">
+        <div class="section-header-row">
+            <div class="section-icon"><mat-icon svgIcon="payments"></mat-icon></div>
+            <h2>2. Secure Payments</h2>
+        </div>
+        <div class="section-text">
+          <p>We do not store or process your raw credit card information on our internal servers.</p>
+          <ul class="data-list">
+            <li><strong>Payment Gateways:</strong> All transactions are securely routed through encrypted, industry-standard payment providers.</li>
+            <li><strong>Zero-Sale Policy:</strong> Navrik does not, and will never, sell your personal, dealership, or financial data to third-party data brokers.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="policy-section">
+        <div class="section-header-row">
+            <div class="section-icon"><mat-icon svgIcon="cookie"></mat-icon></div>
+            <h2>3. Local Storage & Analytics</h2>
+        </div>
+        <div class="section-text">
+          <p>We prioritize your digital privacy. We use basic Local Storage to power essential portal features, such as saving your active hardware cart or fitment requests so you don't lose your progress.</p>
+          <p>Only when you choose to allow analytics do we use privacy-conscious, aggregated website measurement to understand traffic and improve the site. You can decline without affecting shopping, quote requests, or support.</p>
+        </div>
+      </section>
+
+      <section class="policy-section">
+        <div class="section-header-row">
+            <div class="section-icon"><mat-icon svgIcon="gavel"></mat-icon></div>
+            <h2>4. Your Privacy Rights</h2>
+        </div>
+        <div class="section-text">
+          <p>Under the POPIA Act, you maintain absolute control over your personal information. You have the right to access, update, or request the deletion of your data from our fulfillment and CRM systems.</p>
+          
+          <div class="contact-card">
+            <p>Privacy questions or requests</p>
+            <a aria-label="Email Navrik" [href]="'mailto:' + siteSettings.settings().contact.email" class="industrial-link">{{ siteSettings.settings().contact.email }}</a>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <footer class="privacy-footer">
+      <website-button class="large-btn" [id]="'PrivacyToHome'" routerLink="/">
+        Return to Home
+      </website-button>
+    </footer>
+  </main>
+</div>

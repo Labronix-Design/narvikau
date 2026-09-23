@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>NAVRIK | Trays & Accessories - Built Tough for Africa</title>
+    <base href="/">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="theme-color" content="#050505">
+
+    <meta name="description" content="Navrik: Premium heavy-duty aluminium bakkie trays, canopies, and toolboxes. Built for the toughest African conditions. Engineered for Hilux, Ranger, Land Cruiser, and more.">
+    <meta name="keywords" content="4x4 accessories, bakkie trays, aluminium canopies, heavy duty toolboxes, South Africa, off-road equipment, Navrik industrial, ute trays">
+    <meta name="author" content="Navrik Trays & Accessories">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* NAVRIK BRAND COLORS - Synced exactly to Angular Component */
+            --nv-black: #050505;
+            --nv-grey-dark: #1A1A1A;
+            --nv-grey-light: #8E8E8E;
+            --nv-orange: #E65C00;
+            --nv-silver: #D1D1D1;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            background-color: var(--nv-black);
+            font-family: 'Inter', -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        /* --- TOUGH DARK BACKGROUND --- */
+        #pre-load {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            /* Deep radial gradient to simulate a spotlight on dark textured metal */
+            background: radial-gradient(circle at center, var(--nv-grey-dark) 0%, var(--nv-black) 80%);
+            
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            
+            transition: opacity 0.6s ease-in-out, visibility 0.6s;
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #pre-load.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 40px;
+        }
+
+        /* --- BRAND TYPOGRAPHY & METALLIC EFFECT --- */
+        .brand-stack {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .brand-name {
+            margin: 0;
+            font-size: 3.5rem;
+            font-weight: 900;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            
+            /* Metallic Silver Effect */
+            background: linear-gradient(to bottom, #FFFFFF 0%, #A0A0A0 40%, #505050 50%, #909090 60%, #FFFFFF 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.8));
+        }
+
+        .brand-tagline {
+            margin: 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.3em;
+            color: var(--nv-silver);
+            text-transform: uppercase;
+        }
+
+        /* --- HEAVY DUTY LOADER BAR --- */
+        .industrial-loader {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .loader-track {
+            width: 100%;
+            height: 8px;
+            background-color: #000000;
+            border: 1px solid #333;
+            border-radius: 2px;
+            overflow: hidden;
+            position: relative;
+            /* Sharp, angled ends for that mechanical/truck feel */
+            transform: skewX(-15deg);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.9);
+        }
+
+        .loader-fill {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, transparent, var(--nv-orange), #FF8C00);
+            /* Sweeping engine-rev animation */
+            animation: revEngine 1.5s cubic-bezier(0.77, 0, 0.175, 1) infinite;
+        }
+
+        @keyframes revEngine {
+            0% { left: -50%; }
+            50% { left: 100%; }
+            100% { left: 100%; }
+        }
+
+        /* --- STATUS INDICATOR --- */
+        .status-box {
+            text-align: center;
+            /* Mimicking the orange highlight strip from the flyer */
+            background: linear-gradient(90deg, transparent, rgba(230, 92, 0, 0.1), transparent);
+            padding: 4px 20px;
+        }
+
+        .status-indicator {
+            margin: 0;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+            color: var(--nv-orange);
+            font-weight: 800;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(230, 92, 0, 0.4);
+            animation: pulseText 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; filter: brightness(1.2); }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="pre-load">
+        <div class="loader-container">
+            
+            <div class="brand-stack">
+                <h2 class="brand-name">NAVRIK</h2>
+                <p class="brand-tagline">TRAYS & ACCESSORIES</p>
+            </div>
+
+            <div class="industrial-loader">
+                <div class="loader-track">
+                    <div class="loader-fill"></div>
+                </div>
+                <div class="status-box">
+                    <p class="status-indicator">BUILT TOUGH FOR AFRICA</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <website-root></website-root>
+
+    <script>
+        window.addEventListener('load', () => {
+            const preloader = document.getElementById('pre-load');
+            // Give Angular a moment to render the real PageLoaderComponent behind it
+            setTimeout(() => {
+                preloader.classList.add('fade-out');
+                document.body.style.overflow = 'auto';
+            }, 800); 
+        });
+    </script>
+</body>
+</html>

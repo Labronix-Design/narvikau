@@ -1,0 +1,185 @@
+<div class="contact-page">
+
+  <!-- ── Page header ── -->
+  <header class="contact-hero texture-hex">
+    <div class="pw-container">
+      <p class="page-eyebrow">Get In Touch</p>
+      <h1 class="page-title">Contact <span class="highlight-orange">Navrik.</span></h1>
+      <p class="page-sub">Dealer enquiries, fitment bookings, or just want to know more — reach us directly and we'll get back to you within 1 business day.</p>
+    </div>
+  </header>
+
+  <!-- ── Two-column layout ── -->
+  <section class="contact-body pw-section">
+    <div class="pw-container">
+      <div class="contact-grid">
+
+        <!-- ── LEFT: Info column ── -->
+        <aside class="info-col">
+
+          <!-- Direct contact -->
+          <div class="info-block">
+            <h2 class="info-heading">Direct Contact</h2>
+            <ul class="contact-list">
+              <li class="contact-item">
+                <span class="contact-icon-wrap">
+                  <mat-icon svgIcon="email"></mat-icon>
+                </span>
+                <div class="contact-item-body">
+                  <span class="contact-item-label">Email</span>
+                  <a [href]="'mailto:' + siteSettings.settings().contact.email" class="contact-item-value">{{ siteSettings.settings().contact.email }}</a>
+                </div>
+              </li>
+              @if (siteSettings.settings().contact.phone; as phone) {
+                <li class="contact-item">
+                  <span class="contact-icon-wrap">
+                    <mat-icon svgIcon="call"></mat-icon>
+                  </span>
+                  <div class="contact-item-body">
+                    <span class="contact-item-label">Phone</span>
+                    <a [href]="'tel:' + phone" class="contact-item-value">{{ phone }}</a>
+                  </div>
+                </li>
+              }
+              <li class="contact-item">
+                <span class="contact-icon-wrap">
+                  <mat-icon svgIcon="directions_car"></mat-icon>
+                </span>
+                <div class="contact-item-body">
+                  <span class="contact-item-label">Location</span>
+                  <span class="contact-item-value">{{ siteSettings.settings().contact.location }}</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Business hours -->
+          <div class="info-block">
+            <h2 class="info-heading">Business Hours</h2>
+            <ul class="hours-list">
+              @for (row of siteSettings.settings().contact.business_hours; track row.label) {
+                <li class="hours-row" [class.closed]="row.closed">
+                  <span>{{ row.label }}</span>
+                  <span class="hours-time">{{ row.hours }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+
+          <!-- Quick links -->
+          <div class="info-block">
+            <h2 class="info-heading">Useful Links</h2>
+            <nav class="info-links">
+              <a routerLink="/products" class="info-link">
+                <mat-icon svgIcon="arrow_forward"></mat-icon>
+                Browse Products
+              </a>
+              <a routerLink="/finance" class="info-link">
+                <mat-icon svgIcon="arrow_forward"></mat-icon>
+                Finance with ABSA
+              </a>
+              <a routerLink="/refund-policy" class="info-link">
+                <mat-icon svgIcon="arrow_forward"></mat-icon>
+                Refund &amp; Warranty Policy
+              </a>
+            </nav>
+          </div>
+
+        </aside>
+
+        <!-- ── RIGHT: Contact form ── -->
+        <div class="form-col">
+          <div class="form-card panel-machined">
+            <div class="form-card-header">
+              <h2 class="form-title">Send a Message</h2>
+              <p class="form-subtitle">Fill in your details and we'll get back to you within 1 business day.</p>
+            </div>
+
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate class="contact-form">
+
+              <div class="form-row">
+                <div class="field-group" [class.has-error]="fieldInvalid('Name')">
+                  <label class="field-label" for="c-name">Full Name <span class="required">*</span></label>
+                  <input id="c-name" type="text" formControlName="Name"
+                         placeholder="John Doe"
+                         autocomplete="name"
+                         class="field-input" />
+                  @if (fieldInvalid('Name')) {
+                    <span class="field-error">Full name is required.</span>
+                  }
+                </div>
+
+                <div class="field-group" [class.has-error]="fieldInvalid('Surname')">
+                  <label class="field-label" for="c-company">Company / Dealership</label>
+                  <input id="c-company" type="text" formControlName="Surname"
+                         placeholder="Acme Motors (optional)"
+                         autocomplete="organization"
+                         class="field-input" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="field-group" [class.has-error]="fieldInvalid('Phone')">
+                  <label class="field-label" for="c-phone">Contact Number <span class="required">*</span></label>
+                  <input id="c-phone" type="tel" formControlName="Phone"
+                         placeholder="+27 82 000 0000"
+                         autocomplete="tel"
+                         class="field-input" />
+                  @if (fieldInvalid('Phone')) {
+                    <span class="field-error">Contact number is required.</span>
+                  }
+                </div>
+
+                <div class="field-group" [class.has-error]="fieldInvalid('Email')">
+                  <label class="field-label" for="c-email">Email Address <span class="required">*</span></label>
+                  <input id="c-email" type="email" formControlName="Email"
+                         placeholder="you@example.com"
+                         autocomplete="email"
+                         class="field-input" />
+                  @if (fieldInvalid('Email')) {
+                    <span class="field-error">
+                      @if (form.controls.Email.errors?.['required']) { Email address is required. }
+                      @else { Please enter a valid email address. }
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <div class="form-row single">
+                <div class="field-group" [class.has-error]="fieldInvalid('Message')">
+                  <label class="field-label" for="c-message">Message <span class="required">*</span></label>
+                  <textarea id="c-message" formControlName="Message"
+                            placeholder="Tell us about your fitment needs, product enquiry, or dealer partnership interest…"
+                            rows="5"
+                            class="field-input field-textarea"></textarea>
+                  @if (fieldInvalid('Message')) {
+                    <span class="field-error">Please include a message.</span>
+                  }
+                </div>
+              </div>
+
+              <div class="form-footer">
+                <button type="submit" class="submit-btn" [class.is-loading]="isLoading" [disabled]="isLoading">
+                  @if (isLoading) {
+                    <span class="btn-spinner"></span>
+                    Processing…
+                  } @else {
+                    <mat-icon svgIcon="send"></mat-icon>
+                    Send Message
+                  }
+                </button>
+                <p class="form-privacy">
+                  Your information is kept confidential. View our
+                  <a routerLink="/privacy">Privacy Notice</a>.
+                </p>
+              </div>
+
+            </form>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</div>

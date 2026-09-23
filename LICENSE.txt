@@ -1,0 +1,27 @@
+Custom License for navrik
+Copyright (c) navrik 2025. All rights reserved.
+
+This repository and the code contained within it are proprietary and strictly confidential. By accessing this repository, you agree to the following terms:
+
+Ownership and Copyright
+All code, designs, documentation, and other materials in this repository are the exclusive property of navrik and are protected by intellectual property laws, including copyright and trade secret protections.
+Restrictions on Use
+You may not:
+Use, copy, modify, distribute, or create derivative works based on the code or any part of this repository without prior written consent from navrik.
+Reverse-engineer, decompile, disassemble, or attempt to derive the source code of any portion of this repository, except to the extent that such activity is expressly permitted by applicable law.
+Confidentiality
+You acknowledge and agree that all content within this repository is confidential and may not be disclosed or made available to third parties. This includes any code, documentation, or information provided within the repository.
+Commercial Use
+Commercial use of the code is strictly prohibited unless a separate commercial license agreement is obtained from navrik. This includes using the code for profit-generating purposes, sublicensing, or distribution in any form.
+No License Grant
+No license, express or implied, is granted to you under this agreement for any purpose, except as specifically authorized in writing by navrik.
+Term and Termination
+This license is effective until terminated. navrik reserves the right to terminate this license at any time and for any reason, including, but not limited to, violations of the terms set forth in this agreement. Upon termination, you must immediately cease all use of the code and destroy any copies.
+Liability Disclaimer
+The code is provided "as is" without any warranty or guarantee of any kind, express or implied. navrik disclaims all liability for any damages arising from the use or inability to use the code, including but not limited to direct, indirect, incidental, or consequential damages.
+Indemnification
+You agree to indemnify and hold harmless navrik, its employees, contractors, and affiliates from any and all claims, losses, liabilities, expenses, and damages arising out of your use or misuse of the code in violation of this agreement.
+Governing Law
+This agreement will be governed by and construed in accordance with the laws of [Your Jurisdiction], without regard to its conflict of laws principles. Any legal action or proceeding under this agreement will be brought exclusively in the courts located in [Your Jurisdiction].
+Amendments
+navrik reserves the right to modify this license at any time. Any modifications will be effective immediately upon posting to the repository.

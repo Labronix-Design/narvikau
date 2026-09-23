@@ -1,0 +1,138 @@
+/* --- NAVRIK HEAVY-DUTY VARIABLES --- */
+:host {
+  --navrik-bg-dark: #0a0a0a;       /* Deepest black */
+  --navrik-bg-panel: #141414;      /* Matte textured black */
+  --navrik-metal: #2d2d2d;         /* Dark brushed border */
+  --navrik-text: #ffffff;
+  --navrik-text-muted: #a3a3a3;
+  
+  /* High-Contrast Industrial Status Colors */
+  --status-success: #10b981;       /* Technical Green */
+  --status-error: #ef4444;         /* Danger Red */
+  --status-warning: #f59e0b;       /* Caution Yellow */
+  --status-info: var(--nv-orange, #ea580c);          /* Navrik Brand Orange */
+}
+
+.toast-container {
+  position: fixed;
+  top: 90px;
+  left: 50%;
+  transform: translate3d(-50%, 0, 0);
+  z-index: 9999; 
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Slightly tighter gap for a more stacked, mechanical look */
+  width: 400px;
+  max-width: 90%;
+  pointer-events: none; 
+}
+
+.toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  
+  /* Machined metal aesthetic */
+  background: var(--navrik-bg-panel);
+  border: 1px solid var(--navrik-metal);
+  border-radius: 0; /* Completely sharp corners */
+  
+  /* Hard mechanical drop shadow */
+  box-shadow: 4px 4px 0 var(--navrik-bg-dark);
+  
+  overflow: hidden;
+  pointer-events: auto;
+
+  /* Performance & Animation */
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  animation: mechanical-drop 0.25s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
+
+  /* --- DYNAMIC STATES --- */
+  /* Thick colored accent strip on the left edge like an automotive gauge */
+  &.success {
+    border-left: 4px solid var(--status-success);
+    .toast-icon mat-icon { color: var(--status-success); }
+  }
+
+  &.error {
+    border-left: 4px solid var(--status-error);
+    .toast-icon mat-icon { color: var(--status-error); }
+  }
+
+  &.warning {
+    border-left: 4px solid var(--status-warning);
+    .toast-icon mat-icon { color: var(--status-warning); }
+  }
+
+  &.info {
+    border-left: 4px solid var(--status-info);
+    .toast-icon mat-icon { color: var(--status-info); }
+  }
+
+  .toast-icon {
+    display: flex;
+    align-items: center;
+    margin-right: 16px;
+    
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .toast-message {
+    flex: 1;
+    font-family: 'Arial', 'Helvetica Neue', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--navrik-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 1.4;
+    transform: translateZ(0);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .close-btn {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    margin-left: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: var(--navrik-text-muted);
+      transition: color 0.2s ease;
+    }
+    
+    &:hover mat-icon { 
+      color: var(--status-error); /* Highlights red on hover to indicate close/delete */
+    }
+    
+    &:active {
+      transform: scale(0.9);
+    }
+  }
+}
+
+/* Sharp, rigid entry animation replacing the floaty fade */
+@keyframes mechanical-drop {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -15px, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}

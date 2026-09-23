@@ -1,0 +1,98 @@
+@if (legalPageService.unavailable()) {
+  <section class="public-content-unavailable pw-section" aria-live="polite">
+    <div class="pw-container">
+      <div class="panel-machined">
+        <h1>Policy information is refreshing</h1>
+        <p>We are refreshing this information. Please try again shortly.</p>
+      </div>
+    </div>
+  </section>
+} @else {
+<div class="policy-page texture-hex">
+  <div class="policy-container">
+
+    <!-- Page Header -->
+    <div class="policy-hero">
+      <div class="policy-badge">
+        <mat-icon svgIcon="verified_user"></mat-icon>
+        {{ content().badge }}
+      </div>
+      <h1 class="policy-title">{{ content().title_main }} <span class="highlight-orange">{{ content().title_highlight }}</span></h1>
+      <p class="policy-intro">{{ content().intro }}</p>
+
+      <a href="assets/docs/navrik-warranty-and-return-policy.pdf"
+         download="Navrik Warranty and Return Policy.pdf"
+         class="download-btn">
+        <mat-icon svgIcon="download"></mat-icon>
+        Download Full Policy (PDF)
+      </a>
+    </div>
+
+    @for (section of content().sections; track section.title) {
+      <div class="policy-section panel-machined">
+        <div class="section-icon">
+          <mat-icon [svgIcon]="section.icon"></mat-icon>
+        </div>
+        <h2 class="section-title">{{ section.title }}</h2>
+        @if (section.intro) {
+          <p class="section-intro">{{ section.intro }}</p>
+        }
+
+        @if (section.items.length) {
+          <ul class="policy-list">
+            @for (item of section.items; track item.text) {
+              @if (item.type !== 'plain') {
+                <li [class]="item.type + '-item'">
+                  <mat-icon [svgIcon]="item.type === 'excluded' ? 'warning' : 'check_circle'"></mat-icon>
+                  <span>{{ item.text }}</span>
+                </li>
+              }
+            }
+          </ul>
+
+          @for (item of section.items; track item.text) {
+            @if (item.type === 'plain') {
+              <div class="deposit-note">
+                <mat-icon svgIcon="info"></mat-icon>
+                <div>{{ item.text }}</div>
+              </div>
+            }
+          }
+        }
+      </div>
+    }
+
+    @if (content().disclaimer_paragraphs.length) {
+      <div class="policy-section panel-machined disclaimer-section">
+        <div class="section-icon warning-icon">
+          <mat-icon svgIcon="warning"></mat-icon>
+        </div>
+        <h2 class="section-title">{{ content().disclaimer_title }}</h2>
+        @for (para of content().disclaimer_paragraphs; track para) {
+          <p class="section-body">{{ para }}</p>
+        }
+        <p class="section-body">For warranty claims, questions, or technical support, contact us at <a [href]="'mailto:' + siteSettings.settings().contact.email" class="contact-link">{{ siteSettings.settings().contact.email }}</a>.</p>
+      </div>
+    }
+
+    <!-- Footer Actions -->
+    <div class="policy-footer">
+      <a href="assets/docs/navrik-warranty-and-return-policy.pdf"
+         download="Navrik Warranty and Return Policy.pdf"
+         class="download-btn">
+        <mat-icon svgIcon="download"></mat-icon>
+        Download Full Policy (PDF)
+      </a>
+      <a routerLink="/products" class="back-link">
+        <mat-icon svgIcon="arrow_back"></mat-icon>
+        Back to Products
+      </a>
+      <a routerLink="/register-warranty" class="back-link">
+        <mat-icon svgIcon="verified_user"></mat-icon>
+        Register your warranty
+      </a>
+    </div>
+
+  </div>
+</div>
+}
