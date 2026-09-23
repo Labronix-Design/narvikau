@@ -16,6 +16,17 @@ test('generates a public-only sitemap and one coherent Navrik publisher graph', 
   const sitemap = fs.readFileSync(path.join(outputDirectory, 'sitemap.xml'), 'utf8');
   const robots = fs.readFileSync(path.join(outputDirectory, 'robots.txt'), 'utf8');
   const index = fs.readFileSync(indexPath, 'utf8');
+  const sitemapLocations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(([, location]) => location);
+  const allowedLocations = [
+    'https://navrik.com.au/',
+    'https://navrik.com.au/products',
+    'https://navrik.com.au/contact',
+    'https://navrik.com.au/refund-policy',
+    'https://navrik.com.au/privacy',
+    'https://navrik.com.au/terms',
+    'https://navrik.com.au/register-warranty',
+  ];
+  assert.deepEqual(sitemapLocations, allowedLocations);
   assert.match(sitemap, /https:\/\/navrik\.com\.au\/products/);
   assert.doesNotMatch(sitemap, /navrik\.co\.za|\/accessories|\/finance/);
   assert.doesNotMatch(sitemap, /\/admin(?:\/|<)/);
@@ -30,10 +41,17 @@ test('generates a public-only sitemap and one coherent Navrik publisher graph', 
   const schema = JSON.parse(schemaJson);
   const business = schema['@graph'].find((entry) => entry['@type'] === 'LocalBusiness');
   const website = schema['@graph'].find((entry) => entry['@type'] === 'WebSite');
-  assert.equal(business.name, 'Navrik Trays, Canopies & Accessories');
+  assert.equal(business['@id'], 'https://navrik.com.au/#business');
+  assert.equal(business.url, 'https://navrik.com.au');
+  assert.equal(business.email, 'info@navrik.com.au');
+  assert.match(`${business.name} ${business.description}`, /canopies/i);
+  assert.doesNotMatch(`${business.name} ${business.description}`, /trays|accessories|south africa/i);
   assert.deepEqual(business.areaServed, { '@type': 'Country', name: 'Australia' });
+  assert.equal(business.address.addressCountry, 'AU');
   assert.equal(business.logo, undefined, 'the static build must not publish a stale local logo');
   assert.equal(business.image, undefined, 'the static build must not publish a stale local logo');
+  assert.equal(website['@id'], 'https://navrik.com.au/#website');
+  assert.equal(website.url, 'https://navrik.com.au');
   assert.equal(website.inLanguage, 'en-AU');
   assert.deepEqual(website.publisher, { '@id': 'https://navrik.com.au/#business' });
 });
