@@ -16,9 +16,11 @@ test('generates a public-only sitemap and one coherent Navrik publisher graph', 
   const sitemap = fs.readFileSync(path.join(outputDirectory, 'sitemap.xml'), 'utf8');
   const robots = fs.readFileSync(path.join(outputDirectory, 'robots.txt'), 'utf8');
   const index = fs.readFileSync(indexPath, 'utf8');
-  assert.match(sitemap, /https:\/\/www\.navrik\.co\.za\/products/);
+  assert.match(sitemap, /https:\/\/navrik\.com\.au\/products/);
+  assert.doesNotMatch(sitemap, /navrik\.co\.za|\/accessories|\/finance/);
   assert.doesNotMatch(sitemap, /\/admin(?:\/|<)/);
-  assert.match(robots, /Sitemap: https:\/\/www\.navrik\.co\.za\/sitemap\.xml/);
+  assert.match(robots, /Sitemap: https:\/\/navrik\.com\.au\/sitemap\.xml/);
+  assert.doesNotMatch(robots, /navrik\.co\.za/);
   assert.match(robots, /Disallow: \/admin/);
   assert.doesNotMatch(index, /"@type":"Product"/);
   assert.match(index, /"@type":"LocalBusiness"/);
@@ -29,10 +31,11 @@ test('generates a public-only sitemap and one coherent Navrik publisher graph', 
   const business = schema['@graph'].find((entry) => entry['@type'] === 'LocalBusiness');
   const website = schema['@graph'].find((entry) => entry['@type'] === 'WebSite');
   assert.equal(business.name, 'Navrik Trays, Canopies & Accessories');
-  assert.deepEqual(business.areaServed, { '@type': 'Country', name: 'South Africa' });
+  assert.deepEqual(business.areaServed, { '@type': 'Country', name: 'Australia' });
   assert.equal(business.logo, undefined, 'the static build must not publish a stale local logo');
   assert.equal(business.image, undefined, 'the static build must not publish a stale local logo');
-  assert.deepEqual(website.publisher, { '@id': 'https://www.navrik.co.za/#business' });
+  assert.equal(website.inLanguage, 'en-AU');
+  assert.deepEqual(website.publisher, { '@id': 'https://navrik.com.au/#business' });
 });
 
 test('source metadata has no deleted local brand-logo fallback', () => {
