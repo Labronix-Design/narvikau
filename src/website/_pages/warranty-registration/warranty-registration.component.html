@@ -8,7 +8,7 @@
       </div>
       <aside class="qr-card" aria-label="Scan to open warranty registration">
         <img src="assets/warranty-registration-qr.png" [alt]="'QR code for ' + warrantyUrl" width="120" height="120" loading="lazy">
-        <div><strong>Scan to start</strong><span>Then use the private link in your order email.</span></div>
+        <div><strong>Scan to start</strong><span>Open the warranty registration form on your device.</span></div>
       </aside>
     </div>
   </header>
@@ -19,8 +19,8 @@
       <aside class="warranty-help">
         <mat-icon svgIcon="verified_user" aria-hidden="true"></mat-icon>
         <h2>What you’ll need</h2>
-        <ul><li>Your vehicle and registration details</li><li>Your purchase and fitment dates</li><li>The private registration link from your Navrik order email</li></ul>
-        <p>We securely match your registration to the purchase in that link. It does not replace your proof of purchase or change the terms of your warranty.</p>
+        <ul><li>Your contact and vehicle details</li><li>Your canopy model and purchase reference</li><li>Your purchase and fitment dates</li></ul>
+        <p>Keep your proof of purchase with this registration. It does not change the terms of your warranty.</p>
         <a routerLink="/refund-policy">Read the policy <mat-icon svgIcon="arrow_forward" aria-hidden="true"></mat-icon></a>
       </aside>
 
@@ -35,9 +35,13 @@
       } @else {
         <form [formGroup]="form" (ngSubmit)="submit()" class="warranty-form" novalidate>
           <div class="form-heading"><p class="page-eyebrow">Warranty details</p><h2>Tell us about your vehicle.</h2><p>Fields marked <span aria-hidden="true">*</span> are required.</p></div>
-          @if (!registrationToken) { <div class="form-error" role="alert">This page needs the private registration link from your Navrik order confirmation email. Scanning the QR starts the process, but does not expose your order details.</div> }
           @if (error) { <div class="form-error" role="alert">{{ error }}</div> }
           <div class="form-grid">
+            <label [class.has-error]="fieldInvalid('purchaserName')">Your name <span>*</span><input formControlName="purchaserName" maxlength="160" autocomplete="name"></label>
+            <label [class.has-error]="fieldInvalid('purchaserEmail')">Email <span>*</span><input type="email" formControlName="purchaserEmail" maxlength="254" autocomplete="email"></label>
+            <label [class.has-error]="fieldInvalid('purchaserPhone')">Phone <span>*</span><input type="tel" formControlName="purchaserPhone" maxlength="50" autocomplete="tel"></label>
+            <label [class.has-error]="fieldInvalid('productName')">Canopy model <span>*</span><input formControlName="productName" maxlength="160" placeholder="e.g. Navrik Canopy Adventure"></label>
+            <label [class.has-error]="fieldInvalid('purchaseReference')">Purchase reference <small>Optional</small><input formControlName="purchaseReference" maxlength="160" placeholder="e.g. AU-INV-1042"></label>
             <label [class.has-error]="fieldInvalid('purchaseDate')">Purchase date <span>*</span><input type="date" formControlName="purchaseDate"></label>
             <label [class.has-error]="fieldInvalid('vehicleMake')">Vehicle make <span>*</span><input formControlName="vehicleMake" maxlength="80" placeholder="e.g. Toyota"></label>
             <label [class.has-error]="fieldInvalid('vehicleModel')">Vehicle model <span>*</span><input formControlName="vehicleModel" maxlength="100" placeholder="e.g. Hilux"></label>
@@ -46,7 +50,7 @@
             <label [class.has-error]="fieldInvalid('fitmentDate')">Fitment date <span>*</span><input type="date" formControlName="fitmentDate"></label>
           </div>
           <label class="consent" [class.has-error]="fieldInvalid('consent')"><input type="checkbox" formControlName="consent"> <span>I confirm these details are correct and consent to Navrik storing them to administer my warranty. *</span></label>
-          <button class="submit-btn" type="submit" [disabled]="submitting || !registrationToken">@if (submitting) { Registering… } @else { Register warranty <mat-icon svgIcon="arrow_forward" aria-hidden="true"></mat-icon> }</button>
+          <button class="submit-btn" type="submit" [disabled]="submitting">@if (submitting) { Registering… } @else { Register warranty <mat-icon svgIcon="arrow_forward" aria-hidden="true"></mat-icon> }</button>
           @if (submitted && form.invalid) { <p class="validation-note" role="alert">Please complete every required field with valid details.</p> }
         </form>
       }

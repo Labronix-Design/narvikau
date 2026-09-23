@@ -35,12 +35,12 @@ export interface CatalogProduct {
 export interface WarrantyRegistrationRecord {
   id: number;
   registration_reference: string;
-  order_id: number | null;
   purchaser_name: string;
   purchaser_email: string;
   purchaser_phone: string;
+  product_id: number | null;
   product_name: string;
-  order_reference: string | null;
+  purchase_reference: string | null;
   vehicle_make: string;
   vehicle_model: string;
   vehicle_year: number;
