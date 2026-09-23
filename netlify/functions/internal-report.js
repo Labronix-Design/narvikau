@@ -38,18 +38,24 @@ export function isScheduledReportTime(date) {
   return (parts.weekday === 'Mon' || parts.weekday === 'Sat') && parts.hour === '06' && parts.minute === '00';
 }
 
-export function buildReport({ business, search, hosting }) {
+export function buildReport({ business, enquiries, search, hosting }) {
   return {
     business,
+    enquiries,
     search,
     hosting,
-    measurementCoverage: { search: search?.status || 'not_measured', hosting: hosting?.status || 'not_measured' },
+    measurementCoverage: {
+      enquiries: enquiries?.status || 'not_measured',
+      search: search?.status || 'not_measured',
+      hosting: hosting?.status || 'not_measured',
+    },
   };
 }
 
 function emptySections() {
   return {
     business: { status: 'not_measured', explanation: 'Business metrics have not been cached yet.' },
+    enquiries: { status: 'not_measured', explanation: 'Customer enquiries have not been cached yet.' },
     search: { status: 'not_measured', explanation: 'Search Console has not been measured yet.' },
     hosting: { status: 'not_measured', explanation: 'Hosting usage has not been imported yet.' },
   };
@@ -59,11 +65,20 @@ async function currentReportData(sql) {
   const rows = await sql`
     SELECT section, payload, invalidated_at
     FROM control_centre_cache
-    WHERE section = ANY(${['business', 'search', 'hosting']})
+    WHERE section = ANY(${['business_overview', 'enquiries', 'search', 'hosting']})
   `;
   const sections = emptySections();
+  const reportSections = {
+    business_overview: 'business',
+    enquiries: 'enquiries',
+    search: 'search',
+    hosting: 'hosting',
+  };
   for (const row of rows) {
-    if (!row.invalidated_at && row.payload && typeof row.payload === 'object' && !Array.isArray(row.payload)) sections[row.section] = row.payload;
+    const reportSection = reportSections[row.section];
+    if (!row.invalidated_at && reportSection && row.payload && typeof row.payload === 'object' && !Array.isArray(row.payload)) {
+      sections[reportSection] = row.payload;
+    }
   }
   return sections;
 }
