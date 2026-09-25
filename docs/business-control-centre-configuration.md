@@ -24,8 +24,9 @@ setup-required state instead of inventing metrics.
 The scheduled function runs at minutes 0, 15, 30, and 45 of every hour and
 sends only when it reaches 06:00 on the first day of the month in
 `REPORTING_TIME_ZONE`. The preceding completed local calendar month is sent
-to the exact AU server-side allowlist in `MONTHLY_REPORT_RECIPIENTS`:
-`info@navrik.com.au`.
+separately to the exact server-side allowlist in `MONTHLY_REPORT_RECIPIENTS`:
+the Labronix internal operations recipient `accounts@labronix.co.za` and the
+Navrik AU recipient `info@navrik.com.au`.
 
 Independent durable delivery records and provider idempotency keys keep a
 period/recipient/report-type combination from being sent twice when Netlify

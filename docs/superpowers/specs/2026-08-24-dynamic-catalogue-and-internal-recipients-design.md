@@ -35,7 +35,7 @@ A migration removes the Expedition product record. The seed source, admin model 
 
 ## Monthly report recipients
 
-`MONTHLY_REPORT_RECIPIENTS` is parsed server-side as the exact allowlist of the existing Labronix reporting mailbox and the former source-site mailbox. Missing, duplicate or unknown values fail closed. Preview responses never expose recipient addresses.
+`MONTHLY_REPORT_RECIPIENTS` is parsed server-side as the exact allowlist of the existing Labronix internal reporting mailbox (`accounts@labronix.co.za`) and the Navrik AU mailbox (`info@navrik.com.au`). Missing, duplicate or unknown values fail closed. Preview responses never expose recipient addresses.
 
 One report snapshot is built per period, then delivery is claimed and sent independently for each approved recipient. The existing delivery uniqueness key includes the recipient, so no schema change is needed for independent idempotency. A partial failure is reported safely and can be retried without duplicating a completed recipient's email.
 

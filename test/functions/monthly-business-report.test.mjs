@@ -99,11 +99,11 @@ test('admin preview requires an admin session', async () => {
   assert.deepEqual(JSON.parse(response.body), { error: 'Unauthorized' });
 });
 
-test('admin preview does not expose a recipient and recognises the AU mailbox as configured', async () => {
+test('admin preview does not expose recipients and recognises the exact two-recipient internal allowlist', async () => {
   const handler = createHandler({
     verifyAdminToken: async () => true,
     getSql: () => monthlySql(),
-    env: { MONTHLY_REPORT_RECIPIENTS: ' INFO@NAVRIK.COM.AU ' },
+    env: { MONTHLY_REPORT_RECIPIENTS: ' ACCOUNTS@LABRONIX.CO.ZA, INFO@NAVRIK.COM.AU ' },
     now: () => new Date('2026-08-24T04:00:00.000Z'),
   });
   const response = await handler({ httpMethod: 'GET', headers: {}, queryStringParameters: {} });
@@ -134,48 +134,62 @@ test('admin send fails closed when email configuration is missing', async () => 
   assert.equal(mailCalls, 0);
 });
 
-test('monthly delivery rejects a South African recipient even when the AU mailbox is also configured', async () => {
-  const southAfricanRecipient = ['accounts@labronix', 'co', 'za'].join('.');
-  const result = await deliverMonthlyReport({
-    sql: monthlySql(),
-    period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: `${southAfricanRecipient}, info@navrik.com.au` },
-  });
+test('monthly delivery requires exactly the Labronix and Navrik AU internal recipients', async (t) => {
+  const invalidConfigurations = {
+    'missing Labronix recipient': 'info@navrik.com.au',
+    'missing Navrik AU recipient': 'accounts@labronix.co.za',
+    'duplicate recipient': 'accounts@labronix.co.za,info@navrik.com.au,info@navrik.com.au',
+    'unknown recipient': 'accounts@labronix.co.za,reports@example.com',
+    'mixed extra recipient': 'accounts@labronix.co.za,info@navrik.com.au,reports@example.com',
+  };
 
-  assert.deepEqual(result, { status: 'setup_required', missingConfiguration: ['MONTHLY_REPORT_RECIPIENTS'] });
+  for (const [name, recipients] of Object.entries(invalidConfigurations)) {
+    await t.test(name, async () => {
+      const result = await deliverMonthlyReport({
+        sql: monthlySql(),
+        period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
+        env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: recipients },
+        sendEmail: async () => ({ id: 'must-not-send' }),
+      });
+
+      assert.deepEqual(result, { status: 'setup_required', missingConfiguration: ['MONTHLY_REPORT_RECIPIENTS'] });
+    });
+  }
 });
 
-test('monthly delivery requires the AU internal recipient and sends only to it', async () => {
+test('monthly delivery sends separately and idempotently to Labronix and Navrik AU', async () => {
   const deliveries = [];
   const result = await deliverMonthlyReport({
     sql: monthlySql(),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'info@navrik.com.au' },
-    sendEmail: async (message) => { deliveries.push(message.to); return { id: `email_${deliveries.length}` }; },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'info@navrik.com.au,accounts@labronix.co.za' },
+    sendEmail: async (message) => { deliveries.push(message); return { id: `email_${deliveries.length}` }; },
   });
 
   assert.equal(result.status, 'sent');
-  assert.deepEqual(deliveries, ['info@navrik.com.au']);
+  assert.deepEqual(deliveries.map(({ to }) => to).sort(), ['accounts@labronix.co.za', 'info@navrik.com.au']);
+  assert.equal(deliveries.every(({ idempotencyKey }) => /^[a-f0-9]{64}$/.test(idempotencyKey)), true);
+  assert.equal(new Set(deliveries.map(({ idempotencyKey }) => idempotencyKey)).size, 2);
 });
 
-test('admin completed-month send delivers the operations report only to the configured internal recipient', async () => {
-  let email;
+test('admin completed-month send delivers the operations report to both configured internal recipients', async () => {
+  const emails = [];
   const handler = createHandler({
     verifyAdminToken: async () => true,
     getSql: () => monthlySql(),
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'info@navrik.com.au' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.com.au' },
     now: () => new Date('2026-08-24T04:00:00.000Z'),
-    sendEmail: async (message) => { email = message; return { id: 'email_123' }; },
+    sendEmail: async (message) => { emails.push(message); return { id: `email_${emails.length}` }; },
   });
 
   const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify({ action: 'send_current' }), queryStringParameters: {} });
 
   assert.equal(response.statusCode, 202);
   assert.equal(JSON.parse(response.body).status, 'sent');
-  assert.equal(email.to, 'info@navrik.com.au');
-  assert.equal(email.subject, 'Navrik monthly operations report — July 2026');
-  assert.equal(email.html.includes('Orders received'), false);
-  assert.equal(email.html.includes('invoice'), false);
+  assert.deepEqual(emails.map(({ to }) => to), ['accounts@labronix.co.za', 'info@navrik.com.au']);
+  assert.equal(emails.every(({ subject }) => subject === 'Navrik monthly operations report — July 2026'), true);
+  assert.equal(emails.every(({ html }) => !html.includes('Orders received')), true);
+  assert.equal(emails.every(({ html }) => !html.includes('invoice')), true);
 });
 
 test('monthly delivery does not send again after its period and recipient were recorded as sent', async () => {
@@ -183,7 +197,7 @@ test('monthly delivery does not send again after its period and recipient were r
   const result = await deliverMonthlyReport({
     sql: monthlySql({ delivery: { send_state: 'sent', sent_at: '2026-08-31T04:00:00.000Z' } }),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'info@navrik.com.au' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.com.au' },
     sendEmail: async () => { mailCalls += 1; },
   });
 
@@ -196,7 +210,7 @@ test('monthly delivery fails closed instead of sending a duplicate while an exis
   const result = await deliverMonthlyReport({
     sql: monthlySql({ delivery: { send_state: 'sending', sent_at: null } }),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'info@navrik.com.au' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'accounts@labronix.co.za,info@navrik.com.au' },
     sendEmail: async () => { mailCalls += 1; },
   });
 
@@ -209,7 +223,7 @@ test('monthly delivery reclaims a stale crash lease and retains the deterministi
   const result = await deliverMonthlyReport({
     sql: monthlySql({ delivery: { send_state: 'sending', sent_at: null }, claim: { send_state: 'sending', attempt_started_at: '2026-09-01T04:00:00.000Z' } }),
     period: { startDate: '2026-08-01', endDate: '2026-08-31', complete: true, label: 'August 2026' },
-    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'INFO@NAVRIK.COM.AU' },
+    env: { EMAIL_API_KEY: 'test-key', MONTHLY_REPORT_RECIPIENTS: 'ACCOUNTS@LABRONIX.CO.ZA,INFO@NAVRIK.COM.AU' },
     sendEmail: async (message) => { email = message; return { id: 'email_456' }; },
   });
 

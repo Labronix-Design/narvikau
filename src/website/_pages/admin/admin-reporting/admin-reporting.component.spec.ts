@@ -3,7 +3,7 @@ import { AdminService, MonthlyBusinessReportResponse, MonthlyBusinessReportSendR
 import { AdminReportingComponent } from './admin-reporting.component';
 
 const REPORTING_PERIOD = { label: 'August 2026', startDate: '2026-08-01', endDate: '2026-08-24', complete: false };
-const CONFIGURED_RECIPIENT = 'info@navrik.com.au';
+const CONFIGURED_RECIPIENT = 'accounts@labronix.co.za (internal) and info@navrik.com.au';
 const REPORT_CONTENT = { orders: {}, leads: {}, search: {}, hosting: {}, invoiceReadiness: {}, measurementCoverage: {} };
 
 function reportPreview(recipientConfigured: boolean): MonthlyBusinessReportResponse {
