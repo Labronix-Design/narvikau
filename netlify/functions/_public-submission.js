@@ -34,7 +34,7 @@ export function validatePublicLead(body, { quote = false } = {}) {
     ? new Set(['Name', 'Phone', 'Email', 'Message', 'Product', 'Type'])
     : new Set(['Name', 'Surname', 'Phone', 'Email', 'Message']);
   if (Object.keys(body).some((key) => !allowed.has(key))) throw new SubmissionValidationError('Unknown submission fields');
-  if (quote && body.Type !== 'Canopy Quote Request') throw new SubmissionValidationError('Invalid quote request type');
+  if (quote && body.Type !== 'Product Quote Request') throw new SubmissionValidationError('Invalid quote request type');
   const lead = {
     Name: text(body.Name, 'Name', { required: true, maxLength: 160 }),
     Surname: quote ? '' : text(body.Surname, 'Surname', { maxLength: 160 }),
@@ -42,7 +42,7 @@ export function validatePublicLead(body, { quote = false } = {}) {
     Email: text(body.Email, 'Email', { required: true, maxLength: 254 }).toLowerCase(),
     Message: text(body.Message, 'Message', { required: true, maxLength: 4000 }),
     Product: quote ? text(body.Product, 'Product', { required: true, maxLength: 160 }) : '',
-    ...(quote ? { Type: 'Canopy Quote Request' } : {}),
+    ...(quote ? { Type: 'Product Quote Request' } : {}),
   };
   if (!EMAIL_RE.test(lead.Email)) throw new SubmissionValidationError('Email is invalid');
   return lead;

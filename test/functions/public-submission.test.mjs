@@ -20,7 +20,7 @@ const validQuote = {
   Email: 'avery@example.test',
   Message: 'Please quote this canopy.',
   Product: 'Navrik Canopy Adventure',
-  Type: 'Canopy Quote Request',
+  Type: 'Product Quote Request',
 };
 
 test('contact and quote emails escape untrusted HTML in text and attribute contexts', () => {
@@ -101,12 +101,21 @@ test('contact rejects unknown fields before rate limiting or persistence', async
   assert.equal(databaseAccessed, false);
 });
 
-test('quote accepts the Task 4 canopy quote contract and sends only Australian identity', async () => {
+test('quote accepts a product request, rate-limits it in the product bucket, and sends only Australian identity', async () => {
   const sent = [];
-  const sql = async (strings) => strings.join('').includes('RETURNING id') ? [{ id: 17 }] : [];
+  let rateLimitSource;
+  let persistedSource;
+  const sql = async (strings) => {
+    const query = strings.join('');
+    if (query.includes('INSERT INTO leads')) persistedSource = query.match(/VALUES \('([^']+)'/)[1];
+    return query.includes('RETURNING id') ? [{ id: 17 }] : [];
+  };
   const handler = createQuoteEmailHandler({
     getSql: () => sql,
-    rateLimiter: { check: async ({ source }) => source === 'canopy_quote' },
+    rateLimiter: { check: async ({ source }) => {
+      rateLimitSource = source;
+      return source === 'product_quote';
+    } },
     sendEmail: async (message) => { sent.push(message); return { ok: true }; },
   });
 
@@ -117,11 +126,15 @@ test('quote accepts the Task 4 canopy quote contract and sends only Australian i
   assert.equal(sent[0].from, 'Navrik <info@navrik.com.au>');
   assert.equal(sent[0].to, 'info@navrik.com.au');
   assert.equal(sent[1].to, validQuote.Email);
+  assert.equal(sent[0].subject, 'Product Quote Request: Navrik Canopy Adventure — Avery Customer');
+  assert.equal(sent[1].subject, 'Product quote request received — Navrik Canopy Adventure | Navrik');
+  assert.equal(rateLimitSource, 'product_quote');
+  assert.equal(persistedSource, 'product_quote');
   assert.match(sent[1].html, /navrik\.com\.au/);
   assert.doesNotMatch(sent.map((message) => message.html).join('\n'), /navrik\.co\.za|Built Tough for Africa/);
 });
 
-test('quote rejects malformed or non-canopy payloads before persistence and delivery', async () => {
+test('quote rejects malformed and retired canopy payloads before persistence and delivery', async () => {
   let databaseAccessed = false;
   let delivered = false;
   const handler = createQuoteEmailHandler({
@@ -132,7 +145,9 @@ test('quote rejects malformed or non-canopy payloads before persistence and deli
 
   for (const payload of [
     { ...validQuote, Email: 'invalid' },
+    { ...validQuote, Type: 'Canopy Quote Request' },
     { ...validQuote, Type: 'Accessory Quote Request' },
+    { ...validQuote, Price: 1 },
     { ...validQuote, unexpected: true },
   ]) {
     const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(payload) });
@@ -142,7 +157,7 @@ test('quote rejects malformed or non-canopy payloads before persistence and deli
   assert.equal(delivered, false);
 });
 
-test('quote returns 429 without persistence or delivery when the canopy quote limit is exhausted', async () => {
+test('quote returns 429 without persistence or delivery when the product quote limit is exhausted', async () => {
   let databaseAccessed = false;
   let delivered = false;
   const handler = createQuoteEmailHandler({
@@ -155,6 +170,31 @@ test('quote returns 429 without persistence or delivery when the canopy quote li
 
   assert.equal(response.statusCode, 429);
   assert.equal(databaseAccessed, false);
+  assert.equal(delivered, false);
+});
+
+test('quote email uses generic product quote copy while escaping untrusted values', () => {
+  const quote = buildQuoteEmailHtml({ ...maliciousLead, Type: 'Product Quote Request' });
+  const combinedHtml = `${quote.internalHtml}\n${quote.clientHtml}`;
+
+  assert.match(quote.internalHtml, /Product Quote Request/);
+  assert.match(quote.clientHtml, /product quote request/);
+  assert.doesNotMatch(combinedHtml, /[Cc]anopy quote request/);
+  assert.match(combinedHtml, /&lt;img src=x onerror=alert\(1\)&gt;/);
+  assert.doesNotMatch(combinedHtml, /<img src=x onerror=alert\(1\)>/);
+});
+
+test('quote does not send email when persistence fails', async () => {
+  let delivered = false;
+  const handler = createQuoteEmailHandler({
+    getSql: () => async (strings) => strings.join('').includes('RETURNING id') ? [] : [],
+    rateLimiter: { check: async () => true },
+    sendEmail: async () => { delivered = true; },
+  });
+
+  const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(validQuote) });
+
+  assert.equal(response.statusCode, 503);
   assert.equal(delivered, false);
 });
 

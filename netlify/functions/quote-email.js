@@ -36,8 +36,8 @@ export function buildQuoteEmailHtml(lead) {
   const email = escapeHtml(lead.Email);
   const footer = '<p>Navrik Australia · <a href="https://navrik.com.au">navrik.com.au</a></p>';
   return {
-    internalHtml: `<!doctype html><html><body><h1>Canopy Quote Request</h1>${rows}<p><a href="mailto:${email}">Reply by email</a></p>${footer}</body></html>`,
-    clientHtml: `<!doctype html><html><body><h1>Hi ${name},</h1><p>We have received your canopy quote request and will be in touch within one business day.</p>${rows}${footer}</body></html>`,
+    internalHtml: `<!doctype html><html><body><h1>Product Quote Request</h1>${rows}<p><a href="mailto:${email}">Reply by email</a></p>${footer}</body></html>`,
+    clientHtml: `<!doctype html><html><body><h1>Hi ${name},</h1><p>We have received your product quote request and will be in touch within one business day.</p>${rows}${footer}</body></html>`,
   };
 }
 
@@ -55,7 +55,7 @@ export async function persistQuoteLead({ sql, invalidateSections = invalidateCon
   if (!customer?.id) throw new Error('Customer persistence failed');
   await sql`
     INSERT INTO leads (source, name, email, phone, product, message, customer_id, status)
-    VALUES ('canopy_quote', ${Name}, ${Email}, ${Phone}, ${Product}, ${Message}, ${customer.id}, 'new')
+    VALUES ('product_quote', ${Name}, ${Email}, ${Phone}, ${Product}, ${Message}, ${customer.id}, 'new')
   `;
   await invalidateSections(sql, selectInvalidationSections('leads'));
 }
@@ -75,7 +75,7 @@ export function createQuoteEmailHandler({ getSql = defaultGetSql, sendEmail = de
     let sql;
     try {
       const limiter = rateLimiter || createSubmissionRateLimiter(sql = getSql());
-      if (!await limiter.check({ event, source: 'canopy_quote', email: lead.Email })) {
+      if (!await limiter.check({ event, source: 'product_quote', email: lead.Email })) {
         return { statusCode: 429, body: JSON.stringify({ error: 'Too many submissions. Please try again later.' }) };
       }
     } catch (error) {
@@ -94,8 +94,8 @@ export function createQuoteEmailHandler({ getSql = defaultGetSql, sendEmail = de
     try {
       const rendered = buildQuoteEmailHtml(lead);
       await Promise.all([
-        sendEmail({ from: FROM, to: MAILBOX, subject: `Canopy Quote Request: ${lead.Product} — ${lead.Name}`, html: rendered.internalHtml }),
-        sendEmail({ from: FROM, to: lead.Email, subject: `Canopy quote request received — ${lead.Product} | Navrik`, html: rendered.clientHtml }),
+        sendEmail({ from: FROM, to: MAILBOX, subject: `Product Quote Request: ${lead.Product} — ${lead.Name}`, html: rendered.internalHtml }),
+        sendEmail({ from: FROM, to: lead.Email, subject: `Product quote request received — ${lead.Product} | Navrik`, html: rendered.clientHtml }),
       ]);
       return { statusCode: 200, body: JSON.stringify({ success: true }) };
     } catch (error) {
