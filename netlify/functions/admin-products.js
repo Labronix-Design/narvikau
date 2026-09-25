@@ -79,10 +79,15 @@ function specifications(value) {
   if (entries.length > 30) return null;
   const normalised = {};
   for (const [label, detail] of entries) {
-    if (UNSAFE_SPECIFICATION_KEYS.has(label)
-      || text(label, { required: true, maximum: 120 }) === null
-      || text(detail, { required: true, maximum: 1000 }) === null) return null;
-    normalised[label.trim()] = detail.trim();
+    const safeLabel = text(label, { required: true, maximum: 120 });
+    const safeDetail = text(detail, { required: true, maximum: 1000 });
+    if (safeLabel === null || safeDetail === null || UNSAFE_SPECIFICATION_KEYS.has(safeLabel)) return null;
+    Object.defineProperty(normalised, safeLabel, {
+      value: safeDetail,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
   }
   return normalised;
 }

@@ -36,8 +36,13 @@ function normaliseSpecifications(value) {
   for (const [label, detail] of entries) {
     const safeLabel = text(label, { required: true, maximum: 120 });
     const safeDetail = text(detail, { required: true, maximum: 1000 });
-    if (UNSAFE_SPECIFICATION_KEYS.has(label) || safeLabel === null || safeDetail === null) return null;
-    normalised[safeLabel] = safeDetail;
+    if (safeLabel === null || safeDetail === null || UNSAFE_SPECIFICATION_KEYS.has(safeLabel)) return null;
+    Object.defineProperty(normalised, safeLabel, {
+      value: safeDetail,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
   }
   return normalised;
 }

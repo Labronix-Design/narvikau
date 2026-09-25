@@ -107,6 +107,27 @@ test('admin product creation rejects malformed product fields before a database 
   }
 });
 
+test('admin product creation rejects whitespace-normalised prototype-shaped specification labels before a database write', async () => {
+  let databaseCalls = 0;
+  const handler = createAdminProductsHandler({
+    verifyToken: authenticated,
+    getSql: () => {
+      databaseCalls += 1;
+      throw new Error('database must not be opened for invalid input');
+    },
+  });
+
+  for (const label of [' __proto__ ', ' constructor ', ' prototype ']) {
+    const response = await handler({
+      httpMethod: 'POST',
+      headers: {},
+      body: JSON.stringify({ ...accessory, specifications: { [label]: 'unsafe' } }),
+    });
+    assert.equal(response.statusCode, 400);
+  }
+  assert.equal(databaseCalls, 0);
+});
+
 test('admin product creation rejects price and purchase fields before a database write', async () => {
   let databaseCalls = 0;
   const handler = createAdminProductsHandler({

@@ -84,6 +84,20 @@ test('a cached public product payload allowlists a valid accessory and strips no
   assert.doesNotMatch(JSON.stringify(payload), /purchase|price|checkout|yoco/i);
 });
 
+test('cached payload normalisation rejects whitespace-normalised prototype-shaped specification labels', async () => {
+  const sql = async () => [{
+    payload: [' __proto__ ', ' constructor ', ' prototype '].map((label, index) => ({
+      ...accessory,
+      id: index + 20,
+      specifications: { [label]: 'unsafe' },
+    })),
+  }];
+
+  const payload = await readCatalogueReadModel(sql, 'products');
+
+  assert.deepEqual(payload, []);
+});
+
 test('catalogue rebuild retains the four seeded canopy records alongside a safe generic product', async () => {
   const canopies = ['adventure', 'overland', 'sports', 'defender'].map((model, index) => ({
     ...adventure,
