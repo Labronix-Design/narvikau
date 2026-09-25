@@ -20,22 +20,45 @@ const adventure = {
   side_door: null,
   rear_door: null,
   vehicle_fit: null,
+  specifications: { Material: '5052-grade aluminium' },
 };
 
-test('catalogue rebuild creates only the canopy product snapshot', async () => {
+const accessory = {
+  id: 9,
+  slug: 'navrik-recovery-kit',
+  name: 'Navrik Recovery Kit',
+  category: 'accessory',
+  size: null,
+  color: null,
+  description: 'A compact vehicle recovery kit.',
+  image_url: '/uploads/recovery-kit.jpg',
+  sort_order: 9,
+  gallery_urls: ['/uploads/recovery-kit.jpg'],
+  material: null,
+  thickness: null,
+  front_door_window: null,
+  side_door: null,
+  rear_door: null,
+  vehicle_fit: null,
+  specifications: { Material: 'Nylon', Capacity: '10,000 kg' },
+};
+
+test('catalogue rebuild creates a generic active product snapshot including an accessory', async () => {
   const queries = [];
   const sql = async (strings) => {
     const query = strings.join(' ');
     queries.push(query);
-    if (query.includes('FROM catalog_products')) return [adventure];
+    if (query.includes('FROM catalog_products')) return [adventure, accessory];
     return [];
   };
 
   const payloads = await rebuildCatalogueReadModels(sql);
 
-  assert.deepEqual(payloads, { products: [adventure] });
+  assert.deepEqual(payloads, { products: [adventure, accessory] });
   assert.equal(queries.length, 2);
-  assert.match(queries[0], /category = 'canopy'/);
+  assert.match(queries[0], /WHERE is_active = TRUE/);
+  assert.doesNotMatch(queries[0], /category = 'canopy'|CANOPY_SLUGS/);
+  assert.match(queries[0], /specifications/);
   assert.doesNotMatch(queries.join('\n'), /purchase_mode|price_cents|catalog_accessories|compatibility_matrix|catalog_categories/i);
 });
 
@@ -46,19 +69,39 @@ test('catalogue rebuild rejects retired or unknown snapshot sections', async () 
   await assert.rejects(() => readCatalogueReadModel(sql, 'categories'), /Unknown catalogue cache section/);
 });
 
-test('a cached public product payload is allowlisted and limited to canopies', async () => {
+test('a cached public product payload allowlists a valid accessory and strips non-public payment fields', async () => {
   const sql = async () => [{
     payload: [
       { ...adventure, base_price_cents: 199900, purchaseMode: 'retired_purchase_mode' },
-      { ...adventure, id: 2, slug: 'navrik-standard-tray', category: 'tray' },
-      { ...adventure, id: 3, slug: 'navrik-canopy-expedition', name: 'Navrik Canopy — Expedition' },
+      { ...accessory, price_cents: 199900, checkout_url: 'https://payments.example/checkout', yoco_payment_id: 'payment' },
+      { ...accessory, id: 10, specifications: { Material: { nested: 'value' } } },
     ],
   }];
 
   const payload = await readCatalogueReadModel(sql, 'products');
 
-  assert.deepEqual(payload, [adventure]);
-  assert.doesNotMatch(JSON.stringify(payload), /purchase|price|tray|accessory/i);
+  assert.deepEqual(payload, [adventure, accessory]);
+  assert.doesNotMatch(JSON.stringify(payload), /purchase|price|checkout|yoco/i);
+});
+
+test('catalogue rebuild retains the four seeded canopy records alongside a safe generic product', async () => {
+  const canopies = ['adventure', 'overland', 'sports', 'defender'].map((model, index) => ({
+    ...adventure,
+    id: index + 1,
+    slug: `navrik-canopy-${model}`,
+    name: `Navrik Canopy — ${model}`,
+    sort_order: index + 1,
+  }));
+  const sql = async (strings) => strings.join(' ').includes('FROM catalog_products')
+    ? [...canopies, accessory]
+    : [];
+
+  const payloads = await rebuildCatalogueReadModels(sql);
+
+  assert.deepEqual(payloads.products.map(({ slug }) => slug), [
+    'navrik-canopy-adventure', 'navrik-canopy-overland', 'navrik-canopy-sports',
+    'navrik-canopy-defender', 'navrik-recovery-kit',
+  ]);
 });
 
 test('a public catalogue read returns an empty setup state without rebuilding or writing a missing cache', async () => {

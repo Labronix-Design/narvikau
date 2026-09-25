@@ -9,8 +9,8 @@ test('storefront read model returns only cached public catalogue and site config
     queries.push(strings.join(' '));
     return [{
       products: [
-        { id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [] },
-        { id: 2, slug: 'navrik-standard-tray', name: 'Standard Aluminium Tray', category: 'tray', gallery_urls: [] },
+        { id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [], specifications: { Material: '5052-grade aluminium' } },
+        { id: 2, slug: 'navrik-recovery-kit', name: 'Navrik Recovery Kit', category: 'accessory', gallery_urls: ['/uploads/recovery-kit.jpg'], specifications: { Material: 'Nylon' }, price_cents: 199900, checkout_url: 'https://payments.example/checkout', yoco_payment_id: 'payment' },
       ],
       settings: { logo_url: '/uploads/logo.svg', primary_color: '#ea580c' },
     }];
@@ -21,10 +21,13 @@ test('storefront read model returns only cached public catalogue and site config
 
   assert.equal(response.statusCode, 200);
   assert.deepEqual(JSON.parse(response.body), {
-    products: [{ id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [] }],
+    products: [
+      { id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [], specifications: { Material: '5052-grade aluminium' } },
+      { id: 2, slug: 'navrik-recovery-kit', name: 'Navrik Recovery Kit', category: 'accessory', gallery_urls: ['/uploads/recovery-kit.jpg'], specifications: { Material: 'Nylon' } },
+    ],
     settings: { logo_url: '/uploads/logo.svg', primary_color: '#ea580c' },
   });
-  assert.doesNotMatch(response.body, /purchaseMode|price_cents|tray|accessor|compatibility|packages/i);
+  assert.doesNotMatch(response.body, /purchaseMode|price_cents|checkout|yoco|compatibility|packages/i);
   assert.equal(queries.length, 1);
   assert.match(queries[0], /catalogue_read_models/);
   assert.doesNotMatch(queries[0], /accessor|compatibility|packages|categories/);

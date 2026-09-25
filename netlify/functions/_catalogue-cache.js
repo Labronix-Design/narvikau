@@ -1,30 +1,83 @@
 import { taggedPublicReadHeaders, uncachedResponseHeaders } from './_public-cache.js';
 
 const SECTIONS = new Set(['products']);
-const CANOPY_SLUGS = new Set([
-  'navrik-canopy-adventure',
-  'navrik-canopy-overland',
-  'navrik-canopy-sports',
-  'navrik-canopy-defender',
-]);
-
-const PRODUCT_FIELDS = [
-  'id', 'slug', 'name', 'category', 'size', 'color', 'description', 'image_url',
-  'sort_order', 'gallery_urls', 'material', 'thickness', 'front_door_window',
-  'side_door', 'rear_door', 'vehicle_fit',
+const PRODUCT_TEXT_FIELDS = [
+  ['size', 80], ['color', 80], ['description', 4000], ['image_url', 500],
+  ['material', 160], ['thickness', 80], ['front_door_window', 300],
+  ['side_door', 300], ['rear_door', 300], ['vehicle_fit', 1000],
 ];
+const SAFE_PRODUCT_IDENTIFIER = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const UNSAFE_SPECIFICATION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const MAX_SORT_ORDER = 100000;
+
+function text(value, { required = false, maximum = 2000 } = {}) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if ((!trimmed && required) || trimmed.length > maximum || /[\u0000-\u001F\u007F]/.test(trimmed)) return null;
+  return trimmed;
+}
+
+function identifier(value, maximum) {
+  const normalised = text(value, { required: true, maximum });
+  return normalised !== null && SAFE_PRODUCT_IDENTIFIER.test(normalised) ? normalised : null;
+}
+
+function plainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function normaliseSpecifications(value) {
+  if (!plainObject(value)) return null;
+  const entries = Object.entries(value);
+  if (entries.length > 30) return null;
+  const normalised = {};
+  for (const [label, detail] of entries) {
+    const safeLabel = text(label, { required: true, maximum: 120 });
+    const safeDetail = text(detail, { required: true, maximum: 1000 });
+    if (UNSAFE_SPECIFICATION_KEYS.has(label) || safeLabel === null || safeDetail === null) return null;
+    normalised[safeLabel] = safeDetail;
+  }
+  return normalised;
+}
+
+function normaliseGallery(value) {
+  if (!Array.isArray(value) || value.length > 30) return null;
+  const gallery = value.map((url) => text(url, { required: true, maximum: 500 }));
+  return gallery.every((url) => url !== null) ? gallery : null;
+}
 
 function normaliseProduct(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)
-    || value.category !== 'canopy' || !CANOPY_SLUGS.has(value.slug)) return null;
-  const product = {};
-  for (const field of PRODUCT_FIELDS) {
-    if (Object.hasOwn(value, field)) product[field] = value[field];
+  if (!plainObject(value)) return null;
+  const id = Number(value.id);
+  const slug = identifier(value.slug, 120);
+  const name = text(value.name, { required: true, maximum: 160 });
+  const category = identifier(value.category, 80);
+  if (!Number.isSafeInteger(id) || id <= 0 || slug === null || name === null || category === null) return null;
+
+  const product = { id, slug, name, category };
+  for (const [field, maximum] of PRODUCT_TEXT_FIELDS) {
+    if (!Object.hasOwn(value, field)) continue;
+    if (value[field] === null) {
+      product[field] = null;
+      continue;
+    }
+    const normalised = text(value[field], { maximum });
+    if (normalised === null) return null;
+    product[field] = normalised;
   }
-  product.category = 'canopy';
-  product.gallery_urls = Array.isArray(value.gallery_urls)
-    ? value.gallery_urls.filter((url) => typeof url === 'string')
-    : [];
+  if (Object.hasOwn(value, 'sort_order')) {
+    const sortOrder = Number(value.sort_order);
+    if (!Number.isSafeInteger(sortOrder) || Math.abs(sortOrder) > MAX_SORT_ORDER) return null;
+    product.sort_order = sortOrder;
+  }
+  product.gallery_urls = Object.hasOwn(value, 'gallery_urls') ? normaliseGallery(value.gallery_urls) : [];
+  if (product.gallery_urls === null) return null;
+  if (Object.hasOwn(value, 'specifications')) {
+    product.specifications = normaliseSpecifications(value.specifications);
+    if (product.specifications === null) return null;
+  }
   return product;
 }
 
@@ -44,10 +97,9 @@ async function buildProducts(sql) {
   const products = await sql`
     SELECT id, slug, name, category, size, color, description, image_url,
       sort_order, gallery_urls, material, thickness, front_door_window,
-      side_door, rear_door, vehicle_fit
+      side_door, rear_door, vehicle_fit, specifications
     FROM catalog_products
-    WHERE is_active = TRUE AND category = 'canopy'
-      AND slug = ANY(${[...CANOPY_SLUGS]})
+    WHERE is_active = TRUE
     ORDER BY sort_order ASC, name ASC
   `;
   return normaliseCatalogueProducts(products);

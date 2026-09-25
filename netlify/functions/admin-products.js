@@ -10,17 +10,10 @@ const headers = {
   'Cache-Control': 'private, no-store',
 };
 
-const CANOPY_SLUGS = new Set([
-  'navrik-canopy-adventure',
-  'navrik-canopy-overland',
-  'navrik-canopy-sports',
-  'navrik-canopy-defender',
-]);
-
 const PRODUCT_FIELDS = new Set([
   'slug', 'name', 'category', 'size', 'color', 'description', 'image_url',
   'is_active', 'sort_order', 'gallery_urls', 'material', 'thickness',
-  'front_door_window', 'side_door', 'rear_door', 'vehicle_fit',
+  'front_door_window', 'side_door', 'rear_door', 'vehicle_fit', 'specifications',
 ]);
 const PRODUCT_UPDATE_FIELDS = new Set(['id', ...PRODUCT_FIELDS]);
 const VARIANT_CREATE_FIELDS = new Set([
@@ -29,6 +22,9 @@ const VARIANT_CREATE_FIELDS = new Set([
 const VARIANT_UPDATE_FIELDS = new Set([
   'variant', 'id', 'product_id', 'variant_type', 'variant_value', 'label', 'is_active', 'sort_order',
 ]);
+const SAFE_PRODUCT_IDENTIFIER = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const UNSAFE_SPECIFICATION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const MAX_SORT_ORDER = 100000;
 
 function response(statusCode, body) {
   return { statusCode, headers, body: JSON.stringify(body) };
@@ -60,15 +56,48 @@ function text(value, { required = false, maximum = 2000 } = {}) {
   return trimmed;
 }
 
+function identifier(value, maximum) {
+  const normalised = text(value, { required: true, maximum });
+  return normalised !== null && SAFE_PRODUCT_IDENTIFIER.test(normalised) ? normalised : null;
+}
+
+function boundedInteger(value, { fallback = 0 } = {}) {
+  const integer = value === undefined ? fallback : Number(value);
+  return Number.isSafeInteger(integer) && Math.abs(integer) <= MAX_SORT_ORDER ? integer : null;
+}
+
+function plainObject(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function specifications(value) {
+  if (value === undefined) return {};
+  if (!plainObject(value)) return null;
+  const entries = Object.entries(value);
+  if (entries.length > 30) return null;
+  const normalised = {};
+  for (const [label, detail] of entries) {
+    if (UNSAFE_SPECIFICATION_KEYS.has(label)
+      || text(label, { required: true, maximum: 120 }) === null
+      || text(detail, { required: true, maximum: 1000 }) === null) return null;
+    normalised[label.trim()] = detail.trim();
+  }
+  return normalised;
+}
+
 function validateProduct(body, { updating = false } = {}) {
   if (!hasOnlyFields(body, updating ? PRODUCT_UPDATE_FIELDS : PRODUCT_FIELDS)) return null;
   const id = updating ? positiveInteger(body.id) : undefined;
-  const slug = text(body.slug, { required: true, maximum: 120 });
+  const slug = identifier(body.slug, 120);
   const name = text(body.name, { required: true, maximum: 160 });
-  if ((updating && !id) || !CANOPY_SLUGS.has(slug) || name === null || body.category !== 'canopy') return null;
+  const category = identifier(body.category, 80);
+  const productSpecifications = specifications(body.specifications);
+  if ((updating && !id) || slug === null || name === null || category === null || productSpecifications === null) return null;
   if (body.is_active !== undefined && typeof body.is_active !== 'boolean') return null;
-  const sortOrder = body.sort_order === undefined ? 0 : Number(body.sort_order);
-  if (!Number.isSafeInteger(sortOrder)) return null;
+  const sortOrder = boundedInteger(body.sort_order);
+  if (sortOrder === null) return null;
   if (body.gallery_urls !== undefined && (!Array.isArray(body.gallery_urls)
     || body.gallery_urls.length > 30
     || body.gallery_urls.some((url) => text(url, { required: true, maximum: 500 }) === null))) return null;
@@ -88,7 +117,7 @@ function validateProduct(body, { updating = false } = {}) {
     ...(updating ? { id } : {}),
     slug,
     name,
-    category: 'canopy',
+    category,
     size: optionalText.size,
     color: optionalText.color || 'black',
     description: optionalText.description,
@@ -102,6 +131,7 @@ function validateProduct(body, { updating = false } = {}) {
     side_door: optionalText.side_door,
     rear_door: optionalText.rear_door,
     vehicle_fit: optionalText.vehicle_fit,
+    specifications: productSpecifications,
   };
 }
 
@@ -113,9 +143,9 @@ function validateVariant(body) {
   const variantType = text(body.variant_type, { required: true, maximum: 80 });
   const variantValue = text(body.variant_value, { required: true, maximum: 120 });
   const label = text(body.label, { required: true, maximum: 160 });
-  const sortOrder = body.sort_order === undefined ? 0 : Number(body.sort_order);
+  const sortOrder = boundedInteger(body.sort_order);
   if ((updating && !id) || !productId || variantType === null || variantValue === null || label === null
-    || !Number.isSafeInteger(sortOrder) || (body.is_active !== undefined && typeof body.is_active !== 'boolean')) return null;
+    || sortOrder === null || (body.is_active !== undefined && typeof body.is_active !== 'boolean')) return null;
   return {
     ...(updating ? { id } : {}),
     product_id: productId,
@@ -161,9 +191,8 @@ export function createAdminProductsHandler({
         const products = await sql`
           SELECT id, slug, name, category, size, color, description, image_url, is_active,
             sort_order, gallery_urls, material, thickness, front_door_window, side_door,
-            rear_door, vehicle_fit, created_at, updated_at
+            rear_door, vehicle_fit, specifications, created_at, updated_at
           FROM catalog_products
-          WHERE category = 'canopy'
           ORDER BY sort_order ASC, created_at DESC
         `;
         return response(200, products);
@@ -175,17 +204,18 @@ export function createAdminProductsHandler({
 
       if (event.httpMethod === 'POST') {
         const product = validateProduct(body);
-        if (!product) return response(400, { error: 'A valid supported canopy is required' });
+        if (!product) return response(400, { error: 'A valid product is required' });
         const sql = getSql();
         const [row] = await sql`
           INSERT INTO catalog_products (
             slug, name, category, size, color, description, image_url, is_active, sort_order,
-            gallery_urls, material, thickness, front_door_window, side_door, rear_door, vehicle_fit
+            gallery_urls, material, thickness, front_door_window, side_door, rear_door, vehicle_fit,
+            specifications
           ) VALUES (
             ${product.slug}, ${product.name}, ${product.category}, ${product.size}, ${product.color},
             ${product.description}, ${product.image_url}, ${product.is_active}, ${product.sort_order},
             ${product.gallery_urls}, ${product.material}, ${product.thickness}, ${product.front_door_window},
-            ${product.side_door}, ${product.rear_door}, ${product.vehicle_fit}
+            ${product.side_door}, ${product.rear_door}, ${product.vehicle_fit}, ${JSON.stringify(product.specifications)}::jsonb
           )
           RETURNING *
         `;
@@ -220,7 +250,7 @@ export function createAdminProductsHandler({
 
       if (event.httpMethod === 'PUT') {
         const product = validateProduct(body, { updating: true });
-        if (!product) return response(400, { error: 'A valid supported canopy is required' });
+        if (!product) return response(400, { error: 'A valid product is required' });
         const sql = getSql();
         const [row] = await sql`
           UPDATE catalog_products SET
@@ -229,8 +259,9 @@ export function createAdminProductsHandler({
             image_url = ${product.image_url}, is_active = ${product.is_active}, sort_order = ${product.sort_order},
             gallery_urls = ${product.gallery_urls}, material = ${product.material}, thickness = ${product.thickness},
             front_door_window = ${product.front_door_window}, side_door = ${product.side_door},
-            rear_door = ${product.rear_door}, vehicle_fit = ${product.vehicle_fit}, updated_at = NOW()
-          WHERE id = ${product.id} AND category = 'canopy'
+            rear_door = ${product.rear_door}, vehicle_fit = ${product.vehicle_fit},
+            specifications = ${JSON.stringify(product.specifications)}::jsonb, updated_at = NOW()
+          WHERE id = ${product.id}
           RETURNING *
         `;
         if (!row) return response(404, { error: 'Product not found' });
@@ -245,7 +276,7 @@ export function createAdminProductsHandler({
       const sql = getSql();
       const [deleted] = body.variant === true
         ? await sql`DELETE FROM product_variants WHERE id = ${id} RETURNING id`
-        : await sql`DELETE FROM catalog_products WHERE id = ${id} AND category = 'canopy' RETURNING id`;
+        : await sql`DELETE FROM catalog_products WHERE id = ${id} RETURNING id`;
       if (!deleted) return response(404, { error: body.variant === true ? 'Variant not found' : 'Product not found' });
       await rebuild(sql, ['products']);
       await purgeMutationCache('product', purgeTags, context);

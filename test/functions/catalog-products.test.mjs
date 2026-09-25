@@ -14,9 +14,9 @@ test('catalog products returns the cached product read model on GET', async () =
     purchase_mode: 'retired_purchase_mode',
   }, {
     id: 8,
-    slug: 'navrik-standard-tray',
-    name: 'Standard Aluminium Tray',
-    category: 'tray',
+    slug: 'navrik-recovery-kit',
+    name: 'Navrik Recovery Kit',
+    category: 'accessory',
     gallery_urls: [],
   }];
   const sql = async (strings) => {
@@ -34,8 +34,14 @@ test('catalog products returns the cached product read model on GET', async () =
     name: 'Navrik Canopy — Adventure',
     category: 'canopy',
     gallery_urls: [],
+  }, {
+    id: 8,
+    slug: 'navrik-recovery-kit',
+    name: 'Navrik Recovery Kit',
+    category: 'accessory',
+    gallery_urls: [],
   }]);
-  assert.doesNotMatch(response.body, /purchaseMode|price_cents|tray|accessory/i);
+  assert.doesNotMatch(response.body, /purchaseMode|price_cents/i);
   assert.match(response.headers['Netlify-CDN-Cache-Control'], /durable/);
   assert.equal(response.headers['Netlify-Cache-Tag'], 'catalogue:products');
 });
