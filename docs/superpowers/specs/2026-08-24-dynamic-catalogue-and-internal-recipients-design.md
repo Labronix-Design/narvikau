@@ -4,7 +4,7 @@
 
 Make Navrik's public catalogue and checkout reflect the active administrator-managed catalogue at all times. No public page, checkout calculation, product name, product description, price, configured option, or Expedition canopy reference may depend on a fixed client or function constant.
 
-Add `info@navrik.co.za` as a second separate, internal recipient for monthly business reports, alongside `accounts@labronix.co.za`.
+Add the former source-site mailbox as a second separate, internal recipient for monthly business reports, alongside the existing Labronix reporting mailbox.
 
 ## Catalogue authority and cache
 
@@ -35,7 +35,7 @@ A migration removes the Expedition product record. The seed source, admin model 
 
 ## Monthly report recipients
 
-`MONTHLY_REPORT_RECIPIENTS` is parsed server-side as the exact allowlist of `accounts@labronix.co.za` and `info@navrik.co.za`. Missing, duplicate or unknown values fail closed. Preview responses never expose recipient addresses.
+`MONTHLY_REPORT_RECIPIENTS` is parsed server-side as the exact allowlist of the existing Labronix reporting mailbox and the former source-site mailbox. Missing, duplicate or unknown values fail closed. Preview responses never expose recipient addresses.
 
 One report snapshot is built per period, then delivery is claimed and sent independently for each approved recipient. The existing delivery uniqueness key includes the recipient, so no schema change is needed for independent idempotency. A partial failure is reported safely and can be retried without duplicating a completed recipient's email.
 

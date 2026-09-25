@@ -25,7 +25,7 @@
 - /accessories and /finance lead to /products.
 - Product detail opens a named quote and cannot import cart/checkout code.
 - Contact/quote validation and rate limiting survive the reduction.
-- SEO cannot expose navrik.co.za, en-ZA, South Africa, ZAR, SAST, or payment language.
+- SEO cannot expose the former source-site domain, en-ZA, South Africa, ZAR, SAST, or payment language.
 
 ## File Structure
 

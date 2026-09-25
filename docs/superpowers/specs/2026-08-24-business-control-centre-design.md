@@ -26,4 +26,4 @@ All new endpoints require server-side admin authentication. OAuth client secret,
 
 ## External Configuration
 
-Create the Google Search Console domain property `sc-domain:navrik.co.za` only through an authenticated Google account that owns the domain. Required Netlify secret keys are `GSC_OAUTH_CLIENT_ID`, `GSC_OAUTH_CLIENT_SECRET`, `GSC_OAUTH_REDIRECT_URI`, `GSC_OAUTH_STATE_SECRET`, and `GSC_SITE_URL`; keys are created only when real values are supplied. Existing exposed Netlify values must be rotated and recreated as secrets before release.
+Create the Google Search Console domain property for the former source-site domain only through an authenticated Google account that owns that domain. Required Netlify secret keys are `GSC_OAUTH_CLIENT_ID`, `GSC_OAUTH_CLIENT_SECRET`, `GSC_OAUTH_REDIRECT_URI`, `GSC_OAUTH_STATE_SECRET`, and `GSC_SITE_URL`; keys are created only when real values are supplied. Existing exposed Netlify values must be rotated and recreated as secrets before release.

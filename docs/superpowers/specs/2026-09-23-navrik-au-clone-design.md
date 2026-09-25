@@ -71,7 +71,7 @@ project.
 
 ## Domain, email, and search configuration
 
-All source references to `navrik.co.za`, `www.navrik.co.za`, South Africa,
+All references to the former source-site domain, South Africa,
 `en-ZA`, ZAR/Rand, and SAST are assessed and changed or removed where they are
 public or operationally relevant. The new canonical origin is
 `https://navrik.com.au`; its `www` behaviour will be set consistently in the AU
