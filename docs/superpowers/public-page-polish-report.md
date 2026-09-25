@@ -20,7 +20,7 @@ Scoped visual and copy consistency changes are in place for Finance, Contact, Pr
 - `git diff --check -- <scoped public-page paths>` completed with no whitespace errors.
 - `npx tsc --noEmit -p tsconfig.website.json` completed successfully before concurrent workspace changes. A fresh final run currently fails because `src/website/_pages/admin/admin-analytics/admin-analytics.component.*` is deleted while `website.routes.ts` still imports it.
 - `npm run build` completed successfully before that concurrent deletion. A fresh final build now fails for the same unrelated missing admin analytics module.
-- Local Playwright screenshots were captured at 320px and 1440px for all five scoped routes. Each page measured exactly the viewport width at both sizes (no horizontal overflow). The contact submit button measured 44px. Finance rendered two external application links, both resolving to `https://www.absa.co.za/vehicle-finance/`.
+- Local Playwright screenshots were captured at 320px and 1440px for all five scoped routes. Each page measured exactly the viewport width at both sizes (no horizontal overflow). The contact submit button measured 44px. Finance rendered two external application links to the former source site's finance provider.
 
 ## Concerns
 
