@@ -80,19 +80,33 @@ const canopies = [
     rear_door: 'Half glass window, optional',
     sort_order: 4,
   },
-].map((canopy) => ({ ...common, ...canopy }));
+].map((canopy) => {
+  const product = { ...common, ...canopy };
+  return {
+    ...product,
+    specifications: {
+      Material: product.material,
+      Thickness: product.thickness,
+      'Front door / window': product.front_door_window,
+      'Side door': product.side_door,
+      'Rear door': product.rear_door,
+      'Vehicle fit': product.vehicle_fit,
+    },
+  };
+});
 
 async function seed() {
   for (const canopy of canopies) {
     await sql`
       INSERT INTO catalog_products (
         slug, name, category, size, color, description, image_url, is_active, sort_order,
-        gallery_urls, material, thickness, front_door_window, side_door, rear_door, vehicle_fit
+        gallery_urls, material, thickness, front_door_window, side_door, rear_door, vehicle_fit,
+        specifications
       ) VALUES (
         ${canopy.slug}, ${canopy.name}, ${canopy.category}, ${canopy.size}, ${canopy.color},
         ${canopy.description}, ${canopy.image_url}, TRUE, ${canopy.sort_order},
         ${canopy.gallery_urls}, ${canopy.material}, ${canopy.thickness}, ${canopy.front_door_window},
-        ${canopy.side_door}, ${canopy.rear_door}, ${canopy.vehicle_fit}
+        ${canopy.side_door}, ${canopy.rear_door}, ${canopy.vehicle_fit}, ${JSON.stringify(canopy.specifications)}::jsonb
       )
       ON CONFLICT (slug) DO UPDATE SET
         name = EXCLUDED.name,
@@ -110,6 +124,7 @@ async function seed() {
         side_door = EXCLUDED.side_door,
         rear_door = EXCLUDED.rear_door,
         vehicle_fit = EXCLUDED.vehicle_fit,
+        specifications = EXCLUDED.specifications,
         updated_at = NOW()
     `;
   }
