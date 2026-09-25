@@ -3,7 +3,7 @@ import { neon } from '@neondatabase/serverless';
 import { verifyAdminToken } from './admin-auth.js';
 import { refreshMonthlySearchConsoleSnapshot } from './admin-search-console.js';
 
-const APPROVED_MONTHLY_RECIPIENTS = ['accounts@labronix.co.za', 'info@navrik.com.au'];
+const APPROVED_MONTHLY_RECIPIENTS = ['info@navrik.com.au'];
 
 const log = {
   info: (msg, d = {}) => console.log(JSON.stringify({ level: 'INFO', fn: 'monthly-business-report', msg, ...d, ts: new Date().toISOString() })),

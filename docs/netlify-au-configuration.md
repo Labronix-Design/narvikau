@@ -16,7 +16,7 @@ features. Values are intentionally omitted.
 | `EMAIL_API_KEY` | Dedicated AU Resend credential for transactional mail |
 | `ADMIN_PASSWORD` | AU administration login secret |
 | `ADMIN_APP_ORIGIN` | Optional exact browser-origin override; the intended AU value is `https://navrik.com.au`, which is also the same-origin code default |
-| `MONTHLY_REPORT_RECIPIENTS` | Exact allowlist: `accounts@labronix.co.za,info@navrik.com.au` |
+| `MONTHLY_REPORT_RECIPIENTS` | Exact allowlist: `info@navrik.com.au` |
 | `REPORTING_TIME_ZONE` | IANA time zone used for scheduled operations reports |
 | `SITE_ID` | AU Netlify site identifier used for cache invalidation |
 | `NETLIFY_PURGE_API_TOKEN` | AU site cache-purge credential |
