@@ -202,9 +202,10 @@ function missingDeliveryConfiguration(env) {
 
 export function approvedRecipients(env) {
   const values = typeof env.MONTHLY_REPORT_RECIPIENTS === 'string'
-    ? env.MONTHLY_REPORT_RECIPIENTS.split(',').map((value) => value.trim().toLowerCase()).filter(Boolean)
+    ? env.MONTHLY_REPORT_RECIPIENTS.split(',').map((value) => value.trim().toLowerCase())
     : [];
-  return values.length === APPROVED_MONTHLY_RECIPIENTS.length
+  return values.every(Boolean)
+    && values.length === APPROVED_MONTHLY_RECIPIENTS.length
     && new Set(values).size === APPROVED_MONTHLY_RECIPIENTS.length
     && APPROVED_MONTHLY_RECIPIENTS.every((recipient) => values.includes(recipient))
     ? APPROVED_MONTHLY_RECIPIENTS

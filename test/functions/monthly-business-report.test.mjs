@@ -141,6 +141,8 @@ test('monthly delivery requires exactly the Labronix and Navrik AU internal reci
     'duplicate recipient': 'accounts@labronix.co.za,info@navrik.com.au,info@navrik.com.au',
     'unknown recipient': 'accounts@labronix.co.za,reports@example.com',
     'mixed extra recipient': 'accounts@labronix.co.za,info@navrik.com.au,reports@example.com',
+    'empty middle recipient': 'accounts@labronix.co.za,,info@navrik.com.au',
+    'trailing empty recipient': 'accounts@labronix.co.za,info@navrik.com.au,',
   };
 
   for (const [name, recipients] of Object.entries(invalidConfigurations)) {
