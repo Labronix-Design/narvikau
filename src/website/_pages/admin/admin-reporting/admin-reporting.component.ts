@@ -17,7 +17,7 @@ export class AdminReportingComponent {
   readonly sendState = signal<'idle' | 'confirming' | 'sending'>('idle');
   readonly sendError = signal('');
   readonly canSendMonthlyReport = computed(() => this.monthlyReport()?.delivery.recipientConfigured === true && this.sendState() !== 'sending');
-  readonly configuredRecipient = computed(() => this.monthlyReport()?.delivery.recipientConfigured === true ? 'accounts@labronix.co.za (internal) and info@navrik.com.au' : null);
+  readonly configuredRecipient = computed(() => this.monthlyReport()?.delivery.recipientConfigured === true ? 'Two internal recipients configured' : null);
   readonly reportSections = computed(() => {
     const report = this.monthlyReport()?.report;
     const sections: Array<{ key: keyof MonthlyBusinessReportContent; title: string; detail: string }> = [

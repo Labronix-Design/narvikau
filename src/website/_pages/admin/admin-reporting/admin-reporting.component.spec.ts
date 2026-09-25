@@ -3,7 +3,8 @@ import { AdminService, MonthlyBusinessReportResponse, MonthlyBusinessReportSendR
 import { AdminReportingComponent } from './admin-reporting.component';
 
 const REPORTING_PERIOD = { label: 'August 2026', startDate: '2026-08-01', endDate: '2026-08-24', complete: false };
-const CONFIGURED_RECIPIENT = 'accounts@labronix.co.za (internal) and info@navrik.com.au';
+const CONFIGURED_RECIPIENT = 'Two internal recipients configured';
+const SERVER_RECIPIENT = 'sensitive server-side recipient contract';
 const REPORT_CONTENT = { orders: {}, leads: {}, search: {}, hosting: {}, invoiceReadiness: {}, measurementCoverage: {} };
 
 function reportPreview(recipientConfigured: boolean): MonthlyBusinessReportResponse {
@@ -19,7 +20,7 @@ function deliveryResult(status: 'sent' | 'already_sent'): MonthlyBusinessReportS
   return {
     status,
     period: REPORTING_PERIOD,
-    delivery: { recipient: CONFIGURED_RECIPIENT, sentAt: '2026-08-24T04:00:00.000Z' },
+    delivery: { recipient: SERVER_RECIPIENT, sentAt: '2026-08-24T04:00:00.000Z' },
     report: REPORT_CONTENT,
   };
 }
@@ -49,6 +50,7 @@ describe('AdminReportingComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Completed calendar month');
     expect(fixture.nativeElement.textContent).toContain(CONFIGURED_RECIPIENT);
     expect(fixture.nativeElement.textContent).toContain('Configured internal recipient');
+    expect(fixture.nativeElement.textContent).not.toContain(SERVER_RECIPIENT);
   });
 
   it('requires confirmation before sending the current month report', async () => {
@@ -62,6 +64,7 @@ describe('AdminReportingComponent', () => {
     expect(adminService.sendMonthlyBusinessReport).toHaveBeenCalledOnceWith();
     expect(fixture.nativeElement.textContent).toContain('Sent internally');
     expect(fixture.nativeElement.textContent).toContain(CONFIGURED_RECIPIENT);
+    expect(fixture.nativeElement.textContent).not.toContain(SERVER_RECIPIENT);
   });
 
   it('keeps the send action unavailable and hides the recipient when delivery setup is incomplete', async () => {
@@ -85,6 +88,7 @@ describe('AdminReportingComponent', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Already sent internally');
     expect(fixture.nativeElement.textContent).toContain(CONFIGURED_RECIPIENT);
+    expect(fixture.nativeElement.textContent).not.toContain(SERVER_RECIPIENT);
   });
 
   it('presents only enquiry and website operations reporting', () => {

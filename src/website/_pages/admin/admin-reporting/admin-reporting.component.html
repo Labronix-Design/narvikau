@@ -27,7 +27,7 @@
 
         <div class="delivery-action">
           @if (deliveryResult(); as result) {
-            <p class="delivery-success"><mat-icon svgIcon="check_circle"></mat-icon>@if (result.status === 'already_sent') { Already sent internally } @else { Sent internally } to {{ result.delivery.recipient }}@if (result.delivery.sentAt; as sentAt) { on {{ sentAt | date:'d MMM yyyy, HH:mm' }} }.</p>
+            <p class="delivery-success"><mat-icon svgIcon="check_circle"></mat-icon>@if (result.status === 'already_sent') { Already sent internally } @else { Sent internally } to the configured internal recipients@if (result.delivery.sentAt; as sentAt) { on {{ sentAt | date:'d MMM yyyy, HH:mm' }} }.</p>
           } @else if (sendState() === 'confirming') {
             <div class="confirmation" role="status"><div><strong>Send this completed-month operations report internally?</strong><p>It will go only to {{ configuredRecipient() }}.</p></div><div class="confirmation-actions"><button type="button" class="secondary-button" (click)="cancelSend()">Cancel</button><button type="button" class="primary-button" data-testid="send-monthly-report" (click)="sendMonthlyReport()" [disabled]="sendState() === 'sending'">{{ sendState() === 'sending' ? 'Sending…' : 'Confirm send' }}</button></div></div>
           } @else {
