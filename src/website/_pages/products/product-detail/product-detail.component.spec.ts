@@ -63,6 +63,7 @@ function canopy(): CatalogProduct {
     slug: 'navrik-canopy-adventure',
     name: 'Navrik Canopy — Adventure',
     category: 'canopy',
+    specifications: { Material: 'Aluminium' },
     size: 'Adventure',
     color: 'black',
     description: 'Built around your vehicle.',

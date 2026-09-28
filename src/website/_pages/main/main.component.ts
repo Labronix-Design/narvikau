@@ -214,7 +214,7 @@ export class MainPage implements OnInit, AfterViewInit {
       name: product.name,
       description: product.description,
       imageUrl: product.image_url,
-      badge: product.size,
+      badge: product.size ?? null,
       detailRoute: ['/products', product.slug],
     };
   }

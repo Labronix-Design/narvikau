@@ -73,6 +73,7 @@ function canopy(): CatalogProduct {
     slug: 'navrik-canopy-adventure',
     name: 'Navrik Canopy — Adventure',
     category: 'canopy',
+    specifications: {},
     size: 'Adventure',
     color: 'black',
     description: null,

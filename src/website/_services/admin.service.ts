@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { CatalogProduct as StorefrontCatalogProduct, toRenderableSpecifications } from '../_models/catalog.models';
 
 export interface ProductVariant {
   id?: number;
@@ -12,24 +13,9 @@ export interface ProductVariant {
   sort_order: number;
 }
 
-export interface CatalogProduct {
+export interface CatalogProduct extends Omit<StorefrontCatalogProduct, 'id'> {
   id?: number;
-  slug: string;
-  name: string;
-  category: 'canopy';
-  size: string | null;
-  color: string;
-  description: string | null;
-  image_url: string | null;
   is_active: boolean;
-  sort_order: number;
-  gallery_urls: string[];
-  material: string | null;
-  thickness: string | null;
-  front_door_window: string | null;
-  side_door: string | null;
-  rear_door: string | null;
-  vehicle_fit: string | null;
 }
 
 export interface WarrantyRegistrationRecord {
@@ -283,16 +269,19 @@ export class AdminService {
   }
 
   // ── Products ────────────────────────────────────────────────
-  getProducts(): Promise<CatalogProduct[]> {
-    return firstValueFrom(this.http.get<CatalogProduct[]>('/api/admin-products', { headers: this.authHeaders }));
+  async getProducts(): Promise<CatalogProduct[]> {
+    const products = await firstValueFrom(this.http.get<CatalogProduct[]>('/api/admin-products', { headers: this.authHeaders }));
+    return products.map(product => ({ ...product, specifications: toRenderableSpecifications(product.specifications) }));
   }
 
-  createProduct(p: CatalogProduct): Promise<CatalogProduct> {
-    return firstValueFrom(this.http.post<CatalogProduct>('/api/admin-products', p, { headers: this.authHeaders }));
+  async createProduct(p: CatalogProduct): Promise<CatalogProduct> {
+    const product = await firstValueFrom(this.http.post<CatalogProduct>('/api/admin-products', p, { headers: this.authHeaders }));
+    return { ...product, specifications: toRenderableSpecifications(product.specifications) };
   }
 
-  updateProduct(p: CatalogProduct): Promise<CatalogProduct> {
-    return firstValueFrom(this.http.put<CatalogProduct>('/api/admin-products', p, { headers: this.authHeaders }));
+  async updateProduct(p: CatalogProduct): Promise<CatalogProduct> {
+    const product = await firstValueFrom(this.http.put<CatalogProduct>('/api/admin-products', p, { headers: this.authHeaders }));
+    return { ...product, specifications: toRenderableSpecifications(product.specifications) };
   }
 
   deleteProduct(id: number): Promise<any> {

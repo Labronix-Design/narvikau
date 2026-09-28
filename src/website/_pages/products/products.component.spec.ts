@@ -56,6 +56,7 @@ describe('ProductsPage canopy quotes', () => {
 
   it('does not manufacture a product image when the catalogue omits one', () => {
     expect(fixture.componentInstance.heroImage(canopy())).toBe('');
+    expect(fixture.componentInstance.heroImage(accessory())).toBe('');
   });
 
   it('renders a fixed-navigation-safe hero and dimensioned loading cards', () => {
@@ -80,6 +81,7 @@ function canopy(overrides: Partial<CatalogProduct> = {}): CatalogProduct {
     slug: 'navrik-canopy-adventure',
     name: 'Navrik Canopy — Adventure',
     category: 'canopy',
+    specifications: {},
     size: 'Adventure',
     color: 'black',
     description: null,
@@ -93,5 +95,19 @@ function canopy(overrides: Partial<CatalogProduct> = {}): CatalogProduct {
     rear_door: null,
     vehicle_fit: null,
     ...overrides,
+  };
+}
+
+function accessory(): CatalogProduct {
+  return {
+    id: 2,
+    slug: 'navrik-roof-rack',
+    name: 'Navrik Roof Rack',
+    category: 'accessory',
+    specifications: { Width: '1,400 mm' },
+    description: 'A load-carrying roof rack.',
+    image_url: null,
+    sort_order: 2,
+    gallery_urls: [],
   };
 }

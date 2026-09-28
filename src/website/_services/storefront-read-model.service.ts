@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { CatalogProduct } from '../_models/catalog.models';
+import { CatalogProduct, toRenderableSpecifications } from '../_models/catalog.models';
 import { SiteSettings } from '../_models/site-settings.models';
 
 export interface StorefrontReadModel {
@@ -34,7 +34,13 @@ export class StorefrontReadModelService {
     this.error.set(null);
     try {
       const model = await firstValueFrom(this.http.get<StorefrontReadModel>('/api/catalog-storefront'));
-      this.model.set(model);
+      this.model.set({
+        ...model,
+        products: model.products.map(product => ({
+          ...product,
+          specifications: toRenderableSpecifications(product.specifications),
+        })),
+      });
       this.loaded = true;
     } catch (error) {
       console.error('StorefrontReadModelService load failed:', error);
