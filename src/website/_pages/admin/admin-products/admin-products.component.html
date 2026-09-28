@@ -1,45 +1,85 @@
 <div class="adm-page">
   <div class="adm-header">
-    <h1 class="adm-title">Canopies</h1>
-    <p class="adm-sub">Manage the four supported Australian canopy records and their descriptive options.</p>
+    <h1 class="adm-title">Products</h1>
+    <p class="adm-sub">Manage catalogue products, categories, specifications and descriptive options.</p>
   </div>
 
-  @if (error()) { <div class="adm-error"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
+  @if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
 
   @if (showForm()) {
     <div class="adm-form-wrap">
-      <h2>{{ editingId() ? 'Edit Canopy' : 'New Canopy' }}</h2>
-      <form [formGroup]="form">
+      <h2>{{ editingId() ? 'Edit Product' : 'New Product' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <fieldset class="product-fields" aria-label="Product details" [disabled]="saving()">
         <div class="adm-form-grid">
           <div class="adm-field">
-            <label for="canopy-model">Canopy model *</label>
-            <select id="canopy-model" formControlName="slug" (change)="applyModel(form.controls.slug.value)">
-              @for (model of canopyModels; track model.slug) { <option [value]="model.slug">{{ model.name }}</option> }
-            </select>
+            <label for="product-name">Name *</label>
+            <input id="product-name" formControlName="name" required maxlength="160" aria-describedby="product-name-help product-name-error" [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid">
+            <small id="product-name-help">Enter a product name (up to 160 characters).</small>
+            <small id="product-name-error" class="field-error">@if (form.controls.name.touched && form.controls.name.invalid) { Enter a non-blank name without control characters. }</small>
           </div>
-          <div class="adm-field"><label for="canopy-name">Name *</label><input id="canopy-name" formControlName="name"></div>
-          <div class="adm-field"><label for="canopy-size">Model / Size</label><input id="canopy-size" formControlName="size"></div>
-          <div class="adm-field"><label for="canopy-colour">Colour *</label><input id="canopy-colour" formControlName="color"></div>
-          <div class="adm-field"><label for="canopy-sort">Sort Order</label><input id="canopy-sort" type="number" formControlName="sort_order" min="0"></div>
+          <div class="adm-field">
+            <label for="product-slug">Slug *</label>
+            <input id="product-slug" formControlName="slug" required maxlength="120" aria-describedby="product-slug-help product-slug-error" [attr.aria-invalid]="form.controls.slug.touched && form.controls.slug.invalid">
+            <small id="product-slug-help">Use lowercase letters, numbers and single hyphens, for example roof-rack.</small>
+            <small id="product-slug-error" class="field-error">@if (form.controls.slug.touched && form.controls.slug.invalid) { Enter a valid slug (up to 120 characters). }</small>
+          </div>
+          <div class="adm-field">
+            <label for="product-category">Category *</label>
+            <input id="product-category" formControlName="category" required maxlength="80" aria-describedby="product-category-help product-category-error" [attr.aria-invalid]="form.controls.category.touched && form.controls.category.invalid">
+            <small id="product-category-help">Enter any category using lowercase letters, numbers and single hyphens, for example roof-equipment.</small>
+            <small id="product-category-error" class="field-error">@if (form.controls.category.touched && form.controls.category.invalid) { Enter a valid category (up to 80 characters). }</small>
+          </div>
+          <div class="adm-field">
+            <label for="product-sort">Sort Order</label><input id="product-sort" type="number" formControlName="sort_order" min="-100000" max="100000" step="1" aria-describedby="product-sort-help product-sort-error" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid">
+            <small id="product-sort-help">Whole number between -100000 and 100000. Lower numbers appear first.</small>
+            <small id="product-sort-error" class="field-error">@if (form.controls.sort_order.touched && form.controls.sort_order.invalid) { Enter a whole number within the allowed range. }</small>
+          </div>
           <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible in catalogue</label></div>
           <div class="adm-field span-full">
-            <label>Canopy Image</label>
+            <label for="product-image">Product Image URL</label>
+            <input id="product-image" formControlName="image_url" maxlength="500">
             <website-image-upload [url]="form.controls.image_url.value" (urlChange)="form.controls.image_url.setValue($event)"></website-image-upload>
           </div>
-          <div class="adm-field span-full"><label for="canopy-description">Description</label><textarea id="canopy-description" formControlName="description"></textarea></div>
-          <div class="adm-field"><label for="canopy-material">Material</label><input id="canopy-material" formControlName="material"></div>
-          <div class="adm-field"><label for="canopy-thickness">Thickness</label><input id="canopy-thickness" formControlName="thickness"></div>
-          <div class="adm-field"><label for="canopy-front">Front Door / Window</label><input id="canopy-front" formControlName="front_door_window"></div>
-          <div class="adm-field"><label for="canopy-side">Side Door</label><input id="canopy-side" formControlName="side_door"></div>
-          <div class="adm-field"><label for="canopy-rear">Rear Door</label><input id="canopy-rear" formControlName="rear_door"></div>
-          <div class="adm-field span-full"><label for="canopy-fit">Vehicle Fit</label><input id="canopy-fit" formControlName="vehicle_fit"></div>
+          <div class="adm-field span-full"><label for="product-description">Description</label><textarea id="product-description" formControlName="description" maxlength="4000"></textarea></div>
+          <fieldset class="specifications span-full" formArrayName="specifications" aria-describedby="specification-help specification-errors">
+            <legend>Specifications</legend>
+            <p id="specification-help">Add up to 30 labelled details. Each label must be unique, up to 120 characters; values can contain up to 1000 characters.</p>
+            <div id="specification-errors" aria-live="polite">
+              @if (form.controls.specifications.hasError('duplicateLabels')) { <p class="field-error">Each specification needs a unique label. Remove or rename the duplicate.</p> }
+            </div>
+            @for (row of form.controls.specifications.controls; track row; let index = $index) {
+              <div class="specification-row" [formGroupName]="index">
+                <div class="adm-field">
+                  <label [for]="'specification-label-' + index">Specification {{ index + 1 }} label *</label>
+                  <input [id]="'specification-label-' + index" formControlName="label" required maxlength="120" [attr.aria-describedby]="'specification-label-error-' + index" [attr.aria-invalid]="row.controls.label.touched && row.controls.label.invalid">
+                  <small [id]="'specification-label-error-' + index" class="field-error">
+                    @if (row.controls.label.touched && row.controls.label.invalid) { Enter a non-blank label. Reserved object names and control characters are not allowed. }
+                  </small>
+                </div>
+                <div class="adm-field">
+                  <label [for]="'specification-value-' + index">Specification {{ index + 1 }} value *</label>
+                  <input [id]="'specification-value-' + index" formControlName="value" required maxlength="1000" [attr.aria-describedby]="'specification-value-error-' + index" [attr.aria-invalid]="row.controls.value.touched && row.controls.value.invalid">
+                  <small [id]="'specification-value-error-' + index" class="field-error">
+                    @if (row.controls.value.touched && row.controls.value.invalid) { Enter a non-blank value without control characters. }
+                  </small>
+                </div>
+                <button type="button" class="adm-btn danger small" (click)="removeSpecification(index)" [attr.aria-label]="'Remove specification ' + (index + 1)"><mat-icon svgIcon="delete"></mat-icon>Remove</button>
+              </div>
+            } @empty { <p>No specifications added.</p> }
+            <button type="button" class="adm-btn ghost small" (click)="addSpecification()" [disabled]="form.controls.specifications.length >= 30"><mat-icon svgIcon="add"></mat-icon>Add Specification</button>
+          </fieldset>
           <div class="adm-field span-full">
-            <label>Gallery Images</label>
+            <h3>Gallery Images</h3>
             <div class="gallery-list">
               @for (url of form.controls.gallery_urls.value; track $index) {
                 <div class="gallery-item">
+                  <div class="adm-field">
+                    <label [for]="'gallery-image-' + $index">Gallery image {{ $index + 1 }} URL</label>
+                    <input #galleryUrlInput [id]="'gallery-image-' + $index" [value]="url" maxlength="500" (input)="updateGalleryImage($index, galleryUrlInput.value)">
+                  </div>
                   <website-image-upload [compact]="true" [url]="url" (urlChange)="updateGalleryImage($index, $event)"></website-image-upload>
-                  <button type="button" class="adm-btn danger small" (click)="removeGalleryImage($index)"><mat-icon svgIcon="delete"></mat-icon>Remove</button>
+                  <button type="button" class="adm-btn danger small" (click)="removeGalleryImage($index)" [attr.aria-label]="'Remove gallery image ' + ($index + 1)"><mat-icon svgIcon="delete"></mat-icon>Remove</button>
                 </div>
               }
             </div>
@@ -47,39 +87,40 @@
           </div>
         </div>
         <div class="adm-form-actions">
-          <button type="button" class="adm-btn primary" (click)="save()" [disabled]="saving()"><mat-icon svgIcon="save"></mat-icon>{{ saving() ? 'Saving…' : 'Save Canopy' }}</button>
+          <button type="submit" class="adm-btn primary" [disabled]="saving()"><mat-icon svgIcon="save"></mat-icon>{{ saving() ? 'Saving…' : 'Save Product' }}</button>
           <button type="button" class="adm-btn ghost" (click)="cancelForm()"><mat-icon svgIcon="close"></mat-icon>Cancel</button>
         </div>
+        </fieldset>
       </form>
     </div>
   }
 
   @if (loading()) {
-    <div class="adm-loading"><div class="spin"></div><span class="spin-label">Loading Canopies…</span></div>
+    <div class="adm-loading" role="status"><div class="spin"></div><span class="spin-label">Loading Products…</span></div>
   } @else {
     <div class="section-actions">
-      <h2 class="adm-section-title">{{ products().length }} Canopies</h2>
-      @if (!showForm()) { <button class="adm-btn primary" (click)="openCreate()"><mat-icon svgIcon="add"></mat-icon>Add Canopy</button> }
+      <h2 class="adm-section-title">{{ products().length }} Products</h2>
+      @if (!showForm()) { <button class="adm-btn primary" (click)="openCreate()"><mat-icon svgIcon="add"></mat-icon>Add Product</button> }
     </div>
 
     @if (products().length === 0) {
-      <div class="adm-empty"><mat-icon class="empty-icon" svgIcon="inventory_2"></mat-icon><p class="empty-title">No canopies yet</p></div>
+      <div class="adm-empty"><mat-icon class="empty-icon" svgIcon="inventory_2"></mat-icon><p class="empty-title">No products yet</p></div>
     } @else {
       <div class="adm-table-wrap">
         <table class="adm-table">
-          <thead><tr><th>#</th><th>Name</th><th>Model</th><th class="hide-mobile">Colour</th><th>Active</th><th>Actions</th></tr></thead>
+          <thead><tr><th scope="col">#</th><th scope="col">Name</th><th scope="col">Category</th><th scope="col" class="hide-mobile">Sort Order</th><th scope="col">Active</th><th scope="col">Actions</th></tr></thead>
           <tbody>
             @for (product of products(); track product.id) {
               <tr [class.row-expanded]="expandedProductId() === product.id">
                 <td class="mono">{{ product.id }}</td>
                 <td><div class="product-name-cell"><span>{{ product.name }}</span><span class="slug-tag">{{ product.slug }}</span></div></td>
-                <td>{{ product.size || '—' }}</td>
-                <td class="hide-mobile">{{ product.color }}</td>
-                <td><span class="bool-dot" [class.on]="product.is_active"></span></td>
+                <td>{{ product.category }}</td>
+                <td class="hide-mobile">{{ product.sort_order }}</td>
+                <td><span class="bool-dot" [class.on]="product.is_active" aria-hidden="true"></span> {{ product.is_active ? 'Yes' : 'No' }}</td>
                 <td><div class="row-actions">
-                  <button class="adm-btn ghost small" (click)="openEdit(product)"><mat-icon svgIcon="edit"></mat-icon>Edit</button>
+                  <button class="adm-btn ghost small" (click)="openEdit(product)" [disabled]="saving()"><mat-icon svgIcon="edit"></mat-icon>Edit</button>
                   <button class="adm-btn ghost small" (click)="toggleVariants(product)"><mat-icon svgIcon="tune"></mat-icon>Options</button>
-                  <button class="adm-btn danger small" (click)="remove(product)"><mat-icon svgIcon="delete"></mat-icon></button>
+                  <button class="adm-btn danger small" (click)="remove(product)" [disabled]="saving()" [attr.aria-label]="'Delete ' + product.name"><mat-icon svgIcon="delete"></mat-icon></button>
                 </div></td>
               </tr>
               @if (expandedProductId() === product.id) {
@@ -89,17 +130,17 @@
                   @else {
                     @if (showVariantForm()) {
                       <div class="variant-form"><form [formGroup]="variantForm"><div class="variant-form-grid">
-                        <div class="adm-field"><label>Type</label><select formControlName="variant_type">@for (type of variantTypes; track type) { <option [value]="type">{{ type }}</option> }</select></div>
-                        <div class="adm-field"><label>Value</label><input formControlName="variant_value"></div>
-                        <div class="adm-field"><label>Display Label</label><input formControlName="label"></div>
-                        <div class="adm-field"><label>Sort Order</label><input type="number" formControlName="sort_order" min="0"></div>
+                        <div class="adm-field"><label for="variant-type">Type</label><select id="variant-type" formControlName="variant_type">@for (type of variantTypes; track type) { <option [value]="type">{{ type }}</option> }</select></div>
+                        <div class="adm-field"><label for="variant-value">Value</label><input id="variant-value" formControlName="variant_value"></div>
+                        <div class="adm-field"><label for="variant-label">Display Label</label><input id="variant-label" formControlName="label"></div>
+                        <div class="adm-field"><label for="variant-sort">Sort Order</label><input id="variant-sort" type="number" formControlName="sort_order" min="0"></div>
                         <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible</label></div>
                       </div><div class="adm-form-actions">
                         <button type="button" class="adm-btn primary small" (click)="saveVariant()" [disabled]="variantSaving()"><mat-icon svgIcon="save"></mat-icon>{{ variantSaving() ? 'Saving…' : 'Save Option' }}</button>
                         <button type="button" class="adm-btn ghost small" (click)="cancelVariantForm()">Cancel</button>
                       </div></form></div>
                     }
-                    @if (variants().length === 0) { <div class="variants-empty">No descriptive options defined for this canopy.</div> }
+                    @if (variants().length === 0) { <div class="variants-empty">No descriptive options defined for this product.</div> }
                     @else {
                       @for (type of variantTypeLabels(); track type) {
                         <div class="variant-group"><div class="variant-group-label">{{ type }}</div><div class="variant-rows">
@@ -107,9 +148,9 @@
                             <div class="variant-item" [class.inactive]="!variant.is_active">
                               <span class="variant-label">{{ variant.label }}</span><span class="variant-value mono">{{ variant.variant_value }}</span>
                               <div class="variant-actions">
-                                <button class="adm-btn ghost small" (click)="toggleVariantActive(variant)"><mat-icon [svgIcon]="variant.is_active ? 'pause_circle' : 'play_circle'"></mat-icon></button>
-                                <button class="adm-btn ghost small" (click)="editVariant(variant)"><mat-icon svgIcon="edit"></mat-icon></button>
-                                <button class="adm-btn danger small" (click)="deleteVariant(variant)"><mat-icon svgIcon="delete"></mat-icon></button>
+                                <button class="adm-btn ghost small" (click)="toggleVariantActive(variant)" [attr.aria-label]="(variant.is_active ? 'Hide ' : 'Show ') + variant.label"><mat-icon [svgIcon]="variant.is_active ? 'pause_circle' : 'play_circle'"></mat-icon></button>
+                                <button class="adm-btn ghost small" (click)="editVariant(variant)" [attr.aria-label]="'Edit ' + variant.label"><mat-icon svgIcon="edit"></mat-icon></button>
+                                <button class="adm-btn danger small" (click)="deleteVariant(variant)" [attr.aria-label]="'Delete ' + variant.label"><mat-icon svgIcon="delete"></mat-icon></button>
                               </div>
                             </div>
                           }

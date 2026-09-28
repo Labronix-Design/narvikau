@@ -1,29 +1,39 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormArray, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminService, CatalogProduct, ProductVariant } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
 import { ImageUploadComponent } from '../../../_components/image-upload/image-upload.component';
+import { toRenderableSpecifications } from '../../../_models/catalog.models';
+
+type SpecificationRow = FormGroup<{ label: FormControl<string>; value: FormControl<string> }>;
+
+const requiredText = (maximum: number): ValidatorFn => control => {
+  const value: unknown = control.value;
+  return typeof value === 'string' && value.trim().length > 0 && value.trim().length <= maximum
+    && !/[\u0000-\u001F\u007F]/.test(value.trim()) ? null : { invalidText: true };
+};
+const identifier: ValidatorFn = control => typeof control.value === 'string'
+  && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(control.value.trim()) ? null : { identifier: true };
+const specificationLabel: ValidatorFn = control => ['__proto__', 'constructor', 'prototype'].includes(control.value.trim())
+  ? { reservedLabel: true } : null;
+const uniqueLabels: ValidatorFn = control => {
+  if (!(control instanceof FormArray)) return null;
+  const labels = control.controls.map(row => String(row.get('label')?.value ?? '').trim());
+  return new Set(labels).size === labels.length ? null : { duplicateLabels: true };
+};
 
 const EMPTY_PRODUCT: Omit<CatalogProduct, 'id'> = {
-  slug: 'navrik-canopy-adventure',
-  name: 'Navrik Canopy — Adventure',
-  category: 'canopy',
+  slug: '',
+  name: '',
+  category: '',
   specifications: {},
-  size: 'Adventure',
-  color: 'black',
   description: null,
   image_url: null,
   is_active: true,
   sort_order: 0,
   gallery_urls: [],
-  material: null,
-  thickness: null,
-  front_door_window: null,
-  side_door: null,
-  rear_door: null,
-  vehicle_fit: null,
 };
 
 @Component({
@@ -52,29 +62,16 @@ export class AdminProductsComponent {
   readonly editingVariantId = signal<number | null>(null);
   readonly variantSaving = signal(false);
 
-  readonly canopyModels = [
-    { slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', size: 'Adventure' },
-    { slug: 'navrik-canopy-overland', name: 'Navrik Canopy — Overland', size: 'Overland' },
-    { slug: 'navrik-canopy-sports', name: 'Navrik Canopy — Sports', size: 'Sports' },
-    { slug: 'navrik-canopy-defender', name: 'Navrik Canopy — Defender', size: 'Defender' },
-  ] as const;
-
   readonly form = this.fb.nonNullable.group({
-    slug: [EMPTY_PRODUCT.slug, Validators.required],
-    name: [EMPTY_PRODUCT.name, Validators.required],
-    size: [EMPTY_PRODUCT.size ?? ''],
-    color: [EMPTY_PRODUCT.color ?? '', Validators.required],
-    description: [''],
-    image_url: [''],
+    slug: ['', [requiredText(120), identifier]],
+    name: ['', requiredText(160)],
+    category: ['', [requiredText(80), identifier]],
+    description: ['', Validators.maxLength(4000)],
+    image_url: ['', Validators.maxLength(500)],
     is_active: [true],
-    sort_order: [0],
+    sort_order: [0, [Validators.required, Validators.min(-100000), Validators.max(100000), Validators.pattern(/^-?\d+$/)]],
     gallery_urls: this.fb.nonNullable.control<string[]>([]),
-    material: [''],
-    thickness: [''],
-    front_door_window: [''],
-    side_door: [''],
-    rear_door: [''],
-    vehicle_fit: [''],
+    specifications: this.fb.array<SpecificationRow>([], [uniqueLabels, Validators.maxLength(30)]),
   });
 
   readonly variantForm = this.fb.nonNullable.group({
@@ -97,7 +94,7 @@ export class AdminProductsComponent {
     try {
       this.products.set(await this.adminService.getProducts());
     } catch {
-      this.error.set('Canopies could not be loaded.');
+      this.error.set('Products could not be loaded.');
     } finally {
       this.loading.set(false);
     }
@@ -105,12 +102,19 @@ export class AdminProductsComponent {
 
   openCreate(): void {
     this.editingId.set(null);
+    this.error.set('');
+    this.form.controls.specifications.clear();
     this.form.reset({ ...this.toFormValue(EMPTY_PRODUCT), gallery_urls: [] });
     this.showForm.set(true);
   }
 
   openEdit(product: CatalogProduct): void {
     this.editingId.set(product.id ?? null);
+    this.error.set('');
+    this.form.controls.specifications.clear();
+    for (const [label, value] of Object.entries(toRenderableSpecifications(product.specifications))) {
+      this.form.controls.specifications.push(this.createSpecificationRow(label, value));
+    }
     this.form.reset(this.toFormValue(product));
     this.showForm.set(true);
   }
@@ -120,35 +124,44 @@ export class AdminProductsComponent {
     this.editingId.set(null);
   }
 
-  applyModel(slug: string): void {
-    const model = this.canopyModels.find(item => item.slug === slug);
-    if (model) this.form.patchValue({ name: model.name, size: model.size });
+  addSpecification(): void {
+    if (this.form.controls.specifications.length < 30) {
+      this.form.controls.specifications.push(this.createSpecificationRow());
+    }
+  }
+
+  removeSpecification(index: number): void {
+    this.form.controls.specifications.removeAt(index);
+  }
+
+  private createSpecificationRow(label = '', value = ''): SpecificationRow {
+    return this.fb.nonNullable.group({
+      label: [label, [requiredText(120), specificationLabel]],
+      value: [value, requiredText(1000)],
+    });
   }
 
   async save(): Promise<void> {
-    if (this.form.invalid || this.saving()) return;
+    if (this.saving()) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      this.error.set('Check the highlighted product fields before saving.');
+      return;
+    }
     this.saving.set(true);
     this.error.set('');
     const value = this.form.getRawValue();
     const payload: CatalogProduct = {
       ...(this.editingId() ? { id: this.editingId()! } : {}),
-      slug: value.slug,
-      name: value.name,
-      category: 'canopy',
-      specifications: this.products().find(product => product.id === this.editingId())?.specifications ?? {},
-      size: value.size || null,
-      color: value.color,
+      slug: value.slug.trim(),
+      name: value.name.trim(),
+      category: value.category.trim(),
+      specifications: Object.fromEntries(value.specifications.map(row => [row.label.trim(), row.value.trim()])),
       description: value.description || null,
       image_url: value.image_url || null,
       is_active: value.is_active,
       sort_order: value.sort_order,
       gallery_urls: value.gallery_urls.filter(Boolean),
-      material: value.material || null,
-      thickness: value.thickness || null,
-      front_door_window: value.front_door_window || null,
-      side_door: value.side_door || null,
-      rear_door: value.rear_door || null,
-      vehicle_fit: value.vehicle_fit || null,
     };
 
     try {
@@ -160,7 +173,7 @@ export class AdminProductsComponent {
         : [...items, saved].sort((left, right) => left.sort_order - right.sort_order));
       this.cancelForm();
     } catch (error: any) {
-      this.error.set(error.error?.error || error.message || 'Canopy save failed.');
+      this.error.set(error.error?.error || error.message || 'Product save failed.');
     } finally {
       this.saving.set(false);
     }
@@ -169,7 +182,7 @@ export class AdminProductsComponent {
   async remove(product: CatalogProduct): Promise<void> {
     if (!product.id) return;
     const confirmed = await this.modal.confirm({
-      title: 'Delete Canopy',
+      title: 'Delete Product',
       message: `Delete "${product.name}"?`,
       confirmLabel: 'Delete',
       variant: 'danger',
@@ -179,7 +192,7 @@ export class AdminProductsComponent {
       await this.adminService.deleteProduct(product.id);
       this.products.update(items => items.filter(item => item.id !== product.id));
     } catch (error: any) {
-      this.error.set(error.message || 'Canopy delete failed.');
+      this.error.set(error.message || 'Product delete failed.');
     }
   }
 
@@ -210,7 +223,7 @@ export class AdminProductsComponent {
     try {
       this.variants.set(await this.adminService.getVariants(product.id));
     } catch {
-      this.error.set('Canopy options could not be loaded.');
+      this.error.set('Product options could not be loaded.');
     } finally {
       this.variantLoading.set(false);
     }
@@ -263,7 +276,7 @@ export class AdminProductsComponent {
         : [...items, saved]);
       this.cancelVariantForm();
     } catch (error: any) {
-      this.error.set(error.error?.error || error.message || 'Canopy option save failed.');
+      this.error.set(error.error?.error || error.message || 'Product option save failed.');
     } finally {
       this.variantSaving.set(false);
     }
@@ -277,7 +290,7 @@ export class AdminProductsComponent {
   async deleteVariant(variant: ProductVariant): Promise<void> {
     if (!variant.id) return;
     const confirmed = await this.modal.confirm({
-      title: 'Delete Canopy Option',
+      title: 'Delete Product Option',
       message: `Delete "${variant.label}"?`,
       confirmLabel: 'Delete',
       variant: 'danger',
@@ -291,19 +304,13 @@ export class AdminProductsComponent {
     return {
       slug: product.slug,
       name: product.name,
-      size: product.size ?? '',
-      color: product.color ?? '',
+      category: product.category,
+      specifications: Object.entries(toRenderableSpecifications(product.specifications)).map(([label, value]) => ({ label, value })),
       description: product.description ?? '',
       image_url: product.image_url ?? '',
       is_active: product.is_active,
       sort_order: product.sort_order,
       gallery_urls: [...product.gallery_urls],
-      material: product.material ?? '',
-      thickness: product.thickness ?? '',
-      front_door_window: product.front_door_window ?? '',
-      side_door: product.side_door ?? '',
-      rear_door: product.rear_door ?? '',
-      vehicle_fit: product.vehicle_fit ?? '',
     };
   }
 }
