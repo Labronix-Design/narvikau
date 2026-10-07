@@ -59,6 +59,12 @@ describe('ProductsPage canopy quotes', () => {
     expect(fixture.componentInstance.heroImage(accessory())).toBe('');
   });
 
+  it('uses the first gallery image as a card cover when no primary image is set', () => {
+    expect(fixture.componentInstance.heroImage(canopy({
+      gallery_urls: ['/images/canopy-side.jpg', '/images/canopy-rear.jpg'],
+    }))).toBe('/images/canopy-side.jpg');
+  });
+
   it('renders a fixed-navigation-safe hero and dimensioned loading cards', () => {
     loading.set(true);
     fixture.detectChanges();

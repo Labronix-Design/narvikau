@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormArray, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
+import { RouterLink } from '@angular/router';
 import { AdminService, CatalogProduct, ProductVariant } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
 import { ImageUploadComponent } from '../../../_components/image-upload/image-upload.component';
@@ -41,7 +43,7 @@ const EMPTY_PRODUCT: Omit<CatalogProduct, 'id'> = {
   templateUrl: './admin-products.component.html',
   styleUrls: ['./admin-products.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule, ImageUploadComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, RouterLink, ImageUploadComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminProductsComponent {
@@ -52,6 +54,10 @@ export class AdminProductsComponent {
   readonly products = signal<CatalogProduct[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly sessionExpired = signal(false);
+  readonly catalogueEmpty = computed(() =>
+    !this.loading() && !this.error() && !this.sessionExpired() && this.products().length === 0
+  );
   readonly showForm = signal(false);
   readonly editingId = signal<number | null>(null);
   readonly saving = signal(false);
@@ -91,10 +97,16 @@ export class AdminProductsComponent {
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set('');
+    this.sessionExpired.set(false);
     try {
       this.products.set(await this.adminService.getProducts());
-    } catch {
-      this.error.set('Products could not be loaded.');
+    } catch (error: unknown) {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        this.adminService.logout();
+        this.sessionExpired.set(true);
+      } else {
+        this.error.set('Products could not be loaded.');
+      }
     } finally {
       this.loading.set(false);
     }
@@ -161,7 +173,7 @@ export class AdminProductsComponent {
       image_url: value.image_url || null,
       is_active: value.is_active,
       sort_order: value.sort_order,
-      gallery_urls: value.gallery_urls.filter(Boolean),
+      gallery_urls: this.additionalGalleryUrls(value.image_url, value.gallery_urls),
     };
 
     try {
@@ -208,6 +220,11 @@ export class AdminProductsComponent {
 
   removeGalleryImage(index: number): void {
     this.form.controls.gallery_urls.setValue(this.form.controls.gallery_urls.value.filter((_, itemIndex) => itemIndex !== index));
+  }
+
+  private additionalGalleryUrls(primaryImageUrl: string, galleryUrls: readonly string[]): string[] {
+    const primary = primaryImageUrl.trim();
+    return [...new Set(galleryUrls.map(url => url.trim()).filter(url => url && url !== primary))];
   }
 
   async toggleVariants(product: CatalogProduct): Promise<void> {

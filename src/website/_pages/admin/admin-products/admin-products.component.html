@@ -37,8 +37,9 @@
           </div>
           <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible in catalogue</label></div>
           <div class="adm-field span-full">
-            <label for="product-image">Product Image URL</label>
+            <label for="product-image">Primary Product Image (Catalogue Cover)</label>
             <input id="product-image" formControlName="image_url" maxlength="500">
+            <small>This image appears on the catalogue card and is the first image in the product gallery.</small>
             <website-image-upload [url]="form.controls.image_url.value" (urlChange)="form.controls.image_url.setValue($event)"></website-image-upload>
           </div>
           <div class="adm-field span-full"><label for="product-description">Description</label><textarea id="product-description" formControlName="description" maxlength="4000"></textarea></div>
@@ -70,7 +71,8 @@
             <button type="button" class="adm-btn ghost small" (click)="addSpecification()" [disabled]="form.controls.specifications.length >= 30"><mat-icon svgIcon="add"></mat-icon>Add Specification</button>
           </fieldset>
           <div class="adm-field span-full">
-            <h3>Gallery Images</h3>
+            <h3>Additional Gallery Images</h3>
+            <p class="gallery-help">Add up to 30 supporting images. They appear after the cover image as selectable thumbnails on the product page.</p>
             <div class="gallery-list">
               @for (url of form.controls.gallery_urls.value; track $index) {
                 <div class="gallery-item">
@@ -97,15 +99,26 @@
 
   @if (loading()) {
     <div class="adm-loading" role="status"><div class="spin"></div><span class="spin-label">Loading Products…</span></div>
+  } @else if (sessionExpired()) {
+    <section class="adm-empty adm-info" role="status" aria-live="polite">
+      <mat-icon class="empty-icon" svgIcon="lock"></mat-icon>
+      <p class="empty-title">Sign in required</p>
+      <p>Your administrator session has expired. Sign in again to manage the catalogue.</p>
+      <a class="adm-btn primary" routerLink="/admin/login"><mat-icon svgIcon="login"></mat-icon>Sign in</a>
+    </section>
   } @else {
     <div class="section-actions">
       <h2 class="adm-section-title">{{ products().length }} Products</h2>
       @if (!showForm()) { <button class="adm-btn primary" (click)="openCreate()"><mat-icon svgIcon="add"></mat-icon>Add Product</button> }
     </div>
 
-    @if (products().length === 0) {
-      <div class="adm-empty"><mat-icon class="empty-icon" svgIcon="inventory_2"></mat-icon><p class="empty-title">No products yet</p></div>
-    } @else {
+    @if (catalogueEmpty()) {
+      <section class="adm-empty adm-info" role="status" aria-live="polite">
+        <mat-icon class="empty-icon" svgIcon="inventory_2"></mat-icon>
+        <p class="empty-title">No products yet</p>
+        <p>The catalogue is connected and ready. Add a product when you are ready to publish it.</p>
+      </section>
+    } @else if (products().length) {
       <div class="adm-table-wrap">
         <table class="adm-table">
           <thead><tr><th scope="col">#</th><th scope="col">Name</th><th scope="col">Category</th><th scope="col" class="hide-mobile">Sort Order</th><th scope="col">Active</th><th scope="col">Actions</th></tr></thead>

@@ -3,6 +3,7 @@ import '@angular/compiler';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { Injector, runInInjectionContext } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder } from '@angular/forms';
 import { AdminService, CatalogProduct } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
@@ -21,11 +22,15 @@ const canopies: CatalogProduct[] = ['Adventure', 'Overland', 'Sports', 'Defender
   sort_order: index,
 }));
 
-async function editor(products = canopies) {
+async function editor(products = canopies, productsError: unknown = null) {
   const submissions: CatalogProduct[] = [];
   const deleted: number[] = [];
   const service = {
-    getProducts: async () => products,
+    logout: () => undefined,
+    getProducts: async () => {
+      if (productsError) throw productsError;
+      return products;
+    },
     createProduct: async (payload: CatalogProduct) => {
       submissions.push(payload);
       return { ...payload, id: 20 };
@@ -45,6 +50,22 @@ async function editor(products = canopies) {
   await Promise.resolve();
   return { component, submissions, deleted };
 }
+
+test('treats a successful empty catalogue as an informational state', async () => {
+  const { component } = await editor([]);
+
+  assert.equal(component.catalogueEmpty(), true);
+  assert.equal(component.sessionExpired(), false);
+  assert.equal(component.error(), '');
+});
+
+test('asks an administrator to sign in again when loading products is unauthorised', async () => {
+  const { component } = await editor([], new HttpErrorResponse({ status: 401 }));
+
+  assert.equal(component.catalogueEmpty(), false);
+  assert.equal(component.sessionExpired(), true);
+  assert.equal(component.error(), '');
+});
 
 for (const product of canopies) {
   test(`loads and edits ${product.name} through generic specifications`, async () => {
@@ -156,4 +177,16 @@ test('clears previous rows for a new product and preserves gallery editing and d
   await component.remove(canopies[0]);
   assert.deepEqual(deleted, [1]);
   assert.equal(component.products().length, 3);
+});
+
+test('keeps the primary cover separate from unique additional gallery images when saving', async () => {
+  const { component, submissions } = await editor();
+  component.openEdit(canopies[0]);
+  component.form.controls.image_url.setValue('/cover.jpg');
+  component.form.controls.gallery_urls.setValue(['/cover.jpg', '/side.jpg', '/side.jpg', '/rear.jpg', '']);
+
+  await component.save();
+
+  assert.equal(submissions[0].image_url, '/cover.jpg');
+  assert.deepEqual(submissions[0].gallery_urls, ['/side.jpg', '/rear.jpg']);
 });

@@ -6,6 +6,10 @@ import { SiteSettingsService } from '../../_services/site-settings.service';
 import { CatalogProduct } from '../../_models/catalog.models';
 import { QuoteModalComponent } from '../../_components/quote-modal/quote-modal.component';
 
+export function toProductCardImage(primaryImageUrl: string | null, galleryUrls: readonly string[]): string {
+  return primaryImageUrl?.trim() || galleryUrls.find(url => url.trim())?.trim() || '';
+}
+
 @Component({
   selector: 'website-products',
   templateUrl: './products.component.html',
@@ -32,7 +36,7 @@ export class ProductsPage implements OnInit {
   }
 
   heroImage(product: CatalogProduct): string {
-    return product.image_url || '';
+    return toProductCardImage(product.image_url, product.gallery_urls);
   }
 
   openQuoteModal(product: CatalogProduct): void {

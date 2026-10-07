@@ -5,6 +5,15 @@ import { ProductService } from '../../../_services/product.service';
 import { SiteSettingsService } from '../../../_services/site-settings.service';
 import { QuoteModalComponent } from '../../../_components/quote-modal/quote-modal.component';
 
+export function toProductGallery(primaryImageUrl: string | null, galleryUrls: readonly string[]): string[] {
+  return [...new Set(
+    [primaryImageUrl, ...galleryUrls]
+      .filter((url): url is string => typeof url === 'string')
+      .map(url => url.trim())
+      .filter(Boolean),
+  )];
+}
+
 @Component({
   selector: 'website-product-detail',
   templateUrl: './product-detail.component.html',
@@ -26,7 +35,7 @@ export class ProductDetailPage implements OnInit {
   readonly gallery = computed(() => {
     const product = this.product();
     if (!product) return [];
-    return product.gallery_urls.length ? product.gallery_urls : product.image_url ? [product.image_url] : [];
+    return toProductGallery(product.image_url, product.gallery_urls);
   });
   readonly currentImage = computed(() => this.gallery()[this.galleryIndex()] ?? '');
   readonly specList = computed(() => {

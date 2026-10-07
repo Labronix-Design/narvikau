@@ -55,6 +55,29 @@ describe('ProductDetailPage canopy quotes', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.qm-dialog')?.textContent).toContain('Navrik Canopy — Adventure');
   });
+
+  it('keeps the primary image as the product cover and renders each additional gallery image once', () => {
+    products.set([canopy({
+      image_url: '/images/canopy-cover.jpg',
+      gallery_urls: [
+        '/images/canopy-side.jpg',
+        '/images/canopy-cover.jpg',
+        '/images/canopy-rear.jpg',
+        '/images/canopy-side.jpg',
+      ],
+    })]);
+
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.gallery()).toEqual([
+      '/images/canopy-cover.jpg',
+      '/images/canopy-side.jpg',
+      '/images/canopy-rear.jpg',
+    ]);
+    expect(fixture.nativeElement.querySelectorAll('.gallery-thumb').length).toBe(3);
+    expect(fixture.nativeElement.querySelector<HTMLImageElement>('.product-img')?.src)
+      .toContain('/images/canopy-cover.jpg');
+  });
 });
 
 function canopy(): CatalogProduct {

@@ -42,6 +42,21 @@
   margin-bottom: 10px;
 }
 
+.gallery-help {
+  color: var(--nv-text-muted, #bbb);
+  font-size: .85rem;
+  margin: 0 0 12px;
+}
+
+.adm-info {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  max-width: 640px;
+
+  p { margin: 0; }
+}
+
 .gallery-item {
   display: flex;
   align-items: center;

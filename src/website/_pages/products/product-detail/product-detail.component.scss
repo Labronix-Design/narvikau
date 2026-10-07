@@ -160,7 +160,7 @@ $sticky-bar-h: 72px;
   line-height: 1.1;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: #fff;
+  color: var(--nv-text-main);
   margin: 0;
   text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
 }
@@ -450,6 +450,7 @@ $sticky-bar-h: 72px;
     letter-spacing: 0.02em;
     line-height: 1.1;
     margin: 0 0 10px;
+    color: var(--nv-text-main);
   }
 
   .product-desc {
