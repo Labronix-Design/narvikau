@@ -5,8 +5,6 @@
 -- partial deployment. The legacy canopy columns remain available during this
 -- release for backwards compatibility.
 
-BEGIN;
-
 -- 0001 created these two checks inline, so PostgreSQL assigned the following
 -- names. Drop only those legacy product-list/category constraints.
 ALTER TABLE catalog_products
@@ -127,5 +125,3 @@ WHERE is_active = TRUE
 ON CONFLICT (section) DO UPDATE SET
   payload = EXCLUDED.payload,
   updated_at = EXCLUDED.updated_at;
-
-COMMIT;
