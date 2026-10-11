@@ -2,6 +2,7 @@ import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { ensureMetaPixel, MetaPixelWindow, trackMetaPixelEvent } from './meta-pixel';
 
 export type AnalyticsConsent = 'unknown' | 'granted' | 'denied';
 
@@ -10,7 +11,7 @@ interface AnalyticsConfiguration {
   measurementId: string | null;
 }
 
-interface AnalyticsWindow extends Window {
+interface AnalyticsWindow extends Window, MetaPixelWindow {
   dataLayer?: IArguments[];
   gtag?: (...args: unknown[]) => void;
   [key: string]: unknown;
@@ -45,12 +46,15 @@ export class AnalyticsService {
     if (this.consent() !== 'granted' || this.isAdminRoute(url)) return;
 
     await this.ensureLoaded();
-    if (!this.measurementId || !isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId)) return;
 
-    this.gtag('event', 'page_view', {
-      page_path: this.publicPath(url),
-      page_title: this.document.title,
-    });
+    trackMetaPixelEvent(this.analyticsWindow(), 'PageView');
+    if (this.measurementId) {
+      this.gtag('event', 'page_view', {
+        page_path: this.publicPath(url),
+        page_title: this.document.title,
+      });
+    }
   }
 
   async trackEvent(name: string, parameters: Record<string, unknown> = {}): Promise<void> {
@@ -60,8 +64,19 @@ export class AnalyticsService {
     if (this.measurementId) this.gtag('event', name, parameters);
   }
 
+  /** Records Meta's standard Lead conversion after a confirmed public enquiry. */
+  trackMetaLead(): void {
+    if (this.consent() !== 'granted' || this.isCurrentAdminRoute()) return;
+
+    this.ensureMetaPixelLoaded();
+    trackMetaPixelEvent(this.analyticsWindow(), 'Lead');
+  }
+
   private async ensureLoaded(): Promise<void> {
-    if (!isPlatformBrowser(this.platformId) || this.consent() !== 'granted' || this.measurementId || this.isCurrentAdminRoute()) return;
+    if (!isPlatformBrowser(this.platformId) || this.consent() !== 'granted' || this.isCurrentAdminRoute()) return;
+
+    this.ensureMetaPixelLoaded();
+    if (this.measurementId) return;
 
     this.loadPromise ??= this.loadConfiguration();
     await this.loadPromise;
@@ -110,6 +125,11 @@ export class AnalyticsService {
       script.dataset['navrikAnalytics'] = measurementId;
       this.document.head.appendChild(script);
     }
+  }
+
+  private ensureMetaPixelLoaded(): void {
+    if (!isPlatformBrowser(this.platformId) || this.consent() !== 'granted' || this.isCurrentAdminRoute()) return;
+    ensureMetaPixel(this.analyticsWindow(), this.document);
   }
 
   private disableAnalytics(): void {

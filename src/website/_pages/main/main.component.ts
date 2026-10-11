@@ -11,6 +11,7 @@ import { ImageLoaderComponent } from '../../_components/image-loader/image-loade
 import { FeatureFlagsService } from '../../_services/feature-flags.service';
 import { SiteSettingsService } from '../../_services/site-settings.service';
 import { ProductService } from '../../_services/product.service';
+import { AnalyticsService } from '../../_services/analytics.service';
 import { CatalogProduct } from '../../_models/catalog.models';
 import { DEFAULT_HERO_SLIDES, DEFAULT_BRAND_LOGOS, DEFAULT_TRUST_BAR, DEFAULT_COMPAT_NOTE } from '../../_models/site-settings.models';
 
@@ -48,6 +49,7 @@ export class MainPage implements OnInit, AfterViewInit {
   private router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly toast = inject(ToastService);
+  private readonly analytics = inject(AnalyticsService);
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
 
@@ -238,6 +240,7 @@ export class MainPage implements OnInit, AfterViewInit {
         body: JSON.stringify(this.SubmitForm.value)
       });
       if (response.ok) {
+        this.analytics.trackMetaLead();
         this.SubmitForm.reset();
         this.submitted = false;
         this.isLoading = false;

@@ -13,7 +13,7 @@ import { AnalyticsService } from '../../_services/analytics.service';
       <aside class="consent" aria-label="Analytics preference" aria-live="polite">
         <div>
           <strong>Help us improve Navrik</strong>
-          <p>May we use privacy-conscious website analytics? You can change your choice by clearing this site’s data.</p>
+          <p>May we use website analytics and the Meta (Facebook) Pixel to measure completed enquiries for advertising conversion measurement? You can change your choice by clearing this site’s data.</p>
           <a routerLink="/privacy">Read the privacy notice</a>
         </div>
         <div class="actions">

@@ -7,6 +7,7 @@ import { ButtonComponent } from '../button/button.component';
 import { ToastService } from '../../_services/toast.service';
 import { FeatureFlagsService } from '../../_services/feature-flags.service';
 import { SiteSettingsService } from '../../_services/site-settings.service';
+import { AnalyticsService } from '../../_services/analytics.service';
 
 @Component({
   selector: 'website-quote-modal',
@@ -46,6 +47,7 @@ export class QuoteModalComponent implements OnDestroy {
   readonly siteSettings = inject(SiteSettingsService);
   private readonly formBuilder = inject(FormBuilder).nonNullable;
   private readonly toast = inject(ToastService);
+  private readonly analytics = inject(AnalyticsService);
 
   readonly quoteForm = this.formBuilder.group({
     Name: ['', Validators.required],
@@ -94,6 +96,7 @@ export class QuoteModalComponent implements OnDestroy {
         })
       });
       if (response.ok) {
+        this.analytics.trackMetaLead();
         this.quoteForm.reset();
         this.submitted = false;
         this.isLoading = false;

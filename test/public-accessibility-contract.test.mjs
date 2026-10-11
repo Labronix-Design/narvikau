@@ -73,6 +73,15 @@ test('public emphasis keeps large hero text readable and uses the configured acc
   assert.doesNotMatch(consentStyles, /#fec78e|#611909/);
 });
 
+test('analytics consent names Meta conversion measurement before a visitor opts in', async () => {
+  const consent = await source('src/website/_components/analytics-consent/analytics-consent.component.ts');
+  const privacyNotice = await source('src/website/_pages/privacy-notice/privacy-notice.component.html');
+
+  assert.match(consent, /Meta \(Facebook\) Pixel/);
+  assert.match(privacyNotice, /Meta \(Facebook\) Pixel/);
+  assert.match(privacyNotice, /conversion measurement/);
+});
+
 test('administrator-uploaded hero images use responsive Netlify image variants', async () => {
   const imageLoader = await source('src/website/_components/image-loader/image-loader.component.ts');
 

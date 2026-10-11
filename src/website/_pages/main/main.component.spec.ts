@@ -7,18 +7,22 @@ import { FeatureFlagsService } from '../../_services/feature-flags.service';
 import { SiteSettingsService } from '../../_services/site-settings.service';
 import { ProductService } from '../../_services/product.service';
 import { CatalogProduct } from '../../_models/catalog.models';
+import { AnalyticsService } from '../../_services/analytics.service';
 
 describe('MainPage canopy quote funnel', () => {
   let fixture: ComponentFixture<MainPage>;
+  let analytics: jasmine.SpyObj<AnalyticsService>;
   const products = signal<CatalogProduct[]>([]);
   const productError = signal<string | null>(null);
 
   beforeEach(async () => {
+    analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', ['trackMetaLead']);
     await TestBed.configureTestingModule({
       imports: [MainPage],
       providers: [
         { provide: Router, useValue: { url: '/', parseUrl: () => ({ fragment: null }) } },
         { provide: ToastService, useValue: { showToast: jasmine.createSpy('showToast') } },
+        { provide: AnalyticsService, useValue: analytics },
         { provide: FeatureFlagsService, useValue: { emailsEnabled: true } },
         {
           provide: SiteSettingsService,
@@ -64,6 +68,26 @@ describe('MainPage canopy quote funnel', () => {
 
     expect(fixture.componentInstance.quoteModalOpen).toBeTrue();
     expect(fixture.componentInstance.quoteModalProduct).toBe('');
+  });
+
+  it('records a Meta Lead only after its homepage contact form succeeds', async () => {
+    const component = fixture.componentInstance;
+    component.SubmitForm.setValue({ Name: 'Alex', Surname: 'Dealer', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
+    spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 200 }));
+
+    await component.onSubmit();
+
+    expect(analytics.trackMetaLead).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not record a Meta Lead when its homepage contact form fails', async () => {
+    const component = fixture.componentInstance;
+    component.SubmitForm.setValue({ Name: 'Alex', Surname: 'Dealer', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
+    spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 500 }));
+
+    await component.onSubmit();
+
+    expect(analytics.trackMetaLead).not.toHaveBeenCalled();
   });
 });
 

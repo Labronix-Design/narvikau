@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { ToastService } from '../../_services/toast.service';
 import { SiteSettingsService } from '../../_services/site-settings.service';
+import { AnalyticsService } from '../../_services/analytics.service';
 
 @Component({
   selector: 'website-contact',
@@ -16,6 +17,7 @@ import { SiteSettingsService } from '../../_services/site-settings.service';
 export class ContactPage implements OnInit {
   private fb      = inject(FormBuilder);
   private toast   = inject(ToastService);
+  private analytics = inject(AnalyticsService);
   siteSettings    = inject(SiteSettingsService);
 
   submitted = false;
@@ -55,6 +57,7 @@ export class ContactPage implements OnInit {
 
       if (!res.ok) throw new Error(await res.text());
 
+      this.analytics.trackMetaLead();
       this.form.reset();
       this.submitted = false;
       this.toast.showToast({

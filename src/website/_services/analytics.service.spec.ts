@@ -15,7 +15,10 @@ describe('AnalyticsService', () => {
     localStorage.clear();
     document = window.document;
     document.head.querySelectorAll('[data-navrik-analytics]').forEach(node => node.remove());
+    document.head.querySelectorAll('[data-navrik-meta-pixel]').forEach(node => node.remove());
     (window as Window & { gtag?: jasmine.Spy }).gtag = jasmine.createSpy('gtag');
+    delete (window as Window & { fbq?: jasmine.Spy }).fbq;
+    delete (window as Window & { _fbq?: jasmine.Spy })._fbq;
     http = jasmine.createSpyObj<HttpClient>('HttpClient', ['get']);
 
     TestBed.configureTestingModule({
@@ -79,5 +82,33 @@ describe('AnalyticsService', () => {
 
     expect(document.head.querySelector('[data-navrik-analytics]')).toBeNull();
     history.pushState({}, '', '/');
+  });
+
+  it('loads the Meta Pixel and records PageView only after analytics consent', async () => {
+    http.get.and.returnValue(of({ enabled: true, measurementId: 'G-ABCD1234' }));
+    const fbq = jasmine.createSpy('fbq');
+    (window as Window & { fbq?: jasmine.Spy }).fbq = fbq;
+
+    await service.grant();
+
+    expect(document.head.querySelector<HTMLScriptElement>('[data-navrik-meta-pixel]')?.src)
+      .toContain('https://connect.facebook.net/en_US/fbevents.js');
+    expect(fbq).toHaveBeenCalledWith('init', '1573411030753133');
+    expect(fbq).toHaveBeenCalledWith('track', 'PageView');
+  });
+
+  it('records a Meta Lead only after consent on a public route', async () => {
+    http.get.and.returnValue(of({ enabled: true, measurementId: 'G-ABCD1234' }));
+    const fbq = jasmine.createSpy('fbq');
+    (window as Window & { fbq?: jasmine.Spy }).fbq = fbq;
+
+    service.trackMetaLead();
+    expect(fbq).not.toHaveBeenCalled();
+
+    await service.grant();
+    fbq.calls.reset();
+    service.trackMetaLead();
+
+    expect(fbq).toHaveBeenCalledWith('track', 'Lead');
   });
 });
