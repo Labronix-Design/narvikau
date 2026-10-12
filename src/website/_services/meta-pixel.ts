@@ -1,4 +1,4 @@
-export const META_PIXEL_ID = '1573411030753133';
+export const META_PIXEL_ID = '1103381922272544';
 const META_PIXEL_SCRIPT_SELECTOR = 'script[data-navrik-meta-pixel]';
 
 type MetaPixelQueue = unknown[][];

@@ -43,12 +43,12 @@ test('installs the official Meta Pixel once and queues its initial PageView', as
   ensureMetaPixel(window, document);
 
   assert.deepEqual(window.fbq.queue, [
-    ['init', '1573411030753133'],
+    ['init', '1103381922272544'],
     ['track', 'PageView'],
   ]);
   assert.equal(document.scripts.length, 1);
   assert.equal(document.scripts[0].src, 'https://connect.facebook.net/en_US/fbevents.js');
-  assert.equal(document.scripts[0].attributes['data-navrik-meta-pixel'], '1573411030753133');
+  assert.equal(document.scripts[0].attributes['data-navrik-meta-pixel'], '1103381922272544');
   assert.equal(window.fbq.loaded, true);
   assert.equal(window.fbq.version, '2.0');
   assert.equal(window.fbq.push, window.fbq);
@@ -63,7 +63,7 @@ test('queues events safely before Meta has loaded', async () => {
   trackMetaPixelEvent(window, 'Lead');
 
   assert.deepEqual(window.fbq.queue, [
-    ['init', '1573411030753133'],
+    ['init', '1103381922272544'],
     ['track', 'Lead'],
   ]);
 });

@@ -93,7 +93,7 @@ describe('AnalyticsService', () => {
 
     expect(document.head.querySelector<HTMLScriptElement>('[data-navrik-meta-pixel]')?.src)
       .toContain('https://connect.facebook.net/en_US/fbevents.js');
-    expect(fbq).toHaveBeenCalledWith('init', '1573411030753133');
+    expect(fbq).toHaveBeenCalledWith('init', '1103381922272544');
     expect(fbq).toHaveBeenCalledWith('track', 'PageView');
   });
 
