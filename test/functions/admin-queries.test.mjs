@@ -18,6 +18,24 @@ test('manual creation accepts each supported type with atomic parameterised stor
  assert.match(queries[0].query,/'manual'/);assert.ok(queries[0].values.includes(enquiry_type));assert.ok(queries[0].values.includes('avery@example.test'));assert.ok(queries[0].values.includes('Melbourne'));assert.ok(queries[0].values.includes('Friend'));assert.equal(invalidations.length,1);
  }
 });
+test('manual creation stores multiline message and notes with CRLF normalised to LF',async()=>{
+ const queries=[];
+ const handler=createHandler({verifyAdminToken:async()=>true,getSql:()=>async(strings,...values)=>{queries.push({query:strings.join('?'),values});return [{id:4,source:'manual'}];},invalidateSections:async()=>{}});
+ const response=await handler(request('POST',{...payload,message:'First line\r\nSecond line\nThird line',admin_notes:'Call Friday\r\nSend quote'}));
+ assert.equal(response.statusCode,201);
+ assert.equal(queries.length,1);
+ assert.ok(queries[0].values.includes('First line\nSecond line\nThird line'));
+ assert.ok(queries[0].values.includes('Call Friday\nSend quote'));
+ assert.ok(!queries[0].values.includes('First line\r\nSecond line\nThird line'));
+});
+test('manual creation rejects non-line-break controls in message and notes before SQL',async()=>{
+ let calls=0;
+ const handler=createHandler({verifyAdminToken:async()=>true,getSql:()=>{calls++;return async()=>[];}});
+ for(const fields of [{message:'Hello\u0000world'},{message:'Hello\tworld'},{admin_notes:'Call\u007Fagain'},{admin_notes:'Call\ragain'},{message:'x'.repeat(4001)},{admin_notes:'x'.repeat(4001)},{name:'Avery\nBrown'},{location_suburb:'Mel\nbourne'}]) {
+  assert.equal((await handler(request('POST',{...payload,...fields}))).statusCode,422,JSON.stringify(fields));
+ }
+ assert.equal(calls,0);
+});
 test('manual creation rejects unknown fields and invalid type/location/referral before SQL',async()=>{
  let calls=0;const handler=createHandler({verifyAdminToken:async()=>true,getSql:()=>{calls++;return async()=>[];}});
  for(const fields of [{source:'contact_form'},{id:5},{enquiry_type:'unknown'},{enquiry_type:null},{location_state:'Gauteng'},{location_suburb:''},{discovery_source_detail:''},{email:'bad'},{admin_notes:3},{status:'bogus'},{name:''},{product:'x'.repeat(161)}]) assert.equal((await handler(request('POST',{...payload,...fields}))).statusCode,422,JSON.stringify(fields));
@@ -57,6 +75,16 @@ test('lead updates protect captured details and accept only actual status/notes 
  let calls=0;const handler=createHandler({verifyAdminToken:async()=>true,getSql:()=>async()=>{calls++;return [{id:4,status:'contacted'}];},invalidateSections:async()=>{}});
  for(const fields of [{enquiry_type:'dealer_enquiry'},{source:'manual'},{name:'Changed'},{location_state:'Victoria'},{}]) assert.equal((await handler(request('PUT',{id:4,...fields}))).statusCode,400);
  assert.equal(calls,0);assert.equal((await handler(request('PUT',{id:4,status:'contacted',admin_notes:'Called'}))).statusCode,200);
+});
+test('lead note updates normalise line breaks and reject other controls before SQL',async()=>{
+ const queries=[];
+ const handler=createHandler({verifyAdminToken:async()=>true,getSql:()=>async(strings,...values)=>{queries.push({query:strings.join('?'),values});return [{id:4,status:'contacted'}];},invalidateSections:async()=>{}});
+ assert.equal((await handler(request('PUT',{id:4,admin_notes:'First call\r\nFollow up\nTomorrow'}))).statusCode,200);
+ assert.ok(queries[0].values.includes('First call\nFollow up\nTomorrow'));
+ for(const admin_notes of ['Bad\u0000note','Bad\tnote','Bad\rnote',null,'x'.repeat(4001)]) {
+  assert.equal((await handler(request('PUT',{id:4,admin_notes}))).statusCode,400);
+ }
+ assert.equal(queries.length,1);
 });
 test('manual creation remains accepted after cache invalidation failure and handles database failures safely',async()=>{
  const handler=createHandler({verifyAdminToken:async()=>true,getSql:()=>async()=>[{id:4}],invalidateSections:async()=>{throw new Error('cache unavailable');}});

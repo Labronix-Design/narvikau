@@ -33,8 +33,9 @@ function parseUpdateBody(raw) {
       || !Number.isSafeInteger(body.id) || body.id < 1
       || (body.status === undefined && body.admin_notes === undefined)
       || (body.status !== undefined && !VALID_STATUSES.includes(body.status))
-      || (body.admin_notes !== undefined && (typeof body.admin_notes !== 'string' || body.admin_notes.length > 4000))) return null;
-    return { id: body.id, status: body.status, admin_notes: body.admin_notes };
+      || (body.admin_notes !== undefined && typeof body.admin_notes !== 'string')) return null;
+    const adminNotes = body.admin_notes === undefined ? undefined : enquiryText(body.admin_notes, 'admin_notes', { maxLength: 4000, multiline: true });
+    return { id: body.id, status: body.status, admin_notes: adminNotes };
   } catch {
     return null;
   }
@@ -53,8 +54,8 @@ function validateManualLead(body) {
     phone: enquiryText(body.phone, 'phone', { maxLength: 50 }),
     company: enquiryText(body.company, 'company', { required: ['dealer_enquiry', 'fitment_enquiry'].includes(body.enquiry_type), maxLength: 160 }),
     product: enquiryText(body.product, 'product', { required: body.enquiry_type === 'product_quote', maxLength: 160 }),
-    message: enquiryText(body.message, 'message', { maxLength: 4000 }),
-    adminNotes: enquiryText(body.admin_notes, 'admin_notes', { maxLength: 4000 }),
+    message: enquiryText(body.message, 'message', { maxLength: 4000, multiline: true }),
+    adminNotes: enquiryText(body.admin_notes, 'admin_notes', { maxLength: 4000, multiline: true }),
     ...details,
   };
 }

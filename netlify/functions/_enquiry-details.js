@@ -11,14 +11,15 @@ export const DISCOVERY_SOURCES_REQUIRING_DETAIL = Object.freeze(['Other AI Platf
 
 export class SubmissionValidationError extends Error {}
 
-export function enquiryText(value, field, { required = false, maxLength }) {
+export function enquiryText(value, field, { required = false, maxLength, multiline = false }) {
   if (value === undefined || value === null) {
     if (required) throw new SubmissionValidationError(`${field} is required`);
     return '';
   }
   if (typeof value !== 'string') throw new SubmissionValidationError(`${field} must be text`);
-  if (/[\u0000-\u001F\u007F]/.test(value)) throw new SubmissionValidationError(`${field} contains unsupported characters`);
-  const trimmed = value.trim();
+  const normalised = multiline ? value.replace(/\r\n/g, '\n') : value;
+  if ((multiline ? /[\u0000-\u0009\u000B-\u001F\u007F]/ : /[\u0000-\u001F\u007F]/).test(normalised)) throw new SubmissionValidationError(`${field} contains unsupported characters`);
+  const trimmed = normalised.trim();
   if (required && !trimmed) throw new SubmissionValidationError(`${field} is required`);
   if (trimmed.length > maxLength) throw new SubmissionValidationError(`${field} is too long`);
   return trimmed;
