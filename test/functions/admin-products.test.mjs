@@ -32,8 +32,10 @@ test('an authenticated admin can create an accessory product with specifications
   const rebuilds = [];
   const purges = [];
   const sql = async (strings, ...parameters) => {
-    queries.push(strings.join(' '));
+    const query = strings.join(' ');
+    queries.push(query);
     values.push(parameters);
+    if (query.includes('catalog_categories')) return [{ slug: 'accessory', is_active: true }];
     return [{ id: 27, ...accessory }];
   };
   const handler = createAdminProductsHandler({
@@ -46,12 +48,13 @@ test('an authenticated admin can create an accessory product with specifications
   const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(accessory) });
 
   assert.equal(response.statusCode, 201);
-  assert.match(queries[0], /INSERT INTO catalog_products/);
-  assert.match(queries[0], /specifications/);
-  assert.ok(values[0].includes('accessory'));
-  assert.ok(values[0].includes(JSON.stringify(accessory.specifications)));
-  assert.deepEqual(rebuilds, [['products']]);
-  assert.deepEqual(purges, [['catalogue:products', 'catalogue:storefront']]);
+  assert.match(queries[0], /catalog_categories/);
+  assert.match(queries[1], /INSERT INTO catalog_products/);
+  assert.match(queries[1], /specifications/);
+  assert.ok(values[1].includes('accessory'));
+  assert.ok(values[1].includes(JSON.stringify(accessory.specifications)));
+  assert.deepEqual(rebuilds, [['products', 'categories']]);
+  assert.deepEqual(purges, [['catalogue:products', 'catalogue:categories', 'catalogue:storefront']]);
 });
 
 test('an authenticated admin can edit and delete a non-canopy product by product id', async () => {
@@ -59,6 +62,7 @@ test('an authenticated admin can edit and delete a non-canopy product by product
   const sql = async (strings) => {
     const query = strings.join(' ');
     queries.push(query);
+    if (query.includes('catalog_categories')) return [{ slug: 'accessory', is_active: true }];
     if (query.includes('UPDATE catalog_products')) return [{ id: 27, ...accessory, name: 'Navrik Heavy-Duty Recovery Kit' }];
     return [{ id: 27 }];
   };
@@ -78,11 +82,12 @@ test('an authenticated admin can edit and delete a non-canopy product by product
 
   assert.equal(update.statusCode, 200);
   assert.equal(deletion.statusCode, 200);
-  assert.match(queries[0], /UPDATE catalog_products/);
-  assert.match(queries[0], /WHERE id =/);
-  assert.doesNotMatch(queries[0], /category = 'canopy'/);
-  assert.match(queries[1], /DELETE FROM catalog_products WHERE id =/);
+  assert.match(queries[0], /catalog_categories/);
+  assert.match(queries[1], /UPDATE catalog_products/);
+  assert.match(queries[1], /WHERE id =/);
   assert.doesNotMatch(queries[1], /category = 'canopy'/);
+  assert.match(queries[2], /DELETE FROM catalog_products WHERE id =/);
+  assert.doesNotMatch(queries[2], /category = 'canopy'/);
 });
 
 test('admin product creation rejects malformed product fields before a database write', async () => {
@@ -146,14 +151,16 @@ test('admin product creation rejects price and purchase fields before a database
   assert.equal(databaseCalls, 0);
 });
 
-test('admin product creation persists a canopy and refreshes only product caches', async () => {
+test('admin product creation persists an active canopy and refreshes catalogue caches', async () => {
   const queries = [];
   const values = [];
   const rebuilds = [];
   const purges = [];
   const sql = async (strings, ...parameters) => {
-    queries.push(strings.join(' '));
+    const query = strings.join(' ');
+    queries.push(query);
     values.push(parameters);
+    if (query.includes('catalog_categories')) return [{ slug: 'canopy', is_active: true }];
     return [{ id: 1, ...validProduct }];
   };
   const handler = createAdminProductsHandler({
@@ -166,13 +173,14 @@ test('admin product creation persists a canopy and refreshes only product caches
   const response = await handler({ httpMethod: 'POST', headers: {}, body: JSON.stringify(validProduct) });
 
   assert.equal(response.statusCode, 201);
-  assert.equal(queries.length, 1);
-  assert.match(queries[0], /INSERT INTO catalog_products/);
-  assert.match(queries[0], /specifications/);
-  assert.doesNotMatch(queries[0], /price|purchase|tray/i);
-  assert.ok(values[0].includes('canopy'));
-  assert.deepEqual(rebuilds, [['products']]);
-  assert.deepEqual(purges, [['catalogue:products', 'catalogue:storefront']]);
+  assert.equal(queries.length, 2);
+  assert.match(queries[0], /catalog_categories/);
+  assert.match(queries[1], /INSERT INTO catalog_products/);
+  assert.match(queries[1], /specifications/);
+  assert.doesNotMatch(queries[1], /price|purchase|tray/i);
+  assert.ok(values[1].includes('canopy'));
+  assert.deepEqual(rebuilds, [['products', 'categories']]);
+  assert.deepEqual(purges, [['catalogue:products', 'catalogue:categories', 'catalogue:storefront']]);
 });
 
 test('admin product variants cannot carry price fields', async () => {
@@ -197,4 +205,59 @@ test('admin product variants cannot carry price fields', async () => {
 
   assert.equal(response.statusCode, 400);
   assert.equal(databaseCalls, 0);
+});
+
+test('product create and update reject unknown or inactive categories before a write', async () => {
+  for (const method of ['POST', 'PUT']) {
+    for (const categoryRows of [[], [{ slug: 'retired', is_active: false }]]) {
+      const queries = [];
+      const handler = createAdminProductsHandler({
+        verifyToken: authenticated,
+        getSql: () => async (strings, ...values) => {
+          queries.push({ query: strings.join('?'), values });
+          return categoryRows;
+        },
+      });
+      const body = {
+        ...validProduct,
+        category: categoryRows.length ? 'retired' : 'unknown',
+        ...(method === 'PUT' ? { id: 1 } : {}),
+      };
+      const result = await handler({ httpMethod: method, headers: {}, body: JSON.stringify(body) });
+      assert.equal(result.statusCode, 422);
+      assert.equal(queries.length, 1);
+      assert.match(queries[0].query, /catalog_categories/);
+      assert.doesNotMatch(queries[0].query, /INSERT INTO|UPDATE catalog_products/);
+    }
+  }
+});
+
+test('product create accepts an active 120-character category slug and refreshes both cache sections', async () => {
+  const longSlug = 'a'.repeat(120);
+  const queries = [];
+  const rebuilds = [];
+  const purges = [];
+  const handler = createAdminProductsHandler({
+    verifyToken: authenticated,
+    getSql: () => async (strings, ...values) => {
+      const query = strings.join('?');
+      queries.push({ query, values });
+      return query.includes('catalog_categories')
+        ? [{ slug: longSlug, is_active: true }]
+        : [{ id: 1, ...validProduct, category: longSlug }];
+    },
+    rebuild: async (_sql, sections) => rebuilds.push(sections),
+    purgeTags: async (tags) => purges.push(tags),
+  });
+
+  const result = await handler({
+    httpMethod: 'POST', headers: {}, body: JSON.stringify({ ...validProduct, category: longSlug }),
+  });
+  assert.equal(result.statusCode, 201);
+  assert.equal(queries.length, 2);
+  assert.match(queries[0].query, /catalog_categories/);
+  assert.match(queries[1].query, /INSERT INTO catalog_products/);
+  assert.ok(queries[1].values.includes(longSlug));
+  assert.deepEqual(rebuilds, [['products', 'categories']]);
+  assert.deepEqual(purges, [['catalogue:products', 'catalogue:categories', 'catalogue:storefront']]);
 });

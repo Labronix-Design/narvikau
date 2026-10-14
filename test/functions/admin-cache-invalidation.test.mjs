@@ -55,7 +55,9 @@ test('lead updates reject unknown fields before a database query', async () => {
   assert.equal(queried, false);
 });
 
-const successfulSql = async () => [{ id: 1, content: { title_main: 'Saved' } }];
+const successfulSql = async (strings) => strings.join(' ').includes('catalog_categories')
+  ? [{ slug: 'canopy', is_active: true }]
+  : [{ id: 1, content: { title_main: 'Saved' } }];
 
 const publicMutationCases = [
   {
@@ -66,8 +68,8 @@ const publicMutationCases = [
       body: JSON.stringify({ slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy' }),
     },
     expectedStatus: 201,
-    expectedTags: ['catalogue:products', 'catalogue:storefront'],
-    expectedRebuild: ['products'],
+    expectedTags: ['catalogue:products', 'catalogue:categories', 'catalogue:storefront'],
+    expectedRebuild: ['products', 'categories'],
     expectedTimeline: ['write', 'rebuild', 'purge'],
   },
   {
@@ -118,7 +120,7 @@ for (const mutationCase of publicMutationCases) {
     const handler = mutationCase.createHandler({
       verifyToken: async () => true,
       getSql: () => async (...args) => {
-        timeline.push('write');
+        if (!args[0].join(' ').includes('catalog_categories')) timeline.push('write');
         return successfulSql(...args);
       },
       rebuild: async (_sql, sections) => { timeline.push('rebuild'); actualRebuild = sections; },
@@ -138,7 +140,7 @@ for (const mutationCase of publicMutationCases) {
   });
 }
 
-test('product variants rebuild and purge only the product-related snapshots', async () => {
+test('product variants rebuild and purge the catalogue snapshots', async () => {
   const rebuilds = [];
   const purges = [];
   const handler = createAdminProductsHandler({
@@ -155,8 +157,8 @@ test('product variants rebuild and purge only the product-related snapshots', as
   });
 
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(rebuilds, [['products']]);
-  assert.deepEqual(purges, [['catalogue:products', 'catalogue:storefront']]);
+  assert.deepEqual(rebuilds, [['products', 'categories']]);
+  assert.deepEqual(purges, [['catalogue:products', 'catalogue:categories', 'catalogue:storefront']]);
 });
 
 for (const sourceMutation of [
@@ -164,15 +166,15 @@ for (const sourceMutation of [
     name: 'product update',
     createHandler: createAdminProductsHandler,
     event: { httpMethod: 'PUT', body: JSON.stringify({ id: 4, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy' }) },
-    rebuild: ['products'],
-    tags: ['catalogue:products', 'catalogue:storefront'],
+    rebuild: ['products', 'categories'],
+    tags: ['catalogue:products', 'catalogue:categories', 'catalogue:storefront'],
   },
   {
     name: 'product delete',
     createHandler: createAdminProductsHandler,
     event: { httpMethod: 'DELETE', body: JSON.stringify({ id: 4 }) },
-    rebuild: ['products'],
-    tags: ['catalogue:products', 'catalogue:storefront'],
+    rebuild: ['products', 'categories'],
+    tags: ['catalogue:products', 'catalogue:categories', 'catalogue:storefront'],
   },
 ]) {
   test(`a successful direct ${sourceMutation.name} refreshes only its related snapshots`, async () => {
@@ -180,7 +182,9 @@ for (const sourceMutation of [
     const purges = [];
     const handler = sourceMutation.createHandler({
       verifyToken: async () => true,
-      getSql: () => async () => [{ id: 4 }],
+      getSql: () => async (strings) => strings.join(' ').includes('catalog_categories')
+        ? [{ slug: 'canopy', is_active: true }]
+        : [{ id: 4 }],
       rebuild: async (_sql, sections) => { rebuilds.push(sections); },
       purgeTags: async (tags) => { purges.push(tags); },
     });
@@ -280,7 +284,9 @@ for (const mutationCase of missingPublicMutationCases) {
     const purged = [];
     const handler = mutationCase.createHandler({
       verifyToken: async () => true,
-      getSql: () => async () => [],
+      getSql: () => async (strings) => strings.join(' ').includes('catalog_categories')
+        ? [{ slug: 'canopy', is_active: true }]
+        : [],
       rebuild: async (...args) => { rebuilt.push(args); },
       purgeTags: async (tags) => { purged.push(tags); },
     });

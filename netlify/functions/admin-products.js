@@ -97,7 +97,7 @@ function validateProduct(body, { updating = false } = {}) {
   const id = updating ? positiveInteger(body.id) : undefined;
   const slug = identifier(body.slug, 120);
   const name = text(body.name, { required: true, maximum: 160 });
-  const category = identifier(body.category, 80);
+  const category = identifier(body.category, 120);
   const productSpecifications = specifications(body.specifications);
   if ((updating && !id) || slug === null || name === null || category === null || productSpecifications === null) return null;
   if (body.is_active !== undefined && typeof body.is_active !== 'boolean') return null;
@@ -162,6 +162,15 @@ function validateVariant(body) {
   };
 }
 
+async function hasActiveCategory(sql, categorySlug) {
+  const [category] = await sql`
+    SELECT slug, is_active FROM catalog_categories
+    WHERE slug = ${categorySlug} AND is_active = TRUE
+    LIMIT 1
+  `;
+  return category?.is_active === true;
+}
+
 export function createAdminProductsHandler({
   verifyToken = verifyAdminToken,
   getSql = () => neon(process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL),
@@ -211,6 +220,9 @@ export function createAdminProductsHandler({
         const product = validateProduct(body);
         if (!product) return response(400, { error: 'A valid product is required' });
         const sql = getSql();
+        if (!await hasActiveCategory(sql, product.category)) {
+          return response(422, { error: 'Select an active catalogue category' });
+        }
         const [row] = await sql`
           INSERT INTO catalog_products (
             slug, name, category, size, color, description, image_url, is_active, sort_order,
@@ -224,7 +236,7 @@ export function createAdminProductsHandler({
           )
           RETURNING *
         `;
-        await rebuild(sql, ['products']);
+        await rebuild(sql, ['products', 'categories']);
         await purgeMutationCache('product', purgeTags, context);
         return response(201, row);
       }
@@ -248,7 +260,7 @@ export function createAdminProductsHandler({
               RETURNING *
             `;
         if (!row) return response(404, { error: 'Variant not found' });
-        await rebuild(sql, ['products']);
+        await rebuild(sql, ['products', 'categories']);
         await purgeMutationCache('product', purgeTags, context);
         return response(200, row);
       }
@@ -257,6 +269,9 @@ export function createAdminProductsHandler({
         const product = validateProduct(body, { updating: true });
         if (!product) return response(400, { error: 'A valid product is required' });
         const sql = getSql();
+        if (!await hasActiveCategory(sql, product.category)) {
+          return response(422, { error: 'Select an active catalogue category' });
+        }
         const [row] = await sql`
           UPDATE catalog_products SET
             slug = ${product.slug}, name = ${product.name}, category = ${product.category},
@@ -270,7 +285,7 @@ export function createAdminProductsHandler({
           RETURNING *
         `;
         if (!row) return response(404, { error: 'Product not found' });
-        await rebuild(sql, ['products']);
+        await rebuild(sql, ['products', 'categories']);
         await purgeMutationCache('product', purgeTags, context);
         return response(200, row);
       }
@@ -283,7 +298,7 @@ export function createAdminProductsHandler({
         ? await sql`DELETE FROM product_variants WHERE id = ${id} RETURNING id`
         : await sql`DELETE FROM catalog_products WHERE id = ${id} RETURNING id`;
       if (!deleted) return response(404, { error: body.variant === true ? 'Variant not found' : 'Product not found' });
-      await rebuild(sql, ['products']);
+      await rebuild(sql, ['products', 'categories']);
       await purgeMutationCache('product', purgeTags, context);
       return response(200, { ok: true });
     } catch (error) {

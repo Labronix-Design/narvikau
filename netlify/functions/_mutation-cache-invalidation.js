@@ -1,7 +1,8 @@
 import { purgePublicCacheTags } from './_cache-invalidation.js';
 
 export const MUTATION_TAGS = Object.freeze({
-  product: Object.freeze(['catalogue:products', 'catalogue:storefront']),
+  product: Object.freeze(['catalogue:products', 'catalogue:categories', 'catalogue:storefront']),
+  category: Object.freeze(['catalogue:products', 'catalogue:categories', 'catalogue:storefront']),
   siteSettings: Object.freeze(['site-settings', 'catalogue:storefront']),
   legalRefund: Object.freeze(['legal:refund']),
   legalTerms: Object.freeze(['legal:terms']),
