@@ -1,15 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductDetailPage } from './product-detail.component';
 import { ProductService } from '../../../_services/product.service';
 import { SiteSettingsService } from '../../../_services/site-settings.service';
 import { FeatureFlagsService } from '../../../_services/feature-flags.service';
-import { CatalogProduct } from '../../../_models/catalog.models';
+import { CatalogCategory, CatalogProduct } from '../../../_models/catalog.models';
+import { StorefrontReadModelService } from '../../../_services/storefront-read-model.service';
 
 describe('ProductDetailPage canopy quotes', () => {
   let fixture: ComponentFixture<ProductDetailPage>;
   const products = signal<CatalogProduct[]>([]);
+  const categories = signal<CatalogCategory[]>([{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }]);
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -26,11 +28,21 @@ describe('ProductDetailPage canopy quotes', () => {
         { provide: FeatureFlagsService, useValue: { emailsEnabled: true } },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'navrik-canopy-adventure' } } } },
         { provide: Router, useValue: { navigate: async () => true } },
+        { provide: StorefrontReadModelService, useValue: { model: computed(() => ({ categories: categories() })) } },
       ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductDetailPage);
     products.set([]);
+    categories.set([{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }]);
+  });
+
+  it('uses the managed category name for detail navigation and labels', () => {
+    categories.set([{ id: 2, slug: 'roof-equipment', name: 'Roof Equipment', description: null, sort_order: 0 }]);
+    products.set([{ ...canopy(), category: 'roof-equipment' }]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.back-link')?.textContent).toContain('Roof Equipment');
+    expect(fixture.nativeElement.querySelector('.pdp-hero')?.getAttribute('aria-label')).toContain('Roof Equipment');
   });
 
   it('shows a named quote action and no cart, payment, variant, or accessory controls', async () => {

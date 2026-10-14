@@ -1,0 +1,81 @@
+<div class="adm-page">
+  <header class="adm-header">
+    <h1 class="adm-title">Categories</h1>
+    <p class="adm-sub">Organise products into named catalogue sections. Only active categories appear publicly and can be chosen for products.</p>
+  </header>
+
+  @if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
+
+  @if (showForm()) {
+    <div class="adm-form-wrap">
+      <h2>{{ editingId() === null ? 'New Category' : 'Edit Category' }}</h2>
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <fieldset class="category-fields" [disabled]="saving()">
+          <div class="adm-form-grid">
+            <div class="adm-field">
+              <label for="category-name">Name *</label>
+              <input id="category-name" formControlName="name" required maxlength="160" [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid" aria-describedby="category-name-error">
+              <small id="category-name-error" class="field-error">@if (form.controls.name.touched && form.controls.name.invalid) { Enter a name of up to 160 characters. }</small>
+            </div>
+            <div class="adm-field">
+              <label for="category-slug">Slug *</label>
+              <input id="category-slug" formControlName="slug" required maxlength="120" [attr.aria-invalid]="form.controls.slug.touched && form.controls.slug.invalid" aria-describedby="category-slug-help category-slug-error">
+              <small id="category-slug-help">Lowercase letters, numbers and single hyphens; up to 120 characters.</small>
+              <small id="category-slug-error" class="field-error">@if (form.controls.slug.touched && form.controls.slug.invalid) { Enter a valid slug. }</small>
+            </div>
+            <div class="adm-field span-full">
+              <label for="category-description">Description</label>
+              <textarea id="category-description" formControlName="description" maxlength="2000" [attr.aria-invalid]="form.controls.description.touched && form.controls.description.invalid" aria-describedby="category-description-error"></textarea>
+              <small id="category-description-error" class="field-error">@if (form.controls.description.touched && form.controls.description.invalid) { Use up to 2000 characters without control characters. }</small>
+            </div>
+            <div class="adm-field">
+              <label for="category-sort">Sort Order</label>
+              <input id="category-sort" type="number" formControlName="sort_order" min="-100000" max="100000" step="1" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid">
+              <small class="field-error">@if (form.controls.sort_order.touched && form.controls.sort_order.invalid) { Enter a whole number from -100000 to 100000. }</small>
+            </div>
+            <div class="adm-field"><label class="toggle-row"><input type="checkbox" formControlName="is_active"><span>Active in catalogue</span></label></div>
+          </div>
+          <div class="adm-form-actions">
+            <button type="submit" class="adm-btn primary" [disabled]="saving()"><mat-icon svgIcon="save"></mat-icon>{{ saving() ? 'Saving…' : 'Save Category' }}</button>
+            <button type="button" class="adm-btn ghost" (click)="cancelForm()">Cancel</button>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="adm-loading" role="status"><div class="spin"></div><span class="spin-label">Loading Categories…</span></div>
+  } @else if (sessionExpired()) {
+    <section class="adm-empty" role="status"><p class="empty-title">Sign in required</p><a class="adm-btn primary" routerLink="/admin/login">Sign in</a></section>
+  } @else {
+    <div class="section-actions">
+      <h2 class="adm-section-title">{{ categories().length }} Categories</h2>
+      @if (!showForm()) { <button type="button" class="adm-btn primary" (click)="openCreate()"><mat-icon svgIcon="add"></mat-icon>Add Category</button> }
+    </div>
+    @if (categories().length) {
+      <div class="adm-table-wrap">
+        <table class="adm-table">
+          <thead><tr><th scope="col">Name</th><th scope="col">Slug</th><th scope="col">Sort Order</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
+          <tbody>
+            @for (category of categories(); track category.id) {
+              <tr>
+                <td><strong>{{ category.name }}</strong>@if (category.description) { <div class="category-description">{{ category.description }}</div> }</td>
+                <td class="mono">{{ category.slug }}</td>
+                <td>{{ category.sort_order }}</td>
+                <td>{{ category.is_active ? 'Active' : 'Inactive' }}</td>
+                <td><div class="category-actions">
+                  <button type="button" class="adm-btn ghost small" (click)="openEdit(category)">Edit</button>
+                  <button type="button" class="adm-btn ghost small" [disabled]="saving()" (click)="toggleActive(category)">{{ category.is_active ? 'Deactivate' : 'Activate' }}</button>
+                  <button type="button" class="adm-btn danger small" (click)="remove(category)">Delete</button>
+                </div></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!error()) {
+      <section class="adm-empty" role="status"><p class="empty-title">No categories yet</p><p class="empty-desc">Add a category before creating catalogue products.</p></section>
+    }
+  }
+</div>

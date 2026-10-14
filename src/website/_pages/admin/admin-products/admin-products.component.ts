@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormArray, FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
-import { AdminService, CatalogProduct, ProductVariant } from '../../../_services/admin.service';
+import { AdminCategory, AdminService, CatalogProduct, ProductVariant } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
 import { ImageUploadComponent } from '../../../_components/image-upload/image-upload.component';
 import { toRenderableSpecifications } from '../../../_models/catalog.models';
@@ -52,6 +53,9 @@ export class AdminProductsComponent {
   private readonly fb = inject(FormBuilder);
 
   readonly products = signal<CatalogProduct[]>([]);
+  readonly categories = signal<AdminCategory[]>([]);
+  readonly activeCategories = computed(() => this.categories().filter(category => category.is_active));
+  readonly categoryNames = computed(() => new Map(this.categories().map(category => [category.slug, category.name])));
   readonly loading = signal(true);
   readonly error = signal('');
   readonly sessionExpired = signal(false);
@@ -71,13 +75,20 @@ export class AdminProductsComponent {
   readonly form = this.fb.nonNullable.group({
     slug: ['', [requiredText(120), identifier]],
     name: ['', requiredText(160)],
-    category: ['', [requiredText(80), identifier]],
+    category: ['', [requiredText(120), identifier]],
     description: ['', Validators.maxLength(4000)],
     image_url: ['', Validators.maxLength(500)],
     is_active: [true],
     sort_order: [0, [Validators.required, Validators.min(-100000), Validators.max(100000), Validators.pattern(/^-?\d+$/)]],
     gallery_urls: this.fb.nonNullable.control<string[]>([]),
     specifications: this.fb.array<SpecificationRow>([], [uniqueLabels, Validators.maxLength(30)]),
+  });
+  private readonly selectedCategory = toSignal(this.form.controls.category.valueChanges,
+    { initialValue: this.form.controls.category.value });
+  readonly currentInactiveCategory = computed(() => {
+    const selected = this.selectedCategory();
+    return this.editingId() && selected && !this.activeCategories().some(category => category.slug === selected)
+      ? selected : null;
   });
 
   readonly variantForm = this.fb.nonNullable.group({
@@ -99,7 +110,9 @@ export class AdminProductsComponent {
     this.error.set('');
     this.sessionExpired.set(false);
     try {
-      this.products.set(await this.adminService.getProducts());
+      const [products, categories] = await Promise.all([this.adminService.getProducts(), this.adminService.getCategories()]);
+      this.products.set(products);
+      this.categories.set(categories);
     } catch (error: unknown) {
       if (error instanceof HttpErrorResponse && error.status === 401) {
         this.adminService.logout();
@@ -158,6 +171,11 @@ export class AdminProductsComponent {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.error.set('Check the highlighted product fields before saving.');
+      return;
+    }
+    if (!this.activeCategories().some(category => category.slug === this.form.controls.category.value)) {
+      this.form.controls.category.markAsTouched();
+      this.error.set('Select an active category before saving this product.');
       return;
     }
     this.saving.set(true);

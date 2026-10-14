@@ -1,22 +1,22 @@
 <div class="pdp-page">
   @if (productService.loading()) {
-    <div class="pdp-loading" aria-live="polite"><div class="nv-spinner"></div><p>Loading canopy details…</p></div>
+    <div class="pdp-loading" aria-live="polite"><div class="nv-spinner"></div><p>Loading product details…</p></div>
   } @else if (productService.error()) {
     <div class="pw-container">
       <section class="error-state" aria-live="polite">
         <div class="error-icon-wrap"><mat-icon svgIcon="warning"></mat-icon></div>
         <div class="error-body">
-          <h1 class="error-heading">Canopy details are unavailable</h1>
+          <h1 class="error-heading">Product details are unavailable</h1>
           <p class="error-sub">Please try again shortly or contact our team for help.</p>
           <div class="error-actions">
-            <a routerLink="/products" class="error-cta-primary"><mat-icon svgIcon="arrow_back"></mat-icon>Back to canopies</a>
+            <a routerLink="/products" class="error-cta-primary"><mat-icon svgIcon="arrow_back"></mat-icon>Back to products</a>
             <a [href]="'mailto:' + siteSettings.settings().contact.email" class="error-cta-secondary"><mat-icon svgIcon="email"></mat-icon>Contact us</a>
           </div>
         </div>
       </section>
     </div>
   } @else if (product(); as product) {
-    <section class="pdp-hero texture-hex" aria-label="Canopy heading">
+    <section class="pdp-hero texture-hex" [attr.aria-label]="categoryName() + ' heading'">
       <div class="pdp-hero-body pw-container">
         @if (product.size) { <span class="pdp-hero-badge canopy-badge">{{ product.size }}</span> }
         <h1 class="pdp-hero-title">{{ product.name }}</h1>
@@ -24,18 +24,18 @@
     </section>
 
     <div class="pdp-breadcrumb pw-container">
-      <a routerLink="/products" class="back-link"><mat-icon svgIcon="arrow_back"></mat-icon>All canopies</a>
+      <a routerLink="/products" class="back-link"><mat-icon svgIcon="arrow_back"></mat-icon>All {{ categoryName() }}</a>
     </div>
 
     <main class="pdp-main pw-container">
-      <section class="viewer-side" aria-label="Canopy images">
+      <section class="viewer-side" [attr.aria-label]="categoryName() + ' images'">
         <div class="viewer-card panel-machined">
           @if (currentImage()) {
             <div class="product-stage canopy-stage">
               <img [src]="currentImage()" [alt]="product.name" class="product-img" loading="eager" fetchpriority="high" decoding="async">
             </div>
           } @else {
-            <div class="product-stage canopy-stage product-image-empty"><mat-icon svgIcon="image"></mat-icon><span>Canopy image not available</span></div>
+            <div class="product-stage canopy-stage product-image-empty"><mat-icon svgIcon="image"></mat-icon><span>Product image not available</span></div>
           }
           @if (gallery().length > 1) {
             <div class="gallery-strip">
@@ -67,7 +67,7 @@
         }
 
         <section class="price-card panel-machined quote-card" aria-label="Quote request">
-          <p class="quote-note"><mat-icon svgIcon="forum"></mat-icon>Tell us about your vehicle and fitment needs for a tailored canopy quote.</p>
+          <p class="quote-note"><mat-icon svgIcon="forum"></mat-icon>Tell us about your vehicle and requirements for a tailored {{ categoryName() }} quote.</p>
           <div class="pdp-actions">
             <button class="quote-request-btn"
                     type="button"

@@ -1,16 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { ProductsPage } from './products.component';
 import { ProductService } from '../../_services/product.service';
 import { SiteSettingsService } from '../../_services/site-settings.service';
 import { FeatureFlagsService } from '../../_services/feature-flags.service';
 import { ToastService } from '../../_services/toast.service';
 import { CatalogProduct } from '../../_models/catalog.models';
+import { StorefrontReadModelService } from '../../_services/storefront-read-model.service';
 
 describe('ProductsPage canopy quotes', () => {
   let fixture: ComponentFixture<ProductsPage>;
   const products = signal<CatalogProduct[]>([]);
   const loading = signal(false);
+  const categories = signal([{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }]);
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -20,16 +22,30 @@ describe('ProductsPage canopy quotes', () => {
           provide: ProductService,
           useValue: {
             products, loading, error: signal(null), load: async () => undefined,
+            byCategory: (category: string) => products().filter(product => product.category === category),
           },
         },
         { provide: SiteSettingsService, useValue: { settings: signal({ contact: { email: 'sales@example.test' } }) } },
         { provide: FeatureFlagsService, useValue: { emailsEnabled: true } },
         { provide: ToastService, useValue: { showToast: jasmine.createSpy('showToast') } },
+        { provide: StorefrontReadModelService, useValue: { model: computed(() => ({ categories: categories() })) } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(ProductsPage);
     products.set([]);
     loading.set(false);
+    categories.set([{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }]);
+  });
+
+  it('groups products under their managed category names', () => {
+    categories.set([
+      { id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 },
+      { id: 2, slug: 'roof-equipment', name: 'Roof Equipment', description: null, sort_order: 1 },
+    ]);
+    products.set([canopy(), accessory()]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.product-section').length).toBe(2);
+    expect(fixture.nativeElement.textContent).toContain('Roof Equipment');
   });
 
   it('renders an exact named quote action for every canopy without checkout copy', () => {

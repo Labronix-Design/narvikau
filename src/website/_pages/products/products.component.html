@@ -1,9 +1,9 @@
 <div class="products-page">
   <section class="listing-hero texture-hex">
     <div class="pw-container">
-      <span class="listing-eyebrow">Australian canopy range</span>
-      <h1 class="listing-title">Aluminium Canopies</h1>
-      <p class="listing-subtitle">Explore the current Navrik canopy range and request a tailored quote for your vehicle.</p>
+      <span class="listing-eyebrow">Australian product range</span>
+      <h1 class="listing-title">Navrik Products</h1>
+      <p class="listing-subtitle">Explore the current Navrik range and request a tailored quote for your vehicle.</p>
     </div>
   </section>
 
@@ -27,7 +27,7 @@
       <section class="error-state" aria-live="polite">
         <div class="error-icon-wrap"><mat-icon svgIcon="warning"></mat-icon></div>
         <div class="error-body">
-          <h2 class="error-heading">Canopy information is unavailable</h2>
+          <h2 class="error-heading">Product information is unavailable</h2>
           <p class="error-sub">Please try again shortly or contact our team for help.</p>
           <div class="error-actions">
             <a [href]="'mailto:' + siteSettings.settings().contact.email" class="error-cta-primary">
@@ -40,14 +40,14 @@
     </div>
   } @else {
     <div class="pw-container listing-body">
-      @if (productService.products().length) {
+      @for (section of productSections(); track section.category.id) {
         <section class="product-section">
           <div class="section-header">
             <span class="section-eyebrow">Built for Australian conditions</span>
-            <h2 class="section-title">Canopies</h2>
+            <h2 class="section-title">{{ section.category.name }}</h2>
           </div>
           <div class="product-grid">
-            @for (product of productService.products(); track product.id) {
+            @for (product of section.products; track product.id) {
               <article class="product-card panel-machined">
                 <a [routerLink]="['/products', product.slug]" class="card-img-wrap" [attr.aria-label]="'View ' + product.name">
                   @if (heroImage(product); as image) {
@@ -80,8 +80,8 @@
       @if (isEmpty()) {
         <div class="empty-state">
           <div class="empty-icon-wrap"><mat-icon svgIcon="inventory_2"></mat-icon></div>
-          <h3 class="empty-heading">Canopies are being prepared</h3>
-          <p class="empty-sub">The current catalogue does not have a published canopy to show yet.</p>
+          <h3 class="empty-heading">Products are being prepared</h3>
+          <p class="empty-sub">The current catalogue does not have a published product to show yet.</p>
           <div class="empty-actions">
             <a routerLink="/contact" class="empty-cta-primary">Contact us</a>
             <a [href]="'mailto:' + siteSettings.settings().contact.email" class="empty-cta-secondary">

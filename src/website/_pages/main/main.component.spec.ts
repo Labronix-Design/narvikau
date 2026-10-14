@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { MainPage } from './main.component';
 import { ToastService } from '../../_services/toast.service';
@@ -8,12 +8,15 @@ import { SiteSettingsService } from '../../_services/site-settings.service';
 import { ProductService } from '../../_services/product.service';
 import { CatalogProduct } from '../../_models/catalog.models';
 import { AnalyticsService } from '../../_services/analytics.service';
+import { StorefrontReadModelService } from '../../_services/storefront-read-model.service';
+import { CatalogCategory } from '../../_models/catalog.models';
 
 describe('MainPage canopy quote funnel', () => {
   let fixture: ComponentFixture<MainPage>;
   let analytics: jasmine.SpyObj<AnalyticsService>;
   const products = signal<CatalogProduct[]>([]);
   const productError = signal<string | null>(null);
+  const categories = signal<CatalogCategory[]>([{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }]);
 
   beforeEach(async () => {
     analytics = jasmine.createSpyObj<AnalyticsService>('AnalyticsService', ['trackMetaLead']);
@@ -36,11 +39,24 @@ describe('MainPage canopy quote funnel', () => {
           },
         },
         { provide: ProductService, useValue: { products, loading: signal(false), error: productError, load: async () => undefined } },
+        { provide: StorefrontReadModelService, useValue: { model: computed(() => ({ categories: categories() })) } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(MainPage);
     products.set([]);
     productError.set(null);
+    categories.set([{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }]);
+  });
+
+  it('builds a featured lane from each published category with products', () => {
+    categories.set([
+      { id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 },
+      { id: 2, slug: 'roof-equipment', name: 'Roof Equipment', description: 'Carry more gear', sort_order: 1 },
+    ]);
+    products.set([canopy(), { ...canopy(), id: 2, slug: 'roof-rack', name: 'Roof Rack', category: 'roof-equipment' }]);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.catalogueCategories().map(category => category.label)).toEqual(['Canopies', 'Roof Equipment']);
+    expect(fixture.nativeElement.textContent).toContain('Roof Equipment');
   });
 
   it('shows the canopy catalogue with an exact named quote action and no retired ranges', () => {
@@ -53,7 +69,7 @@ describe('MainPage canopy quote funnel', () => {
     );
     const pageText = fixture.nativeElement.textContent as string;
     expect(quoteAction).not.toBeNull();
-    expect(pageText).toContain('1 canopy in the current catalogue');
+    expect(pageText).toContain('1 product in the current catalogue');
     expect(pageText).not.toContain('Bakkie trays');
     expect(pageText).not.toContain('Browse accessories');
 

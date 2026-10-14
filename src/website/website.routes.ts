@@ -19,7 +19,7 @@ export const websiteRoutes: Routes = [
   },
   {
     path: 'products',
-    title: 'Canopies | Navrik Australia',
+    title: 'Products | Navrik Australia',
     loadComponent: () => import('./_pages/products/products.component').then(m => m.ProductsPage)
   },
   {
@@ -29,7 +29,7 @@ export const websiteRoutes: Routes = [
   },
   {
     path: 'products/:slug',
-    title: 'Canopy | Navrik Australia',
+    title: 'Product | Navrik Australia',
     loadComponent: () => import('./_pages/products/product-detail/product-detail.component').then(m => m.ProductDetailPage)
   },
   {
@@ -88,6 +88,11 @@ export const websiteRoutes: Routes = [
         path: 'products',
         title: 'Products | Navrik Admin',
         loadComponent: () => import('./_pages/admin/admin-products/admin-products.component').then(m => m.AdminProductsComponent)
+      },
+      {
+        path: 'categories',
+        title: 'Categories | Navrik Admin',
+        loadComponent: () => import('./_pages/admin/admin-categories/admin-categories.component').then(m => m.AdminCategoriesComponent)
       },
       {
         path: 'analytics',

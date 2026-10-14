@@ -8,6 +8,7 @@ import { FormBuilder } from '@angular/forms';
 import { AdminService, CatalogProduct } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
 import { AdminProductsComponent } from './admin-products.component';
+import { AdminCategory } from '../../../_services/admin.service';
 
 const canopies: CatalogProduct[] = ['Adventure', 'Overland', 'Sports', 'Defender'].map((model, index) => ({
   id: index + 1,
@@ -22,7 +23,13 @@ const canopies: CatalogProduct[] = ['Adventure', 'Overland', 'Sports', 'Defender
   sort_order: index,
 }));
 
-async function editor(products = canopies, productsError: unknown = null) {
+const categories: AdminCategory[] = [
+  { id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0, is_active: true },
+  { id: 2, slug: 'roof-equipment', name: 'Roof Equipment', description: null, sort_order: 1, is_active: true },
+  { id: 3, slug: 'retired', name: 'Retired', description: null, sort_order: 2, is_active: false },
+];
+
+async function editor(products = canopies, productsError: unknown = null, managed = categories) {
   const submissions: CatalogProduct[] = [];
   const deleted: number[] = [];
   const service = {
@@ -31,6 +38,7 @@ async function editor(products = canopies, productsError: unknown = null) {
       if (productsError) throw productsError;
       return products;
     },
+    getCategories: async () => managed,
     createProduct: async (payload: CatalogProduct) => {
       submissions.push(payload);
       return { ...payload, id: 20 };
@@ -108,6 +116,27 @@ test('creates a product in a new category without canopy or payment payload fiel
   });
   assert.equal(component.products().at(-1)?.name, 'Roof Rack');
   assert.equal(component.showForm(), false);
+});
+
+test('only managed active categories are available for a new product', async () => {
+  const { component, submissions } = await editor();
+  component.openCreate();
+  assert.deepEqual(component.activeCategories().map(category => category.slug), ['canopy', 'roof-equipment']);
+  component.form.patchValue({ name: 'Rack', slug: 'roof-rack', category: 'retired' });
+  await component.save();
+  assert.equal(submissions.length, 0);
+  component.form.controls.category.setValue('roof-equipment');
+  await component.save();
+  assert.equal(submissions[0]?.category, 'roof-equipment');
+});
+
+test('preserves an inactive current category for editing but prevents resaving it', async () => {
+  const { component, submissions } = await editor([{ ...canopies[0], category: 'retired' }]);
+  component.openEdit({ ...canopies[0], category: 'retired' });
+  assert.equal(component.form.controls.category.value, 'retired');
+  assert.equal(component.currentInactiveCategory(), 'retired');
+  await component.save();
+  assert.equal(submissions.length, 0);
 });
 
 for (const label of ['', '   ', '__proto__', 'constructor', 'prototype']) {

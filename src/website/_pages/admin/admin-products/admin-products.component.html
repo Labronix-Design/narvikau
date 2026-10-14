@@ -1,7 +1,7 @@
 <div class="adm-page">
   <div class="adm-header">
     <h1 class="adm-title">Products</h1>
-    <p class="adm-sub">Manage catalogue products, categories, specifications and descriptive options.</p>
+    <p class="adm-sub">Manage catalogue products, specifications and descriptive options. Categories are managed separately.</p>
   </div>
 
   @if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
@@ -26,9 +26,17 @@
           </div>
           <div class="adm-field">
             <label for="product-category">Category *</label>
-            <input id="product-category" formControlName="category" required maxlength="80" aria-describedby="product-category-help product-category-error" [attr.aria-invalid]="form.controls.category.touched && form.controls.category.invalid">
-            <small id="product-category-help">Enter any category using lowercase letters, numbers and single hyphens, for example roof-equipment.</small>
-            <small id="product-category-error" class="field-error">@if (form.controls.category.touched && form.controls.category.invalid) { Enter a valid category (up to 80 characters). }</small>
+            <select id="product-category" formControlName="category" required aria-describedby="product-category-help product-category-error" [attr.aria-invalid]="form.controls.category.touched && (form.controls.category.invalid || currentInactiveCategory())">
+              <option value="">Select a category</option>
+              @for (category of activeCategories(); track category.id) {
+                <option [value]="category.slug">{{ category.name }}</option>
+              }
+              @if (currentInactiveCategory(); as inactiveSlug) {
+                <option [value]="inactiveSlug" disabled>{{ inactiveSlug }} (inactive)</option>
+              }
+            </select>
+            <small id="product-category-help">Only active managed categories can be used. <a routerLink="/admin/categories">Manage categories</a>.</small>
+            <small id="product-category-error" class="field-error">@if (form.controls.category.touched && (form.controls.category.invalid || currentInactiveCategory())) { Select an active category. }</small>
           </div>
           <div class="adm-field">
             <label for="product-sort">Sort Order</label><input id="product-sort" type="number" formControlName="sort_order" min="-100000" max="100000" step="1" aria-describedby="product-sort-help product-sort-error" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid">
@@ -89,7 +97,7 @@
           </div>
         </div>
         <div class="adm-form-actions">
-          <button type="submit" class="adm-btn primary" [disabled]="saving()"><mat-icon svgIcon="save"></mat-icon>{{ saving() ? 'Saving…' : 'Save Product' }}</button>
+          <button type="submit" class="adm-btn primary" [disabled]="saving() || !activeCategories().length"><mat-icon svgIcon="save"></mat-icon>{{ saving() ? 'Saving…' : 'Save Product' }}</button>
           <button type="button" class="adm-btn ghost" (click)="cancelForm()"><mat-icon svgIcon="close"></mat-icon>Cancel</button>
         </div>
         </fieldset>
@@ -127,7 +135,7 @@
               <tr [class.row-expanded]="expandedProductId() === product.id">
                 <td class="mono">{{ product.id }}</td>
                 <td><div class="product-name-cell"><span>{{ product.name }}</span><span class="slug-tag">{{ product.slug }}</span></div></td>
-                <td>{{ product.category }}</td>
+                <td>{{ categoryNames().get(product.category) ?? product.category }}</td>
                 <td class="hide-mobile">{{ product.sort_order }}</td>
                 <td><span class="bool-dot" [class.on]="product.is_active" aria-hidden="true"></span> {{ product.is_active ? 'Yes' : 'No' }}</td>
                 <td><div class="row-actions">

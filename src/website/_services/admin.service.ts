@@ -18,6 +18,17 @@ export interface CatalogProduct extends Omit<StorefrontCatalogProduct, 'id'> {
   is_active: boolean;
 }
 
+export interface AdminCategory {
+  id: number;
+  slug: string;
+  name: string;
+  description: string | null;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export type CategoryInput = Omit<AdminCategory, 'id'>;
+
 export interface WarrantyRegistrationRecord {
   id: number;
   registration_reference: string;
@@ -286,6 +297,25 @@ export class AdminService {
 
   deleteProduct(id: number): Promise<any> {
     return firstValueFrom(this.http.delete('/api/admin-products', { headers: this.authHeaders, body: { id } }));
+  }
+
+  // ── Catalogue categories ─────────────────────────────────────
+  getCategories(): Promise<AdminCategory[]> {
+    return firstValueFrom(this.http.get<AdminCategory[]>('/api/admin-categories', { headers: this.authHeaders }));
+  }
+
+  createCategory(category: CategoryInput): Promise<AdminCategory> {
+    return firstValueFrom(this.http.post<AdminCategory>('/api/admin-categories', category, { headers: this.authHeaders }));
+  }
+
+  updateCategory(category: AdminCategory): Promise<AdminCategory> {
+    const { id, slug, name, description, sort_order, is_active } = category;
+    return firstValueFrom(this.http.put<AdminCategory>('/api/admin-categories',
+      { id, slug, name, description, sort_order, is_active }, { headers: this.authHeaders }));
+  }
+
+  deleteCategory(id: number): Promise<{ ok: boolean }> {
+    return firstValueFrom(this.http.delete<{ ok: boolean }>('/api/admin-categories', { headers: this.authHeaders, body: { id } }));
   }
 
   // ── Product Variants ─────────────────────────────────────────

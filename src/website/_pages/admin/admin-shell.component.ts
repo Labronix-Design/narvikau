@@ -44,9 +44,10 @@ export class AdminShellComponent {
     },
     {
       id: 'catalog',
-      label: 'Canopy catalogue',
+      label: 'Catalogue',
       items: [
-        { label: 'Canopies', icon: 'inventory_2', path: '/admin/products' },
+        { label: 'Products', icon: 'inventory_2', path: '/admin/products' },
+        { label: 'Categories', icon: 'category', path: '/admin/categories' },
       ],
     },
     {

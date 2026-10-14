@@ -1,0 +1,22 @@
+@use '../admin-shared' as adm;
+
+.category-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.category-description {
+  margin-top: 4px;
+  color: var(--admin-text-muted, #888);
+  font-size: .75rem;
+}
+
+.category-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.field-error { color: #fca5a5; }

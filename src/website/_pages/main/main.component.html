@@ -88,7 +88,7 @@
   </section>
 
   <!-- ═══════════════════════════════════════════════════════════
-       CANOPY CATALOGUE PREVIEW
+       CATALOGUE PREVIEW
        ═══════════════════════════════════════════════════════════ -->
   @if (catalogueUnavailable()) {
   <section id="catalogue" class="catalogue-section pw-section" aria-label="Current product catalogue">
@@ -106,8 +106,8 @@
   <section id="catalogue" class="catalogue-section pw-section" aria-label="Current product catalogue">
     <div class="pw-container">
       <div class="section-header scroll-reveal" #revealEl>
-        <h2 class="section-title">Choose your <span class="highlight-orange">Navrik canopy.</span></h2>
-        <p class="section-subtitle">Explore the live canopy catalogue, then request a tailored recommendation for your vehicle.</p>
+        <h2 class="section-title">Explore the <span class="highlight-orange">Navrik range.</span></h2>
+        <p class="section-subtitle">Browse the live catalogue, then request a tailored recommendation for your vehicle.</p>
       </div>
 
       <div class="category-lanes">
@@ -119,7 +119,7 @@
                 <h3 [id]="'category-' + category.key" class="category-title">{{ category.label }}</h3>
               </div>
               <p class="category-meta">
-                {{ category.count }} {{ category.count === 1 ? 'canopy' : 'canopies' }} in the current catalogue
+                {{ category.count }} {{ category.count === 1 ? 'product' : 'products' }} in the current catalogue
               </p>
             </div>
 
@@ -146,7 +146,7 @@
                   Request a quote
                 </button>
                 <a [routerLink]="category.browseRoute" class="category-browse-link">
-                  Browse all canopies <mat-icon svgIcon="arrow_forward"></mat-icon>
+                  Browse {{ category.label }} <mat-icon svgIcon="arrow_forward"></mat-icon>
                 </a>
               </div>
             </article>
@@ -156,7 +156,7 @@
 
       <div class="catalogue-all-action">
         <a routerLink="/products" class="catalogue-all-link">
-          View the full canopy range <mat-icon svgIcon="arrow_forward"></mat-icon>
+          View the full product range <mat-icon svgIcon="arrow_forward"></mat-icon>
         </a>
       </div>
     </div>
@@ -167,8 +167,8 @@
       <div class="catalogue-empty panel-machined">
         <mat-icon svgIcon="inventory_2"></mat-icon>
         <div>
-          <h2>Canopies are being prepared</h2>
-          <p>The current catalogue does not have a published canopy to show yet. Request a quote and we will help you find the right fit.</p>
+          <h2>Products are being prepared</h2>
+          <p>The current catalogue does not have a published product to show yet. Request a quote and we will help you find the right fit.</p>
         </div>
         <button type="button" class="cat-quote-btn" (click)="openGeneralQuote()">
           <mat-icon svgIcon="forum"></mat-icon>
@@ -269,7 +269,7 @@
 
   @if (showCatalogueFloat()) {
     <button type="button" class="catalogue-browse-float" aria-label="Scroll to the Navrik product catalogue" (click)="scrollTo('catalogue')">
-      <span>View canopies</span>
+      <span>View products</span>
       <mat-icon svgIcon="arrow_forward"></mat-icon>
     </button>
   }

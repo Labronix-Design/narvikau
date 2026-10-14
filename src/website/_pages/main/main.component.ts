@@ -11,6 +11,7 @@ import { ImageLoaderComponent } from '../../_components/image-loader/image-loade
 import { FeatureFlagsService } from '../../_services/feature-flags.service';
 import { SiteSettingsService } from '../../_services/site-settings.service';
 import { ProductService } from '../../_services/product.service';
+import { StorefrontReadModelService } from '../../_services/storefront-read-model.service';
 import { AnalyticsService } from '../../_services/analytics.service';
 import { CatalogProduct } from '../../_models/catalog.models';
 import { DEFAULT_HERO_SLIDES, DEFAULT_BRAND_LOGOS, DEFAULT_TRUST_BAR, DEFAULT_COMPAT_NOTE } from '../../_models/site-settings.models';
@@ -26,7 +27,7 @@ interface HomeCatalogueCard {
 }
 
 interface HomeCatalogueCategory {
-  key: 'canopy';
+  key: string;
   label: string;
   eyebrow: string;
   count: number;
@@ -65,26 +66,28 @@ export class MainPage implements OnInit, AfterViewInit {
   public flags = inject(FeatureFlagsService);
   siteSettings = inject(SiteSettingsService);
   readonly productService = inject(ProductService);
+  private readonly storefront = inject(StorefrontReadModelService);
 
   /** The complete product cache, kept for any surrounding UI that needs it. */
   readonly catalogueProducts = computed(() => [...this.productService.products()]
     .sort((left, right) => left.sort_order - right.sort_order));
 
-  /**
-   * The home page highlights one live canopy while keeping the complete range
-   * available on the dedicated catalogue page.
-   */
+  /** Highlight one product per published category; keep the full range on /products. */
   readonly catalogueCategories = computed<HomeCatalogueCategory[]>(() => {
     const products = this.catalogueProducts();
-    const featured = products[0];
-    return featured ? [{
-      key: 'canopy',
-      label: 'Canopies',
-      eyebrow: 'Built for Australian conditions',
-      count: products.length,
-      featured: this.toHomeProductCard(featured),
-      browseRoute: ['/products'],
-    }] : [];
+    return [...(this.storefront.model()?.categories ?? [])]
+      .sort((left, right) => left.sort_order - right.sort_order || left.name.localeCompare(right.name))
+      .flatMap(category => {
+        const matching = products.filter(product => product.category === category.slug);
+        return matching.length ? [{
+          key: category.slug,
+          label: category.name,
+          eyebrow: category.description || 'Built for Australian conditions',
+          count: matching.length,
+          featured: this.toHomeProductCard(matching[0]),
+          browseRoute: ['/products'],
+        }] : [];
+      });
   });
 
   /** A partial catalogue is less useful than an honest availability state. */
