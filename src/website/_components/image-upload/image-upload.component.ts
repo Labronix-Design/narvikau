@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminService } from '../../_services/admin.service';
 
@@ -52,12 +53,12 @@ export class ImageUploadComponent {
   async handleFile(file: File): Promise<void> {
     this.error.set(null);
 
-    if (!file.type.startsWith('image/')) {
-      this.error.set('Please choose an image file (JPEG, PNG, WebP, GIF, or SVG).');
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      this.error.set('Please choose a JPEG, PNG, or WebP image.');
       return;
     }
     if (file.size > 4 * 1024 * 1024) {
-      this.error.set('Image must be under 4MB.');
+      this.error.set('Image must be 4 MiB or smaller.');
       return;
     }
 
@@ -66,8 +67,12 @@ export class ImageUploadComponent {
       const { url } = await this.adminService.uploadImage(file);
       this.url = url;
       this.urlChange.emit(url);
-    } catch {
-      this.error.set('Upload failed — please try again.');
+    } catch (error) {
+      const serverMessage = error instanceof HttpErrorResponse && error.status >= 400 && error.status < 500
+        && typeof error.error?.error === 'string'
+        ? error.error.error.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 160)
+        : '';
+      this.error.set(serverMessage || 'Upload failed — please try again.');
     } finally {
       this.isUploading.set(false);
     }
