@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { taggedPublicReadHeaders, uncachedResponseHeaders } from './_public-cache.js';
-import { normaliseCatalogueProducts } from './_catalogue-cache.js';
+import { normaliseCatalogueCategories, normaliseCatalogueProducts } from './_catalogue-cache.js';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,6 +44,7 @@ export function createCatalogStorefrontHandler({
       const [model] = await getSql()`
         SELECT
           COALESCE((SELECT payload FROM catalogue_read_models WHERE section = 'products'), '[]'::jsonb) AS products,
+          COALESCE((SELECT payload FROM catalogue_read_models WHERE section = 'categories'), '[]'::jsonb) AS categories,
           COALESCE((
             SELECT jsonb_build_object(
               'logo_url', logo_url,
@@ -62,6 +63,7 @@ export function createCatalogStorefrontHandler({
         headers,
         body: JSON.stringify({
           products: normaliseCatalogueProducts(model?.products),
+          categories: normaliseCatalogueCategories(model?.categories),
           settings: model?.settings && typeof model.settings === 'object' && !Array.isArray(model.settings)
             ? model.settings
             : DEFAULT_SETTINGS,

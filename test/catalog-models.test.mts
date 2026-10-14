@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { toRenderableSpecifications, type CatalogProduct } from '../src/website/_models/catalog.models.js';
+import { toRenderableCategories, toRenderableSpecifications, type CatalogProduct } from '../src/website/_models/catalog.models.ts';
+
+test('accepts safe catalogue categories and discards malformed entries', () => {
+  assert.deepEqual(toRenderableCategories([
+    { id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 },
+    { id: 2, slug: '../unsafe', name: 'Unsafe', description: null, sort_order: 1 },
+    { id: 3, slug: 'inactive', name: '', description: null, sort_order: 2 },
+  ]), [{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }]);
+  assert.deepEqual(toRenderableCategories(null), []);
+});
 
 test('keeps only renderable string specifications for an accessory product', () => {
   const accessory: CatalogProduct = {

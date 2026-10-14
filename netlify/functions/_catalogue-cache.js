@@ -1,6 +1,6 @@
 import { taggedPublicReadHeaders, uncachedResponseHeaders } from './_public-cache.js';
 
-const SECTIONS = new Set(['products']);
+const SECTIONS = new Set(['products', 'categories']);
 const PRODUCT_TEXT_FIELDS = [
   ['size', 80], ['color', 80], ['description', 4000], ['image_url', 500],
   ['material', 160], ['thickness', 80], ['front_door_window', 300],
@@ -90,6 +90,25 @@ export function normaliseCatalogueProducts(payload) {
   return Array.isArray(payload) ? payload.map(normaliseProduct).filter(Boolean) : [];
 }
 
+function normaliseCategory(value) {
+  if (!plainObject(value) || Object.hasOwn(value, 'is_active') && value.is_active !== true) return null;
+  const id = value.id;
+  const slug = identifier(value.slug, 80);
+  const name = text(value.name, { required: true, maximum: 160 });
+  const sortOrder = value.sort_order;
+  const description = value.description === null
+    ? null
+    : text(value.description, { maximum: 2000 });
+  if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0 || slug === null || name === null
+    || typeof sortOrder !== 'number' || !Number.isSafeInteger(sortOrder) || Math.abs(sortOrder) > MAX_SORT_ORDER
+    || description === null && value.description !== null) return null;
+  return { id, slug, name, description, sort_order: sortOrder };
+}
+
+export function normaliseCatalogueCategories(payload) {
+  return Array.isArray(payload) ? payload.map(normaliseCategory).filter(Boolean) : [];
+}
+
 function assertSections(sections) {
   const requested = [...new Set(sections)];
   if (!requested.length || !requested.every((section) => SECTIONS.has(section))) {
@@ -100,17 +119,34 @@ function assertSections(sections) {
 
 async function buildProducts(sql) {
   const products = await sql`
-    SELECT id, slug, name, category, size, color, description, image_url,
-      sort_order, gallery_urls, material, thickness, front_door_window,
-      side_door, rear_door, vehicle_fit, specifications
+    SELECT catalog_products.id, catalog_products.slug, catalog_products.name,
+      catalog_products.category, catalog_products.size, catalog_products.color,
+      catalog_products.description, catalog_products.image_url,
+      catalog_products.sort_order, catalog_products.gallery_urls,
+      catalog_products.material, catalog_products.thickness,
+      catalog_products.front_door_window, catalog_products.side_door,
+      catalog_products.rear_door, catalog_products.vehicle_fit,
+      catalog_products.specifications
     FROM catalog_products
-    WHERE is_active = TRUE
-    ORDER BY sort_order ASC, name ASC
+    JOIN catalog_categories ON catalog_categories.slug = catalog_products.category
+      AND catalog_categories.is_active = TRUE
+    WHERE catalog_products.is_active = TRUE
+    ORDER BY catalog_products.sort_order ASC, catalog_products.name ASC
   `;
   return normaliseCatalogueProducts(products);
 }
 
-const BUILDERS = { products: buildProducts };
+async function buildCategories(sql) {
+  const categories = await sql`
+    SELECT id, slug, name, description, sort_order
+    FROM catalog_categories
+    WHERE is_active = TRUE
+    ORDER BY sort_order ASC, name ASC
+  `;
+  return normaliseCatalogueCategories(categories);
+}
+
+const BUILDERS = { products: buildProducts, categories: buildCategories };
 
 export async function rebuildCatalogueReadModels(sql, sections = ['products']) {
   const requested = assertSections(sections);
@@ -131,7 +167,9 @@ export async function readCatalogueReadModel(sql, section) {
   const [cached] = await sql`
     SELECT payload FROM catalogue_read_models WHERE section = ${section}
   `;
-  return normaliseCatalogueProducts(cached?.payload);
+  return section === 'categories'
+    ? normaliseCatalogueCategories(cached?.payload)
+    : normaliseCatalogueProducts(cached?.payload);
 }
 
 export function catalogueCacheHeaders(section) {

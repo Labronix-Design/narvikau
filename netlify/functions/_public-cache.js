@@ -14,6 +14,7 @@
 
 const PUBLIC_CACHE_TAGS = new Set([
   'catalogue:products',
+  'catalogue:categories',
   'catalogue:storefront',
   'site-settings',
   'legal:refund',

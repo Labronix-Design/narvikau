@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { readCatalogueReadModel, rebuildCatalogueReadModels } from '../../netlify/functions/_catalogue-cache.js';
+import { normaliseCatalogueCategories, readCatalogueReadModel, rebuildCatalogueReadModels } from '../../netlify/functions/_catalogue-cache.js';
+
+const canopies = { id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 };
+const retired = { id: 2, slug: 'retired', name: 'Retired', description: null, sort_order: 1 };
 
 const adventure = {
   id: 1,
@@ -56,17 +59,47 @@ test('catalogue rebuild creates a generic active product snapshot including an a
 
   assert.deepEqual(payloads, { products: [adventure, accessory] });
   assert.equal(queries.length, 2);
-  assert.match(queries[0], /WHERE is_active = TRUE/);
+  assert.match(queries[0], /catalog_products\.is_active = TRUE/);
   assert.doesNotMatch(queries[0], /category = 'canopy'|CANOPY_SLUGS/);
   assert.match(queries[0], /specifications/);
-  assert.doesNotMatch(queries.join('\n'), /purchase_mode|price_cents|catalog_accessories|compatibility_matrix|catalog_categories/i);
+  assert.doesNotMatch(queries.join('\n'), /purchase_mode|price_cents|catalog_accessories|compatibility_matrix/i);
 });
 
 test('catalogue rebuild rejects retired or unknown snapshot sections', async () => {
   const sql = async () => assert.fail('invalid sections must be rejected before a query');
 
   await assert.rejects(() => rebuildCatalogueReadModels(sql, ['accessories']), /Unknown catalogue cache section/);
-  await assert.rejects(() => readCatalogueReadModel(sql, 'categories'), /Unknown catalogue cache section/);
+  await assert.rejects(() => readCatalogueReadModel(sql, 'accessories'), /Unknown catalogue cache section/);
+});
+
+test('catalogue rebuild publishes active categories and only products in active categories', async () => {
+  const queries = [];
+  const sql = async (strings) => {
+    const query = strings.join(' ');
+    queries.push(query);
+    if (query.includes('FROM catalog_categories')) return [canopies];
+    if (query.includes('FROM catalog_products')) return [adventure];
+    return [];
+  };
+
+  const payloads = await rebuildCatalogueReadModels(sql, ['products', 'categories']);
+
+  assert.deepEqual(payloads, { products: [adventure], categories: [canopies] });
+  assert.match(queries.find(query => query.includes('FROM catalog_products')), /JOIN catalog_categories/);
+  assert.match(queries.find(query => query.includes('FROM catalog_products')), /is_active = TRUE/g);
+  assert.match(queries.find(query => query.includes('FROM catalog_categories')), /is_active = TRUE/);
+  assert.deepEqual(await readCatalogueReadModel(async () => [{ payload: [canopies] }], 'categories'), [canopies]);
+});
+
+test('category payloads reject malformed entries and never expose inactive metadata', () => {
+  assert.deepEqual(normaliseCatalogueCategories([canopies, { ...retired, is_active: false }]), [canopies]);
+  assert.deepEqual(normaliseCatalogueCategories(null), []);
+  assert.deepEqual(normaliseCatalogueCategories([
+    { ...canopies, slug: '../canopy' },
+    { ...canopies, id: -1 },
+    { ...canopies, sort_order: '' },
+    { ...canopies, is_active: 'false' },
+  ]), []);
 });
 
 test('a cached public product payload allowlists a valid accessory and strips non-public payment fields', async () => {

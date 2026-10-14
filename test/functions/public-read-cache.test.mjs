@@ -43,9 +43,12 @@ test('public cache headers reject missing, wildcard, and unknown tags', () => {
 
 test('catalogue reads are edge-cached so a public request does not wake the database', () => {
   const headers = catalogueCacheHeaders('products');
+  const categoryHeaders = catalogueCacheHeaders('categories');
   assert.match(headers['Netlify-CDN-Cache-Control'], /durable/);
   assert.match(headers['Netlify-CDN-Cache-Control'], /s-maxage=604800/);
   assert.equal(headers['Netlify-Cache-Tag'], 'catalogue:products');
+  assert.equal(categoryHeaders['Netlify-Cache-Tag'], 'catalogue:categories');
+  assert.match(categoryHeaders['Netlify-CDN-Cache-Control'], /durable/);
   assert.equal(catalogueUncachedHeaders['Cache-Control'], 'no-store');
   assert.equal(catalogueUncachedHeaders['Netlify-CDN-Cache-Control'], 'no-store');
 });

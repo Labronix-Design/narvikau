@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import { CatalogProduct, toRenderableSpecifications } from '../_models/catalog.models';
+import { CatalogCategory, CatalogProduct, toRenderableCategories, toRenderableSpecifications } from '../_models/catalog.models';
 import { SiteSettings } from '../_models/site-settings.models';
 
 export interface StorefrontReadModel {
   products: CatalogProduct[];
+  categories: CatalogCategory[];
   settings: SiteSettings;
 }
 
@@ -36,6 +37,7 @@ export class StorefrontReadModelService {
       const model = await firstValueFrom(this.http.get<StorefrontReadModel>('/api/catalog-storefront'));
       this.model.set({
         ...model,
+        categories: toRenderableCategories(model.categories),
         products: model.products.map(product => ({
           ...product,
           specifications: toRenderableSpecifications(product.specifications),

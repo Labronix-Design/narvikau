@@ -8,6 +8,7 @@ test('storefront read model returns only cached public catalogue and site config
   const sql = async (strings) => {
     queries.push(strings.join(' '));
     return [{
+      categories: [{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }],
       products: [
         { id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [], specifications: { Material: '5052-grade aluminium' } },
         { id: 2, slug: 'navrik-recovery-kit', name: 'Navrik Recovery Kit', category: 'accessory', gallery_urls: ['/uploads/recovery-kit.jpg'], specifications: { Material: 'Nylon' }, price_cents: 199900, checkout_url: 'https://payments.example/checkout', yoco_payment_id: 'payment' },
@@ -21,6 +22,7 @@ test('storefront read model returns only cached public catalogue and site config
 
   assert.equal(response.statusCode, 200);
   assert.deepEqual(JSON.parse(response.body), {
+    categories: [{ id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 }],
     products: [
       { id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [], specifications: { Material: '5052-grade aluminium' } },
       { id: 2, slug: 'navrik-recovery-kit', name: 'Navrik Recovery Kit', category: 'accessory', gallery_urls: ['/uploads/recovery-kit.jpg'], specifications: { Material: 'Nylon' } },
@@ -30,7 +32,8 @@ test('storefront read model returns only cached public catalogue and site config
   assert.doesNotMatch(response.body, /purchaseMode|price_cents|checkout|yoco|compatibility|packages/i);
   assert.equal(queries.length, 1);
   assert.match(queries[0], /catalogue_read_models/);
-  assert.doesNotMatch(queries[0], /accessor|compatibility|packages|categories/);
+  assert.match(queries[0], /section = 'categories'/);
+  assert.doesNotMatch(queries[0], /compatibility|packages/);
   assert.equal(response.headers['Netlify-Cache-Tag'], 'catalogue:storefront');
   assert.match(response.headers['Netlify-CDN-Cache-Control'], /durable/);
 });
