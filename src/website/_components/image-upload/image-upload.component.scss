@@ -31,6 +31,25 @@
     border-style: solid;
     border-color: rgba(255, 255, 255, 0.08);
   }
+
+  &:focus-within {
+    outline: 0.125rem solid var(--nv-focus-ring);
+    outline-offset: 0.1875rem;
+  }
+}
+
+.pick-file {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: inherit;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
 }
 
 .preview-img {

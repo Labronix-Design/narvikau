@@ -25,6 +25,15 @@ describe('ImageUploadComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('JPEG, PNG, WebP');
   });
 
+  it('opens the native picker from a keyboard-focusable button', () => {
+    const input = fixture.nativeElement.querySelector('input[type="file"]') as HTMLInputElement;
+    const pick = fixture.nativeElement.querySelector('button.pick-file') as HTMLButtonElement;
+    const openPicker = spyOn(input, 'click');
+    expect(pick.tabIndex).toBeGreaterThanOrEqual(0);
+    pick.click();
+    expect(openPicker).toHaveBeenCalledTimes(1);
+  });
+
   for (const type of ['image/svg+xml', 'image/gif', 'application/octet-stream']) {
     it(`rejects ${type} without uploading`, async () => {
       await component.handleFile(new File(['invalid'], 'invalid.img', { type }));
