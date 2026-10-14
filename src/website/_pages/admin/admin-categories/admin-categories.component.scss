@@ -13,6 +13,20 @@
   font-size: .75rem;
 }
 
+.adm-table th[scope='row'] {
+  padding: 11px 14px;
+  background: transparent;
+  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.04));
+  color: var(--admin-text, #ddd);
+  font-size: .82rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-align: left;
+  text-transform: none;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .category-actions {
   display: flex;
   flex-wrap: wrap;

@@ -67,4 +67,25 @@ describe('AdminCategoriesComponent', () => {
     await fixture.componentInstance.save();
     expect(service.createCategory).not.toHaveBeenCalled();
   });
+
+  it('identifies each category row and its actions to assistive technology', () => {
+    const row = fixture.nativeElement.querySelector<HTMLTableRowElement>('tbody tr');
+    expect(row?.querySelector('th[scope="row"]')?.textContent).toContain('Canopies');
+    const actions = [...(row?.querySelectorAll<HTMLButtonElement>('.category-actions button') ?? [])];
+    expect(actions.map(button => button.getAttribute('aria-label'))).toEqual([
+      'Edit Canopies', 'Deactivate Canopies', 'Delete Canopies',
+    ]);
+  });
+
+  it('associates the sort-order validation message with its input', () => {
+    fixture.componentInstance.openCreate();
+    fixture.componentInstance.form.controls.sort_order.setValue(100001);
+    fixture.componentInstance.form.controls.sort_order.markAsTouched();
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector<HTMLInputElement>('#category-sort');
+    const error = fixture.nativeElement.querySelector<HTMLElement>('#category-sort-error');
+    expect(input?.getAttribute('aria-invalid')).toBe('true');
+    expect(input?.getAttribute('aria-describedby')).toContain('category-sort-error');
+    expect(error?.textContent).toContain('Enter a whole number');
+  });
 });

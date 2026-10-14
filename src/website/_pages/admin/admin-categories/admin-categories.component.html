@@ -30,8 +30,8 @@
             </div>
             <div class="adm-field">
               <label for="category-sort">Sort Order</label>
-              <input id="category-sort" type="number" formControlName="sort_order" min="-100000" max="100000" step="1" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid">
-              <small class="field-error">@if (form.controls.sort_order.touched && form.controls.sort_order.invalid) { Enter a whole number from -100000 to 100000. }</small>
+              <input id="category-sort" type="number" formControlName="sort_order" min="-100000" max="100000" step="1" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid" aria-describedby="category-sort-error">
+              <small id="category-sort-error" class="field-error" aria-live="polite">@if (form.controls.sort_order.touched && form.controls.sort_order.invalid) { Enter a whole number from -100000 to 100000. }</small>
             </div>
             <div class="adm-field"><label class="toggle-row"><input type="checkbox" formControlName="is_active"><span>Active in catalogue</span></label></div>
           </div>
@@ -60,14 +60,14 @@
           <tbody>
             @for (category of categories(); track category.id) {
               <tr>
-                <td><strong>{{ category.name }}</strong>@if (category.description) { <div class="category-description">{{ category.description }}</div> }</td>
+                <th scope="row">{{ category.name }}@if (category.description) { <div class="category-description">{{ category.description }}</div> }</th>
                 <td class="mono">{{ category.slug }}</td>
                 <td>{{ category.sort_order }}</td>
                 <td>{{ category.is_active ? 'Active' : 'Inactive' }}</td>
                 <td><div class="category-actions">
-                  <button type="button" class="adm-btn ghost small" (click)="openEdit(category)">Edit</button>
-                  <button type="button" class="adm-btn ghost small" [disabled]="saving()" (click)="toggleActive(category)">{{ category.is_active ? 'Deactivate' : 'Activate' }}</button>
-                  <button type="button" class="adm-btn danger small" (click)="remove(category)">Delete</button>
+                  <button type="button" class="adm-btn ghost small" [attr.aria-label]="'Edit ' + category.name" (click)="openEdit(category)">Edit</button>
+                  <button type="button" class="adm-btn ghost small" [attr.aria-label]="(category.is_active ? 'Deactivate ' : 'Activate ') + category.name" [disabled]="saving()" (click)="toggleActive(category)">{{ category.is_active ? 'Deactivate' : 'Activate' }}</button>
+                  <button type="button" class="adm-btn danger small" [attr.aria-label]="'Delete ' + category.name" (click)="remove(category)">Delete</button>
                 </div></td>
               </tr>
             }
