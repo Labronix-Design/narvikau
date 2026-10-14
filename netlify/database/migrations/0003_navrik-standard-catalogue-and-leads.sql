@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS catalog_categories (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT catalog_categories_slug_format_check
-    CHECK (length(slug) <= 80 AND slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+    CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   CONSTRAINT catalog_categories_name_check
     CHECK (length(btrim(name)) BETWEEN 1 AND 160 AND name = btrim(name)),
   CONSTRAINT catalog_categories_description_check
@@ -35,6 +35,19 @@ CREATE TRIGGER trg_catalog_categories_updated_at
 
 INSERT INTO catalog_categories (slug, name, sort_order, is_active)
 VALUES ('canopy', 'Canopies', 0, TRUE)
+ON CONFLICT (slug) DO NOTHING;
+
+-- 0002 permitted any URL-safe product category slug. Give every historical
+-- category a managed row before enforcing the FK, including categories whose
+-- products are currently inactive. A fresh AU database still has only Canopies.
+INSERT INTO catalog_categories (slug, name, sort_order, is_active)
+SELECT DISTINCT
+  p.category,
+  btrim(left(initcap(replace(p.category, '-', ' ')), 160)),
+  0,
+  TRUE
+FROM catalog_products AS p
+WHERE p.category <> 'canopy'
 ON CONFLICT (slug) DO NOTHING;
 
 DO $$

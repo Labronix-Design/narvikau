@@ -74,20 +74,35 @@ test('catalogue rebuild rejects retired or unknown snapshot sections', async () 
 
 test('catalogue rebuild publishes active categories and only products in active categories', async () => {
   const queries = [];
+  const sourceProducts = [adventure, { ...accessory, category: 'retired' }];
+  const sourceCategories = [
+    { ...canopies, is_active: true },
+    { ...retired, is_active: false },
+  ];
   const sql = async (strings) => {
     const query = strings.join(' ');
     queries.push(query);
-    if (query.includes('FROM catalog_categories')) return [canopies];
-    if (query.includes('FROM catalog_products')) return [adventure];
+    if (query.includes('FROM catalog_categories')) return sourceCategories.filter(category => category.is_active);
+    if (query.includes('FROM catalog_products')) {
+      const activeCategoryJoin = /JOIN catalog_categories[\s\S]*?AND catalog_categories\.is_active = TRUE/.test(query);
+      return activeCategoryJoin
+        ? sourceProducts.filter(product => sourceCategories.some(category => category.slug === product.category && category.is_active))
+        : sourceProducts;
+    }
     return [];
   };
 
   const payloads = await rebuildCatalogueReadModels(sql, ['products', 'categories']);
 
   assert.deepEqual(payloads, { products: [adventure], categories: [canopies] });
-  assert.match(queries.find(query => query.includes('FROM catalog_products')), /JOIN catalog_categories/);
-  assert.match(queries.find(query => query.includes('FROM catalog_products')), /is_active = TRUE/g);
+  const productQuery = queries.find(query => query.includes('FROM catalog_products'));
+  assert.match(productQuery, /JOIN catalog_categories/);
+  assert.match(productQuery, /is_active = TRUE/g);
   assert.match(queries.find(query => query.includes('FROM catalog_categories')), /is_active = TRUE/);
+  const withoutCategoryActivePredicate = productQuery.replace('AND catalog_categories.is_active = TRUE', '');
+  assert.deepEqual((await sql([withoutCategoryActivePredicate])).map(product => product.slug), [
+    'navrik-canopy-adventure', 'navrik-recovery-kit',
+  ]);
   assert.deepEqual(await readCatalogueReadModel(async () => [{ payload: [canopies] }], 'categories'), [canopies]);
 });
 
