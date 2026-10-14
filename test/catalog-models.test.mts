@@ -11,6 +11,16 @@ test('accepts safe catalogue categories and discards malformed entries', () => {
   assert.deepEqual(toRenderableCategories(null), []);
 });
 
+test('keeps a historic URL-safe category slug beyond the previous display limit', () => {
+  const slug = `historic-${'a'.repeat(2100)}`;
+  const categories = toRenderableCategories([
+    { id: 12, slug, name: 'Historic', description: null, sort_order: 0 },
+  ]);
+
+  assert.equal(categories.length, 1);
+  assert.equal(categories[0].slug, slug);
+});
+
 test('keeps only renderable string specifications for an accessory product', () => {
   const accessory: CatalogProduct = {
     id: 7,

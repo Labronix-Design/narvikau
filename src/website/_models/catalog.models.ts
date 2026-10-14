@@ -46,7 +46,7 @@ export function toRenderableCategories(value: unknown): CatalogCategory[] {
       const description = ownValue('description');
       const sortOrder = ownValue('sort_order');
       if (typeof id !== 'number' || !Number.isSafeInteger(id) || id <= 0
-        || typeof slug !== 'string' || slug.length > 80 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
+        || typeof slug !== 'string' || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)
         || typeof name !== 'string' || !name.trim() || name.length > 160
         || description !== null && (typeof description !== 'string' || description.length > 2000)
         || typeof sortOrder !== 'number' || !Number.isSafeInteger(sortOrder) || Math.abs(sortOrder) > 100000) return [];

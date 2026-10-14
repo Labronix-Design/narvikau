@@ -5,6 +5,7 @@ import { normaliseCatalogueCategories, readCatalogueReadModel, rebuildCatalogueR
 
 const canopies = { id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 };
 const retired = { id: 2, slug: 'retired', name: 'Retired', description: null, sort_order: 1 };
+const longHistoricCategory = `historic-${'a'.repeat(2100)}`;
 
 const adventure = {
   id: 1,
@@ -74,7 +75,9 @@ test('catalogue rebuild rejects retired or unknown snapshot sections', async () 
 
 test('catalogue rebuild publishes active categories and only products in active categories', async () => {
   const queries = [];
-  const sourceProducts = [adventure, { ...accessory, category: 'retired' }];
+  const inactiveProduct = { ...adventure, id: 3, slug: 'navrik-canopy-archived', is_active: false };
+  const retiredCategoryProduct = { ...accessory, category: 'retired' };
+  const sourceProducts = [adventure, inactiveProduct, retiredCategoryProduct];
   const sourceCategories = [
     { ...canopies, is_active: true },
     { ...retired, is_active: false },
@@ -84,10 +87,11 @@ test('catalogue rebuild publishes active categories and only products in active 
     queries.push(query);
     if (query.includes('FROM catalog_categories')) return sourceCategories.filter(category => category.is_active);
     if (query.includes('FROM catalog_products')) {
-      const activeCategoryJoin = /JOIN catalog_categories[\s\S]*?AND catalog_categories\.is_active = TRUE/.test(query);
-      return activeCategoryJoin
-        ? sourceProducts.filter(product => sourceCategories.some(category => category.slug === product.category && category.is_active))
-        : sourceProducts;
+      const activeProductPredicate = /WHERE catalog_products\.is_active = TRUE/.test(query);
+      const activeCategoryPredicate = /JOIN catalog_categories[\s\S]*?AND catalog_categories\.is_active = TRUE/.test(query);
+      return sourceProducts.filter(product =>
+        (!activeProductPredicate || product.is_active !== false)
+        && (!activeCategoryPredicate || sourceCategories.some(category => category.slug === product.category && category.is_active)));
     }
     return [];
   };
@@ -103,7 +107,24 @@ test('catalogue rebuild publishes active categories and only products in active 
   assert.deepEqual((await sql([withoutCategoryActivePredicate])).map(product => product.slug), [
     'navrik-canopy-adventure', 'navrik-recovery-kit',
   ]);
+  const withoutProductActivePredicate = productQuery.replace('WHERE catalog_products.is_active = TRUE', 'WHERE TRUE');
+  assert.deepEqual((await sql([withoutProductActivePredicate])).map(product => product.slug), [
+    'navrik-canopy-adventure', 'navrik-canopy-archived',
+  ]);
   assert.deepEqual(await readCatalogueReadModel(async () => [{ payload: [canopies] }], 'categories'), [canopies]);
+});
+
+test('cache normalisers preserve long URL-safe category slugs already valid under migration 0002', async () => {
+  const category = { ...canopies, id: 12, slug: longHistoricCategory, name: 'Historic' };
+  const categories = normaliseCatalogueCategories([category]);
+  const products = await readCatalogueReadModel(async () => [{
+    payload: [{ ...accessory, category: longHistoricCategory }],
+  }], 'products');
+
+  assert.equal(categories.length, 1);
+  assert.equal(categories[0].slug, longHistoricCategory);
+  assert.equal(products.length, 1);
+  assert.equal(products[0].category, longHistoricCategory);
 });
 
 test('category payloads reject malformed entries and never expose inactive metadata', () => {
