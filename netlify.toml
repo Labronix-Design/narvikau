@@ -13,6 +13,12 @@
   # Ensures models and certs are bundled into the serverless environment
   included_files = ["netlify/models/**", "netlify/functions/models/**"]
 
+# Apply the tracked Netlify Database migrations as part of each production
+# deployment. This must live in the repository configuration; the generated
+# .netlify configuration is local-only and is not uploaded with a deploy.
+[database.migrations]
+  path = "netlify/database/migrations"
+
 # Customer analytics remains opt-in. This policy permits only the Google tag
 # loader and collection origins needed after consent, while retaining the
 # existing self-hosted app, fonts, JSON-LD, and dynamic theme styles.
