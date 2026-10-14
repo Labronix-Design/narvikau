@@ -11,12 +11,16 @@ test('accepts safe catalogue categories and discards malformed entries', () => {
   assert.deepEqual(toRenderableCategories(null), []);
 });
 
-test('keeps a historic URL-safe category slug beyond the previous display limit', () => {
-  const slug = `historic-${'a'.repeat(2100)}`;
+test('accepts a 120-character category slug and rejects an overlong public slug', () => {
+  const slug = `historic-${'a'.repeat(111)}`;
+  const overlong = `historic-${'a'.repeat(112)}`;
   const categories = toRenderableCategories([
     { id: 12, slug, name: 'Historic', description: null, sort_order: 0 },
+    { id: 13, slug: overlong, name: 'Unmigrated', description: null, sort_order: 1 },
   ]);
 
+  assert.equal(slug.length, 120);
+  assert.equal(overlong.length, 121);
   assert.equal(categories.length, 1);
   assert.equal(categories[0].slug, slug);
 });

@@ -58,8 +58,7 @@ function normaliseProduct(value) {
   const id = Number(value.id);
   const slug = identifier(value.slug, 120);
   const name = text(value.name, { required: true, maximum: 160 });
-  // Migration 0002 allowed URL-safe category slugs without a length cap.
-  const category = identifier(value.category, Number.POSITIVE_INFINITY);
+  const category = identifier(value.category, 120);
   if (!Number.isSafeInteger(id) || id <= 0 || slug === null || name === null || category === null) return null;
 
   const product = { id, slug, name, category };
@@ -94,7 +93,7 @@ export function normaliseCatalogueProducts(payload) {
 function normaliseCategory(value) {
   if (!plainObject(value) || Object.hasOwn(value, 'is_active') && value.is_active !== true) return null;
   const id = value.id;
-  const slug = identifier(value.slug, Number.POSITIVE_INFINITY);
+  const slug = identifier(value.slug, 120);
   const name = text(value.name, { required: true, maximum: 160 });
   const sortOrder = value.sort_order;
   const description = value.description === null

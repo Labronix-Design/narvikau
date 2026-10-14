@@ -5,7 +5,8 @@ import { normaliseCatalogueCategories, readCatalogueReadModel, rebuildCatalogueR
 
 const canopies = { id: 1, slug: 'canopy', name: 'Canopies', description: null, sort_order: 0 };
 const retired = { id: 2, slug: 'retired', name: 'Retired', description: null, sort_order: 1 };
-const longHistoricCategory = `historic-${'a'.repeat(2100)}`;
+const boundedCategory = `historic-${'a'.repeat(111)}`;
+const overlongCategory = `historic-${'a'.repeat(112)}`;
 
 const adventure = {
   id: 1,
@@ -114,17 +115,24 @@ test('catalogue rebuild publishes active categories and only products in active 
   assert.deepEqual(await readCatalogueReadModel(async () => [{ payload: [canopies] }], 'categories'), [canopies]);
 });
 
-test('cache normalisers preserve long URL-safe category slugs already valid under migration 0002', async () => {
-  const category = { ...canopies, id: 12, slug: longHistoricCategory, name: 'Historic' };
-  const categories = normaliseCatalogueCategories([category]);
+test('cache normalisers accept 120-character category slugs and reject longer public values', async () => {
+  const categories = normaliseCatalogueCategories([
+    { ...canopies, id: 12, slug: boundedCategory, name: 'Historic' },
+    { ...canopies, id: 13, slug: overlongCategory, name: 'Unmigrated' },
+  ]);
   const products = await readCatalogueReadModel(async () => [{
-    payload: [{ ...accessory, category: longHistoricCategory }],
+    payload: [
+      { ...accessory, category: boundedCategory },
+      { ...accessory, id: 10, category: overlongCategory },
+    ],
   }], 'products');
 
+  assert.equal(boundedCategory.length, 120);
+  assert.equal(overlongCategory.length, 121);
   assert.equal(categories.length, 1);
-  assert.equal(categories[0].slug, longHistoricCategory);
+  assert.equal(categories[0].slug, boundedCategory);
   assert.equal(products.length, 1);
-  assert.equal(products[0].category, longHistoricCategory);
+  assert.equal(products[0].category, boundedCategory);
 });
 
 test('category payloads reject malformed entries and never expose inactive metadata', () => {

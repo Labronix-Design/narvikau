@@ -3,6 +3,8 @@
 -- check after deleting its categories row, drop the new lead columns and
 -- category table. Preserve canopy_quote in the source check while old rows
 -- exist; a rollback must not discard historical leads.
+-- Canonical category slugs remain valid under 0002 on rollback; remove the
+-- product category length check when rolling back the category schema.
 
 BEGIN;
 
@@ -16,7 +18,7 @@ CREATE TABLE IF NOT EXISTS catalog_categories (
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT catalog_categories_slug_format_check
-    CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+    CHECK (length(slug) BETWEEN 1 AND 120 AND slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
   CONSTRAINT catalog_categories_name_check
     CHECK (length(btrim(name)) BETWEEN 1 AND 160 AND name = btrim(name)),
   CONSTRAINT catalog_categories_description_check
@@ -32,6 +34,55 @@ DROP TRIGGER IF EXISTS trg_catalog_categories_updated_at ON catalog_categories;
 CREATE TRIGGER trg_catalog_categories_updated_at
   BEFORE UPDATE ON catalog_categories
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- 0002 allowed unbounded category slugs. Canonicalise before seeding/backfill
+-- and before adding the FK, preserving every product and its shared category
+-- association, including inactive products. The 55-character prefix plus a
+-- separator and full SHA-256 suffix fits within 120 URL-safe characters.
+-- Stable ordering and salted retries also preserve distinct categories when a
+-- candidate already belongs to a short historical slug or earlier remap.
+-- This one-off migration scans historical products; lock writes until its
+-- transaction has rebuilt both snapshots so concurrent inserts cannot race it.
+LOCK TABLE catalog_products IN SHARE ROW EXCLUSIVE MODE;
+LOCK TABLE catalog_categories IN SHARE ROW EXCLUSIVE MODE;
+
+DO $$
+DECLARE
+  original_slug TEXT;
+  canonical_slug TEXT;
+  attempt BIGINT;
+BEGIN
+  FOR original_slug IN
+    SELECT category FROM (
+      SELECT DISTINCT category FROM catalog_products
+      WHERE length(category) > 120
+    ) AS historical
+    ORDER BY category COLLATE "C"
+  LOOP
+    attempt := 0;
+    LOOP
+      canonical_slug := rtrim(left(original_slug, 55), '-') || '-' ||
+        encode(sha256(convert_to(original_slug || ':' || attempt::text, 'UTF8')), 'hex');
+      EXIT WHEN NOT EXISTS (
+        SELECT 1 FROM catalog_products WHERE category = canonical_slug
+        UNION ALL
+        SELECT 1 FROM catalog_categories WHERE slug = canonical_slug
+      );
+      attempt := attempt + 1;
+    END LOOP;
+
+    UPDATE catalog_products
+    SET category = canonical_slug
+    WHERE category = original_slug;
+  END LOOP;
+END;
+$$;
+
+ALTER TABLE catalog_products
+  DROP CONSTRAINT IF EXISTS catalog_products_category_length_check;
+ALTER TABLE catalog_products
+  ADD CONSTRAINT catalog_products_category_length_check
+  CHECK (length(category) BETWEEN 1 AND 120);
 
 INSERT INTO catalog_categories (slug, name, sort_order, is_active)
 VALUES ('canopy', 'Canopies', 0, TRUE)
