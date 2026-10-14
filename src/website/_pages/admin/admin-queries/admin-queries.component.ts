@@ -21,6 +21,7 @@ export class AdminQueriesComponent implements OnInit {
   private modal = inject(ModalService);
   private readonly fb = inject(FormBuilder).nonNullable;
   private loadSequence = 0;
+  private readonly dirtyNoteIds = new Set<number>();
   readonly activeType = signal('');
   readonly showManualForm = signal(false);
   readonly savingManual = signal(false);
@@ -91,8 +92,12 @@ export class AdminQueriesComponent implements OnInit {
       if (sequence !== this.loadSequence) return;
       this.rows.set(data.rows);
       this.totals.set(data.totals);
+      const currentNotes = this.notesMap();
       const nm: Partial<Record<number, string>> = {};
-      data.rows.forEach((r) => { nm[r.id] = r.admin_notes || ''; });
+      this.dirtyNoteIds.forEach(id => { nm[id] = currentNotes[id] ?? ''; });
+      data.rows.forEach(r => {
+        if (!this.dirtyNoteIds.has(r.id)) nm[r.id] = r.admin_notes ?? '';
+      });
       this.notesMap.set(nm);
     } catch (e: any) {
       if (sequence === this.loadSequence) this.error.set(e.message || 'Failed to load queries');
@@ -166,6 +171,9 @@ export class AdminQueriesComponent implements OnInit {
   }
 
   setNote(id: number, value: string): void {
+    const serverNote = this.rows().find(row => row.id === id)?.admin_notes ?? '';
+    if (value === serverNote) this.dirtyNoteIds.delete(id);
+    else this.dirtyNoteIds.add(id);
     this.notesMap.update(m => ({ ...m, [id]: value }));
   }
 
@@ -174,6 +182,8 @@ export class AdminQueriesComponent implements OnInit {
     try {
       await this.adminService.updateQuery(row.id, { admin_notes });
       this.rows.update(rs => rs.map(r => r.id === row.id ? { ...r, admin_notes } : r));
+      if ((this.notesMap()[row.id] ?? '') === admin_notes) this.dirtyNoteIds.delete(row.id);
+      else this.dirtyNoteIds.add(row.id);
     } catch (e: any) {
       await this.modal.alert({ title: 'Save Failed', message: e.message, variant: 'danger' });
     }
