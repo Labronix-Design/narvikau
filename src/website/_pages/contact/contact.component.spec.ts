@@ -31,16 +31,19 @@ describe('ContactPage', () => {
   });
 
   it('records a Meta Lead only after a successful contact response', async () => {
-    component.form.setValue({ Name: 'Alex', Surname: '', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
-    spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 200 }));
+    component.form.setValue({ Name: 'Alex', Surname: '', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.', Location: { state: 'Victoria', suburb: 'Richmond' }, DiscoverySource: 'Google Search', DiscoverySourceDetail: '' });
+    const request = spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 200 }));
 
     await component.onSubmit();
 
     expect(analytics.trackMetaLead).toHaveBeenCalledTimes(1);
+    const [url, init] = request.calls.mostRecent().args;
+    expect(url).toBe('/api/contact-email');
+    expect(JSON.parse(init?.body as string)).toEqual(jasmine.objectContaining({ LocationState: 'Victoria', LocationSuburb: 'Richmond', DiscoverySource: 'Google Search', DiscoverySourceDetail: '' }));
   });
 
   it('does not record a Meta Lead when the contact response fails', async () => {
-    component.form.setValue({ Name: 'Alex', Surname: '', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
+    component.form.setValue({ Name: 'Alex', Surname: '', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.', Location: { state: 'Victoria', suburb: 'Richmond' }, DiscoverySource: 'Google Search', DiscoverySourceDetail: '' });
     spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 500 }));
 
     await component.onSubmit();

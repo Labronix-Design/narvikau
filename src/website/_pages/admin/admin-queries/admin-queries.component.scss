@@ -1,5 +1,20 @@
 @use '../admin-shared' as adm;
 
+.manual-form { display: grid; gap: 1rem; padding: 1.5rem; margin-block: 1.5rem; border: 1px solid var(--nv-border-strong); }
+.manual-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.manual-field { display: grid; gap: .4rem; min-width: 0; }
+.manual-field input, .manual-field select, .manual-field textarea {
+  width: 100%; box-sizing: border-box; min-height: 44px; padding: .65rem; font: inherit;
+  background: var(--nv-bg-dark); color: var(--nv-text-main); border: 1px solid var(--nv-border-strong); color-scheme: dark;
+}
+.manual-field :is(input, select, textarea):focus-visible { outline: 2px solid var(--nv-orange); outline-offset: 2px; }
+.field-error { color: #f87171; margin: 0; font-size: .85rem; }
+.field-error:empty { display: none; }
+.query-filters { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-block: 1.5rem; }
+.enquiry-details { display: grid; grid-template-columns: auto 1fr; gap: .6rem 1rem; margin: 0; }
+.enquiry-details dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .manual-grid { grid-template-columns: minmax(0, 1fr); } .manual-form { padding: 1rem; } }
+
 // ── STATUS TABS ───────────────────────────────────────────────
 .status-tabs {
   display: flex;

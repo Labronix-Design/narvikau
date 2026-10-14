@@ -28,23 +28,27 @@ describe('QuoteModalComponent', () => {
     fixture.detectChanges();
   });
 
-  it('submits the exact selected canopy as a canopy quote request', async () => {
+  it('submits the exact selected canopy as a product quote request', async () => {
     component.preSelectedProduct = 'Navrik Canopy — Adventure';
-    component.quoteForm.setValue({ Name: 'Alex', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
+    component.quoteForm.setValue({ Name: 'Alex', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.', Location: { state: 'Victoria', suburb: 'Richmond' }, DiscoverySource: 'Google Search', DiscoverySourceDetail: '' });
     const fetchSpy = spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 200 }));
 
     await component.onSubmit();
 
     const [, init] = fetchSpy.calls.mostRecent().args;
     const payload = JSON.parse(init?.body as string);
-    expect(payload.Type).toBe('Canopy Quote Request');
+    expect(payload.Type).toBe('Product Quote Request');
     expect(payload.Product).toBe('Navrik Canopy — Adventure');
     expect(payload.Message).toBe('Please confirm fitment.');
+    expect(payload.LocationState).toBe('Victoria');
+    expect(payload.LocationSuburb).toBe('Richmond');
+    expect(payload.DiscoverySource).toBe('Google Search');
+    expect(payload.Location).toBeUndefined();
     expect(analytics.trackMetaLead).toHaveBeenCalledTimes(1);
   });
 
   it('does not record a Meta Lead when the quote request fails', async () => {
-    component.quoteForm.setValue({ Name: 'Alex', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
+    component.quoteForm.setValue({ Name: 'Alex', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.', Location: { state: 'Victoria', suburb: 'Richmond' }, DiscoverySource: 'Google Search', DiscoverySourceDetail: '' });
     spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 500 }));
 
     await component.onSubmit();

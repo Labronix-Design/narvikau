@@ -14,7 +14,7 @@
 
       @if (flags.emailsEnabled) {
         <div class="qm-body">
-          <p class="qm-subtitle">Tell us about your vehicle and intended use, and our team will recommend the right canopy.</p>
+          <p class="qm-subtitle">Tell us about your vehicle and intended use, and our team will help with the right product.</p>
 
           @if (selectedProduct()) {
             <div class="qm-field-group">
@@ -56,13 +56,33 @@
             <div class="qm-field">
               <label class="qm-label" for="q-msg">What do you need? *</label>
               <textarea id="q-msg" formControlName="Message" rows="4"
-                        placeholder="Tell us your vehicle make, model, year and how you plan to use the canopy..."
+                        placeholder="Tell us your vehicle make, model, year and the product you need..."
                         [class.has-error]="submitted && quoteForm.get('Message')?.invalid"></textarea>
               @if (submitted && quoteForm.get('Message')?.invalid) {
                 <span class="qm-error">Please describe what you need</span>
               }
             </div>
 
+              <website-enquiry-location formControlName="Location" [submitted]="submitted"></website-enquiry-location>
+              <div class="enquiry-referral field-group qm-field">
+                <label class="field-label qm-label" for="q-source">How did you find us? *</label>
+                <select class="field-input" id="q-source" formControlName="DiscoverySource" required
+                  [attr.aria-invalid]="submitted && quoteForm.controls.DiscoverySource.invalid" aria-describedby="q-source-error">
+                  <option value="">Select a source</option>
+                  @for (source of sourceOptions; track source) { <option [value]="source">{{ source }}</option> }
+                </select>
+                <p class="field-error qm-error" id="q-source-error" aria-live="polite">
+                  @if (submitted && quoteForm.controls.DiscoverySource.invalid) { Select how you found us. }
+                </p>
+                @if (sourceRequiresDetail(quoteForm.controls.DiscoverySource.value)) {
+                  <label class="field-label qm-label" for="q-source-detail">Please tell us more *</label>
+                  <input class="field-input" id="q-source-detail" formControlName="DiscoverySourceDetail" maxlength="120" required
+                    [attr.aria-invalid]="submitted && (quoteForm.hasError('discoverySourceDetailRequired') || quoteForm.hasError('discoverySourceDetailInvalid'))" aria-describedby="q-detail-error">
+                  <p class="field-error qm-error" id="q-detail-error" aria-live="polite">
+                    @if (submitted && (quoteForm.hasError('discoverySourceDetailRequired') || quoteForm.hasError('discoverySourceDetailInvalid'))) { Enter referral details (up to 120 characters). }
+                  </p>
+                }
+              </div>
             <website-button type="submit" class="full-width" [disabled]="isLoading">
               <mat-icon svgIcon="send"></mat-icon>
               {{ isLoading ? 'Sending...' : 'Send Quote Request' }}

@@ -118,7 +118,7 @@
                 <div class="field-group" [class.has-error]="fieldInvalid('Phone')">
                   <label class="field-label" for="c-phone">Contact Number <span class="required">*</span></label>
                   <input id="c-phone" type="tel" formControlName="Phone"
-                         placeholder="+27 82 000 0000"
+                         placeholder="0412 345 678"
                          autocomplete="tel"
                          class="field-input" />
                   @if (fieldInvalid('Phone')) {
@@ -154,6 +154,26 @@
                 </div>
               </div>
 
+              <website-enquiry-location formControlName="Location" [submitted]="submitted"></website-enquiry-location>
+              <div class="enquiry-referral field-group qm-field">
+                <label class="field-label qm-label" for="c-source">How did you find us? *</label>
+                <select class="field-input" id="c-source" formControlName="DiscoverySource" required
+                  [attr.aria-invalid]="submitted && form.controls.DiscoverySource.invalid" aria-describedby="c-source-error">
+                  <option value="">Select a source</option>
+                  @for (source of sourceOptions; track source) { <option [value]="source">{{ source }}</option> }
+                </select>
+                <p class="field-error qm-error" id="c-source-error" aria-live="polite">
+                  @if (submitted && form.controls.DiscoverySource.invalid) { Select how you found us. }
+                </p>
+                @if (sourceRequiresDetail(form.controls.DiscoverySource.value)) {
+                  <label class="field-label qm-label" for="c-source-detail">Please tell us more *</label>
+                  <input class="field-input" id="c-source-detail" formControlName="DiscoverySourceDetail" maxlength="120" required
+                    [attr.aria-invalid]="submitted && (form.hasError('discoverySourceDetailRequired') || form.hasError('discoverySourceDetailInvalid'))" aria-describedby="c-detail-error">
+                  <p class="field-error qm-error" id="c-detail-error" aria-live="polite">
+                    @if (submitted && (form.hasError('discoverySourceDetailRequired') || form.hasError('discoverySourceDetailInvalid'))) { Enter referral details (up to 120 characters). }
+                  </p>
+                }
+              </div>
               <div class="form-footer">
                 <button type="submit" class="submit-btn" [class.is-loading]="isLoading" [disabled]="isLoading">
                   @if (isLoading) {

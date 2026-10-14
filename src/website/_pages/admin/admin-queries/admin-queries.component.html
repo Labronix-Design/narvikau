@@ -1,8 +1,67 @@
 <div class="adm-page">
   <div class="adm-header">
-    <h1 class="adm-title">Contact Queries</h1>
-    <p class="adm-sub">All contact form submissions. Update status and add internal notes.</p>
+    <h1 class="adm-title">Enquiries</h1>
+    <p class="adm-sub">Manage website and manual enquiries, update status and add internal notes.</p>
   </div>
+
+
+  <button type="button" class="adm-btn primary" (click)="openManualCreate()" [disabled]="savingManual()">Add manual enquiry</button>
+  @if (notice()) { <p role="status">{{ notice() }}</p> }
+  @if (showManualForm()) {
+    <form class="manual-form" [formGroup]="manualForm" (ngSubmit)="saveManual()" novalidate aria-labelledby="manual-heading">
+      <h2 id="manual-heading">New manual enquiry</h2>
+      <div class="manual-grid">
+        <div class="manual-field">
+          <label for="manual-name">Full name *</label>
+          <input id="manual-name" formControlName="name" maxlength="160" autocomplete="name" aria-describedby="manual-name-error">
+          <p id="manual-name-error" class="field-error">@if (manualSubmitted() && manualForm.controls.name.invalid) { Enter a full name (up to 160 characters). }</p>
+        </div>
+        <div class="manual-field">
+          <label for="manual-email">Email *</label>
+          <input id="manual-email" type="email" formControlName="email" maxlength="254" autocomplete="email" aria-describedby="manual-email-error">
+          <p id="manual-email-error" class="field-error">@if (manualSubmitted() && manualForm.controls.email.invalid) { Enter a valid email address. }</p>
+        </div>
+        <div class="manual-field">
+          <label for="manual-phone">Phone</label><input id="manual-phone" type="tel" formControlName="phone" maxlength="50" autocomplete="tel">
+        </div>
+        <div class="manual-field">
+          <label for="manual-type">Enquiry type *</label>
+          <select id="manual-type" formControlName="enquiry_type">@for (type of typeOptions; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select>
+        </div>
+        <div class="manual-field">
+          <label for="manual-company">Business name {{ ['dealer_enquiry', 'fitment_enquiry'].includes(manualForm.controls.enquiry_type.value) ? '*' : '(optional)' }}</label>
+          <input id="manual-company" formControlName="company" maxlength="160" autocomplete="organization" aria-describedby="manual-company-error">
+          <p id="manual-company-error" class="field-error">@if (manualSubmitted() && manualForm.hasError('companyRequired')) { Enter the partner's business name. }</p>
+        </div>
+        <div class="manual-field">
+          <label for="manual-product">Product {{ manualForm.controls.enquiry_type.value === 'product_quote' ? '*' : '(optional)' }}</label>
+          <input id="manual-product" formControlName="product" maxlength="160" aria-describedby="manual-product-error">
+          <p id="manual-product-error" class="field-error">@if (manualSubmitted() && manualForm.hasError('productRequired')) { Enter the product for this quote. }</p>
+        </div>
+      </div>
+      <website-enquiry-location formControlName="Location" [submitted]="manualSubmitted()"></website-enquiry-location>
+      <div class="manual-grid">
+        <div class="manual-field">
+          <label for="manual-source">How did they find us? *</label>
+          <select id="manual-source" formControlName="DiscoverySource" aria-describedby="manual-source-error"><option value="">Select a source</option>@for (source of sourceOptions; track source) { <option [value]="source">{{ source }}</option> }</select>
+          <p id="manual-source-error" class="field-error">@if (manualSubmitted() && manualForm.controls.DiscoverySource.invalid) { Select a referral source. }</p>
+        </div>
+        @if (sourceRequiresDetail(manualForm.controls.DiscoverySource.value)) {
+          <div class="manual-field">
+            <label for="manual-detail">Referral details *</label><input id="manual-detail" formControlName="DiscoverySourceDetail" maxlength="120" aria-describedby="manual-detail-error">
+            <p id="manual-detail-error" class="field-error">@if (manualSubmitted() && (manualForm.hasError('discoverySourceDetailRequired') || manualForm.hasError('discoverySourceDetailInvalid'))) { Enter referral details (up to 120 characters). }</p>
+          </div>
+        }
+        <div class="manual-field"><label for="manual-status">Status *</label><select id="manual-status" formControlName="status">@for (status of statusOptions; track status) { <option [value]="status">{{ statusLabels[status] }}</option> }</select></div>
+      </div>
+      <div class="manual-field"><label for="manual-message">Message (optional, up to 4,000 characters)</label><textarea id="manual-message" formControlName="message" rows="3" maxlength="4000"></textarea></div>
+      <div class="manual-field"><label for="manual-notes">Internal notes (optional, up to 4,000 characters)</label><textarea id="manual-notes" formControlName="admin_notes" rows="3" maxlength="4000"></textarea></div>
+      @if (manualSubmitted() && manualForm.invalid) { <p role="alert" class="field-error">Complete the required fields above before saving.</p> }
+      @if (manualError()) { <p role="alert" class="field-error">{{ manualError() }}</p> }
+      <div class="expand-quick-actions"><button type="submit" class="adm-btn primary" [disabled]="savingManual()">{{ savingManual() ? 'Saving…' : 'Save enquiry' }}</button><button type="button" class="adm-btn ghost" [disabled]="savingManual()" (click)="showManualForm.set(false)">Cancel</button></div>
+    </form>
+  }
+  <div class="query-filters"><label for="enquiry-type-filter">Enquiry type</label><select id="enquiry-type-filter" class="status-select" [value]="activeType()" (change)="setType($event)"><option value="">All types (including legacy enquiries)</option>@for (type of typeOptions; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select><p class="adm-sub">Status counts include all enquiry types.</p></div>
 
   @if (loading()) {
     <div class="adm-loading">
@@ -16,7 +75,7 @@
     <!-- ── STATUS TABS ── -->
     <div class="status-tabs">
       @for (tab of tabs; track tab.value) {
-        <button class="status-tab" [class.active]="activeTab() === tab.value"
+        <button class="status-tab" [class.active]="activeTab() === tab.value" [attr.aria-pressed]="activeTab() === tab.value"
                 (click)="setTab(tab.value)">
           {{ tab.label }}
           @if (tabCount(tab.value) > 0) {
@@ -39,11 +98,10 @@
             <tr>
               <th>Date</th>
               <th>Name</th>
-              <th>Contact</th>
-              <th>Company</th>
-              <th>Message</th>
+              <th>Type</th>
+              <th>Product</th>
+              <th>Location</th>
               <th>Status</th>
-              <th>Notes</th>
               <th></th>
             </tr>
           </thead>
@@ -60,31 +118,19 @@
                     }
                   </div>
                 </td>
+                <td>{{ typeLabel(row.enquiry_type) }}</td>
+                <td>{{ row.product || '—' }}</td>
+                <td>{{ row.location_suburb || '—' }}@if (row.location_state) {, {{ row.location_state }}}</td>
                 <td>
-                  <div class="contact-cell">
-                    <a [href]="'mailto:' + row.email" class="lead-email">{{ row.email }}</a>
-                    @if (row.phone) {
-                      <a [href]="'tel:' + row.phone" class="lead-phone">{{ row.phone }}</a>
-                    }
-                  </div>
-                </td>
-                <td class="company-cell">{{ row.company || '—' }}</td>
-                <td class="message-preview" (click)="toggleExpand(row.id)">
-                  <span>{{ (row.message || '') | slice:0:80 }}{{ (row.message || '').length > 80 ? '…' : '' }}</span>
-                </td>
-                <td>
-                  <select class="status-select"
+                  <select class="status-select" [attr.aria-label]="'Status for ' + row.name"
                           (change)="updateStatus(row, $any($event.target).value)">
                     @for (s of statusOptions; track s) {
                       <option [value]="s" [selected]="s === row.status">{{ statusLabels[s] }}</option>
                     }
                   </select>
                 </td>
-                <td class="notes-preview">
-                  <span>{{ row.admin_notes ? (row.admin_notes | slice:0:40) + (row.admin_notes.length > 40 ? '…' : '') : '—' }}</span>
-                </td>
                 <td>
-                  <button class="adm-btn ghost small" (click)="toggleExpand(row.id)">
+                  <button class="adm-btn ghost small" [attr.aria-label]="'Details for ' + row.name" [attr.aria-expanded]="expandedId() === row.id" (click)="toggleExpand(row.id)">
                     <mat-icon [svgIcon]="expandedId() === row.id ? 'expand_less' : 'expand_more'"></mat-icon>
                   </button>
                 </td>
@@ -92,8 +138,16 @@
 
               @if (expandedId() === row.id) {
                 <tr class="expand-row">
-                  <td colspan="8">
+                  <td colspan="7">
                     <div class="expand-body">
+                      <dl class="enquiry-details">
+                        <dt>Email</dt><dd><a [href]="'mailto:' + row.email">{{ row.email }}</a></dd>
+                        <dt>Phone</dt><dd>{{ row.phone || '—' }}</dd>
+                        <dt>Business</dt><dd>{{ row.company || '—' }}</dd>
+                        <dt>Referral source</dt><dd>{{ row.discovery_source || 'Not recorded' }}</dd>
+                        @if (row.discovery_source_detail) { <dt>Referral details</dt><dd>{{ row.discovery_source_detail }}</dd> }
+                        <dt>Captured via</dt><dd>{{ row.source }}</dd>
+                      </dl>
 
                       @if (row.message) {
                         <div class="expand-section">
@@ -103,8 +157,8 @@
                       }
 
                       <div class="expand-section">
-                        <div class="expand-label">Internal Notes</div>
-                        <textarea class="notes-input"
+                        <label class="expand-label" [for]="'notes-' + row.id">Internal Notes</label>
+                        <textarea class="notes-input" [id]="'notes-' + row.id" maxlength="4000"
                                   rows="3"
                                   [value]="notesMap()[row.id] ?? ''"
                                   (input)="setNote(row.id, $any($event.target).value)">

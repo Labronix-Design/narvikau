@@ -1,0 +1,33 @@
+<div class="location-field" role="group" [attr.aria-labelledby]="id + '-heading'">
+  <p class="heading" [id]="id + '-heading'">Service area <span class="required">*</span></p>
+  <p class="hint" [id]="id + '-hint'">Tell us where you need service in Australia.</p>
+
+  <div class="location-grid">
+    <div class="field">
+      <label [for]="id + '-state'">State / territory <span class="required">*</span></label>
+      <select [id]="id + '-state'" autocomplete="address-level1" required [value]="state()"
+        [disabled]="disabled()" [attr.aria-invalid]="showErrors() && stateInvalid()"
+        [attr.aria-describedby]="id + '-state-error'" (change)="updateState($event)" (blur)="markTouched()">
+        <option value="">Select a state or territory</option>
+        @for (stateName of states; track stateName) {
+          <option [value]="stateName">{{ stateName }}</option>
+        }
+      </select>
+      <p class="error" [id]="id + '-state-error'" aria-live="polite">
+        @if (showErrors() && stateInvalid()) { Select a state or territory. }
+      </p>
+    </div>
+
+    <div class="field">
+      <label [for]="id + '-suburb'">Suburb / locality <span class="required">*</span></label>
+      <input [id]="id + '-suburb'" type="text" autocomplete="address-level3" maxlength="160" required
+        placeholder="e.g. Richmond" [value]="suburb()" [disabled]="disabled()"
+        [attr.aria-invalid]="showErrors() && suburbInvalid()"
+        [attr.aria-describedby]="id + '-suburb-error'" (input)="updateSuburb($event)" (blur)="markTouched()">
+      <p class="error" [id]="id + '-suburb-error'" aria-live="polite">
+        @if (showErrors() && suburbInvalid()) { Enter your suburb or locality. }
+      </p>
+    </div>
+
+  </div>
+</div>

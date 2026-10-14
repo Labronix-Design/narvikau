@@ -1,4 +1,8 @@
+import { EnquiryLocationComponent } from '../../_components/enquiry-location/enquiry-location.component';
+import { enquiryControls, enquiryPayload } from '../../_models/enquiry-location.models';
+import { ENQUIRY_SOURCE_OPTIONS, sourceRequiresDetail, sourceDetailRequiredValidator } from '../../_models/enquiry-source.models';
 import { ChangeDetectionStrategy, Component, EventEmitter, HostListener, Input, OnDestroy, Output, inject, signal } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,7 +18,7 @@ import { AnalyticsService } from '../../_services/analytics.service';
   templateUrl: './quote-modal.component.html',
   styleUrls: ['./quote-modal.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule, ButtonComponent, CdkTrapFocus],
+  imports: [CommonModule, EnquiryLocationComponent, ReactiveFormsModule, MatIconModule, ButtonComponent, CdkTrapFocus],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuoteModalComponent implements OnDestroy {
@@ -54,7 +58,11 @@ export class QuoteModalComponent implements OnDestroy {
     Phone: ['', Validators.required],
     Email: ['', [Validators.required, Validators.email]],
     Message: ['', Validators.required],
-  });
+    ...enquiryControls(),
+  }, { validators: sourceDetailRequiredValidator });
+  readonly sourceOptions = ENQUIRY_SOURCE_OPTIONS;
+  readonly sourceRequiresDetail = sourceRequiresDetail;
+  private readonly changeDetector = inject(ChangeDetectorRef);
   submitted = false;
   isLoading = false;
 
@@ -82,6 +90,7 @@ export class QuoteModalComponent implements OnDestroy {
   }
 
   async onSubmit(): Promise<void> {
+    if (this.isLoading) return;
     this.submitted = true;
     if (this.quoteForm.invalid) return;
     this.isLoading = true;
@@ -90,9 +99,9 @@ export class QuoteModalComponent implements OnDestroy {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...this.quoteForm.getRawValue(),
-          Type: 'Canopy Quote Request',
-          Product: this.selectedProduct() || 'Canopy enquiry',
+          ...enquiryPayload(this.quoteForm.getRawValue()),
+          Type: 'Product Quote Request',
+          Product: this.selectedProduct() || 'Product enquiry',
         })
       });
       if (response.ok) {
@@ -109,6 +118,8 @@ export class QuoteModalComponent implements OnDestroy {
     } catch {
       this.isLoading = false;
       this.toast.showToast({ message: `Send failed — email us at ${this.siteSettings.settings().contact.email}`, type: 'error' });
+    } finally {
+      this.changeDetector.markForCheck();
     }
   }
 

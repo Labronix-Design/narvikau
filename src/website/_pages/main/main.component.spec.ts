@@ -86,23 +86,42 @@ describe('MainPage canopy quote funnel', () => {
     expect(fixture.componentInstance.quoteModalProduct).toBe('');
   });
 
-  it('records a Meta Lead only after its homepage contact form succeeds', async () => {
+  it('submits the partner contract and records a Meta Lead only after success', async () => {
     const component = fixture.componentInstance;
-    component.SubmitForm.setValue({ Name: 'Alex', Surname: 'Dealer', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
-    spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 200 }));
+    component.SubmitForm.setValue({ Name: 'Alex', BusinessName: 'Alex Motors', EnquiryType: 'dealer_enquiry', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.', Location: { state: 'Victoria', suburb: 'Richmond' }, DiscoverySource: 'Google Search', DiscoverySourceDetail: '' });
+    const request = spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 200 }));
 
     await component.onSubmit();
 
     expect(analytics.trackMetaLead).toHaveBeenCalledTimes(1);
+    const [url, init] = request.calls.mostRecent().args;
+    expect(url).toBe('/api/partner-email');
+    const payload = JSON.parse(init?.body as string);
+    expect(payload).toEqual(jasmine.objectContaining({ BusinessName: 'Alex Motors', EnquiryType: 'dealer_enquiry', LocationState: 'Victoria', LocationSuburb: 'Richmond', DiscoverySource: 'Google Search' }));
+    expect(payload.Surname).toBeUndefined();
+    expect(payload.Location).toBeUndefined();
   });
 
   it('does not record a Meta Lead when its homepage contact form fails', async () => {
     const component = fixture.componentInstance;
-    component.SubmitForm.setValue({ Name: 'Alex', Surname: 'Dealer', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.' });
+    component.SubmitForm.setValue({ Name: 'Alex', BusinessName: 'Alex Motors', EnquiryType: 'dealer_enquiry', Phone: '0412345678', Email: 'alex@example.test', Message: 'Please confirm fitment.', Location: { state: 'Victoria', suburb: 'Richmond' }, DiscoverySource: 'Google Search', DiscoverySourceDetail: '' });
     spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 500 }));
 
     await component.onSubmit();
 
+    expect(analytics.trackMetaLead).not.toHaveBeenCalled();
+    expect(component.SubmitForm.controls.BusinessName.value).toBe('Alex Motors');
+  });
+
+  it('does not submit an incomplete partner business or type', async () => {
+    const component = fixture.componentInstance;
+    const request = spyOn(window, 'fetch');
+    component.SubmitForm.patchValue({ Name: 'Alex', Phone: '0412345678', Email: 'alex@example.test', Message: 'Partner application', Location: { state: 'Victoria', suburb: 'Richmond' }, DiscoverySource: 'Google Search' });
+    await component.onSubmit();
+    expect(request).not.toHaveBeenCalled();
+    component.SubmitForm.patchValue({ BusinessName: 'Alex Motors' });
+    await component.onSubmit();
+    expect(request).not.toHaveBeenCalled();
     expect(analytics.trackMetaLead).not.toHaveBeenCalled();
   });
 });

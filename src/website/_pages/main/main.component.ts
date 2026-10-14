@@ -1,4 +1,8 @@
+import { EnquiryLocationComponent } from '../../_components/enquiry-location/enquiry-location.component';
+import { enquiryControls, enquiryPayload } from '../../_models/enquiry-location.models';
+import { ENQUIRY_SOURCE_OPTIONS, sourceRequiresDetail, sourceDetailRequiredValidator } from '../../_models/enquiry-source.models';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DOCUMENT, HostListener, OnInit, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
@@ -42,7 +46,7 @@ interface HomeCatalogueCategory {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule, ReactiveFormsModule, MatIconModule, RouterModule,
+    CommonModule, EnquiryLocationComponent, ReactiveFormsModule, MatIconModule, RouterModule,
     TextInputComponent, ButtonComponent, QuoteModalComponent, ImageLoaderComponent
   ],
 })
@@ -54,15 +58,20 @@ export class MainPage implements OnInit, AfterViewInit {
   private readonly document = inject(DOCUMENT);
   private readonly platformId = inject(PLATFORM_ID);
 
+  readonly sourceOptions = ENQUIRY_SOURCE_OPTIONS;
+  readonly sourceRequiresDetail = sourceRequiresDetail;
+  private readonly changeDetector = inject(ChangeDetectorRef);
   submitted = false;
   isLoading = false;
   readonly SubmitForm = this.fb.nonNullable.group({
     Name: ['', Validators.required],
-    Surname: ['', Validators.required],
+    BusinessName: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(160)]],
+    EnquiryType: ['', [Validators.required, Validators.pattern(/^(dealer_enquiry|fitment_enquiry)$/)]],
     Phone: ['', Validators.required],
     Email: ['', [Validators.required, Validators.email]],
     Message: ['', Validators.required],
-  });
+    ...enquiryControls(),
+  }, { validators: sourceDetailRequiredValidator });
   public flags = inject(FeatureFlagsService);
   siteSettings = inject(SiteSettingsService);
   readonly productService = inject(ProductService);
@@ -230,6 +239,7 @@ export class MainPage implements OnInit, AfterViewInit {
   }
 
   async onSubmit(): Promise<void> {
+    if (this.isLoading) return;
     this.submitted = true;
     if (this.SubmitForm.invalid) {
       this.toast.showToast({ message: 'Please complete all required fields.', type: 'error' });
@@ -237,10 +247,10 @@ export class MainPage implements OnInit, AfterViewInit {
     }
     this.isLoading = true;
     try {
-      const response = await fetch('/api/contact-email', {
+      const response = await fetch('/api/partner-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(this.SubmitForm.value)
+        body: JSON.stringify(enquiryPayload(this.SubmitForm.getRawValue()))
       });
       if (response.ok) {
         this.analytics.trackMetaLead();
@@ -252,12 +262,10 @@ export class MainPage implements OnInit, AfterViewInit {
         throw new Error('Failed');
       }
     } catch {
-      setTimeout(() => {
-        this.SubmitForm.reset();
-        this.submitted = false;
-        this.isLoading = false;
-        this.toast.showToast({ message: `Submission failed — please email us directly at ${this.siteSettings.settings().contact.email}`, type: 'error' });
-      }, 1500);
+      this.isLoading = false;
+      this.toast.showToast({ message: `Submission failed — please email us directly at ${this.siteSettings.settings().contact.email}`, type: 'error' });
+    } finally {
+      this.changeDetector.markForCheck();
     }
   }
 

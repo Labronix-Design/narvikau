@@ -29,6 +29,43 @@ export interface AdminCategory {
 
 export type CategoryInput = Omit<AdminCategory, 'id'>;
 
+export interface ManualQueryInput {
+  name: string;
+  email: string;
+  phone: string;
+  company: string;
+  product: string;
+  message: string;
+  status: string;
+  admin_notes: string;
+  enquiry_type: string;
+  location_state: string;
+  location_suburb: string;
+  discovery_source: string;
+  discovery_source_detail: string;
+}
+
+export interface AdminQueryRow {
+  id: number;
+  source: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  product: string | null;
+  message: string | null;
+  status: string;
+  admin_notes: string | null;
+  enquiry_type: string | null;
+  location_state: string | null;
+  location_suburb: string | null;
+  discovery_source: string | null;
+  discovery_source_detail: string | null;
+  created_at: string;
+}
+
+export type AdminQueryTotals = Partial<Record<string, number | string>>;
+
 export interface WarrantyRegistrationRecord {
   id: number;
   registration_reference: string;
@@ -376,12 +413,17 @@ export class AdminService {
   }
 
   // ── Queries (contact leads) ──────────────────────────────────
-  getQueries(params?: { status?: string; limit?: number; offset?: number }): Promise<any> {
+  getQueries(params?: { status?: string; enquiry_type?: string; limit?: number; offset?: number }): Promise<{ rows: AdminQueryRow[]; totals: AdminQueryTotals }> {
     const qs = new URLSearchParams();
     if (params?.status) qs.set('status', params.status);
+    if (params?.enquiry_type) qs.set('enquiry_type', params.enquiry_type);
     if (params?.limit)  qs.set('limit',  String(params.limit));
     if (params?.offset) qs.set('offset', String(params.offset));
-    return firstValueFrom(this.http.get<any>(`/api/admin-queries?${qs}`, { headers: this.authHeaders }));
+    return firstValueFrom(this.http.get<{ rows: AdminQueryRow[]; totals: AdminQueryTotals }>(`/api/admin-queries?${qs}`, { headers: this.authHeaders }));
+  }
+
+  createQuery(payload: ManualQueryInput): Promise<AdminQueryRow> {
+    return firstValueFrom(this.http.post<AdminQueryRow>('/api/admin-queries', payload, { headers: this.authHeaders }));
   }
 
   updateQuery(id: number, payload: { status?: string; admin_notes?: string }): Promise<any> {

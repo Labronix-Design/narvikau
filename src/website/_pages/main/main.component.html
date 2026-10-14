@@ -225,8 +225,8 @@
     <div class="pw-container">
       <div class="order-box panel-machined">
         <div class="order-text texture-sand">
-          <h2 class="section-title">Canopy <span class="highlight-orange">Enquiries.</span></h2>
-          <p>Tell us about your vehicle and intended use, and our team will help you choose the right Navrik canopy.</p>
+          <h2 class="section-title">Dealer &amp; Fitment <span class="highlight-orange">Partners.</span></h2>
+          <p>Interested in becoming a Navrik dealer or fitment partner in Australia? Tell us about your business and service area.</p>
           <div class="contact-direct">
             <mat-icon svgIcon="email"></mat-icon>
             <a [href]="'mailto:' + siteSettings.settings().contact.email">{{ siteSettings.settings().contact.email }}</a>
@@ -237,14 +237,43 @@
             <form [formGroup]="SubmitForm" (ngSubmit)="onSubmit()" novalidate>
               <div class="form-row">
                 <website-text-input label="Full Name"       formControlName="Name"    [submitted]="submitted"></website-text-input>
-                <website-text-input label="Surname" formControlName="Surname" [submitted]="submitted"></website-text-input>
+                <website-text-input label="Business Name" formControlName="BusinessName" [submitted]="submitted"></website-text-input>
               </div>
               <div class="form-row">
                 <website-text-input label="Contact Number"  formControlName="Phone"   [submitted]="submitted"></website-text-input>
                 <website-text-input label="Email Address"   formControlName="Email"   [submitted]="submitted"></website-text-input>
               </div>
+              <div class="enquiry-referral">
+                <label for="p-type">Partnership type *</label>
+                <select id="p-type" formControlName="EnquiryType" required aria-describedby="p-type-error" [attr.aria-invalid]="submitted && SubmitForm.controls.EnquiryType.invalid">
+                  <option value="">Select partnership type</option>
+                  <option value="dealer_enquiry">Dealer enquiry</option>
+                  <option value="fitment_enquiry">Fitment centre enquiry</option>
+                </select>
+                <p id="p-type-error" class="field-error" aria-live="polite">@if (submitted && SubmitForm.controls.EnquiryType.invalid) { Select a partnership type. }</p>
+              </div>
               <div class="form-row single">
-                <website-text-input label="Vehicle and canopy requirements" formControlName="Message" [submitted]="submitted"></website-text-input>
+                <website-text-input label="Tell us about your business" formControlName="Message" [submitted]="submitted"></website-text-input>
+              </div>
+              <website-enquiry-location formControlName="Location" [submitted]="submitted"></website-enquiry-location>
+              <div class="enquiry-referral field-group qm-field">
+                <label class="field-label qm-label" for="p-source">How did you find us? *</label>
+                <select class="field-input" id="p-source" formControlName="DiscoverySource" required
+                  [attr.aria-invalid]="submitted && SubmitForm.controls.DiscoverySource.invalid" aria-describedby="p-source-error">
+                  <option value="">Select a source</option>
+                  @for (source of sourceOptions; track source) { <option [value]="source">{{ source }}</option> }
+                </select>
+                <p class="field-error qm-error" id="p-source-error" aria-live="polite">
+                  @if (submitted && SubmitForm.controls.DiscoverySource.invalid) { Select how you found us. }
+                </p>
+                @if (sourceRequiresDetail(SubmitForm.controls.DiscoverySource.value)) {
+                  <label class="field-label qm-label" for="p-source-detail">Please tell us more *</label>
+                  <input class="field-input" id="p-source-detail" formControlName="DiscoverySourceDetail" maxlength="120" required
+                    [attr.aria-invalid]="submitted && (SubmitForm.hasError('discoverySourceDetailRequired') || SubmitForm.hasError('discoverySourceDetailInvalid'))" aria-describedby="p-detail-error">
+                  <p class="field-error qm-error" id="p-detail-error" aria-live="polite">
+                    @if (submitted && (SubmitForm.hasError('discoverySourceDetailRequired') || SubmitForm.hasError('discoverySourceDetailInvalid'))) { Enter referral details (up to 120 characters). }
+                  </p>
+                }
               </div>
               <website-button type="submit" [disabled]="isLoading" class="full-width">
                 <mat-icon svgIcon="send"></mat-icon>

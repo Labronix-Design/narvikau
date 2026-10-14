@@ -1,4 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { EnquiryLocationComponent } from '../../_components/enquiry-location/enquiry-location.component';
+import { enquiryControls, enquiryPayload } from '../../_models/enquiry-location.models';
+import { ENQUIRY_SOURCE_OPTIONS, sourceRequiresDetail, sourceDetailRequiredValidator } from '../../_models/enquiry-source.models';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -12,7 +16,8 @@ import { AnalyticsService } from '../../_services/analytics.service';
   templateUrl: './contact.component.html',
   styleUrls: ['./contact.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, MatIconModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, EnquiryLocationComponent, ReactiveFormsModule, RouterModule, MatIconModule],
 })
 export class ContactPage implements OnInit {
   private fb      = inject(FormBuilder);
@@ -20,6 +25,9 @@ export class ContactPage implements OnInit {
   private analytics = inject(AnalyticsService);
   siteSettings    = inject(SiteSettingsService);
 
+  readonly sourceOptions = ENQUIRY_SOURCE_OPTIONS;
+  readonly sourceRequiresDetail = sourceRequiresDetail;
+  private readonly changeDetector = inject(ChangeDetectorRef);
   submitted = false;
   isLoading = false;
 
@@ -29,7 +37,8 @@ export class ContactPage implements OnInit {
     Phone:   ['', Validators.required],
     Email:   ['', [Validators.required, Validators.email]],
     Message: ['', Validators.required],
-  });
+    ...enquiryControls(),
+  }, { validators: sourceDetailRequiredValidator });
 
   ngOnInit(): void {
     window.scrollTo({ top: 0, behavior: 'instant' });
@@ -41,6 +50,7 @@ export class ContactPage implements OnInit {
   }
 
   async onSubmit(): Promise<void> {
+    if (this.isLoading) return;
     this.submitted = true;
     if (this.form.invalid) {
       this.toast.showToast({ message: 'Please complete all required fields.', type: 'error' });
@@ -52,7 +62,7 @@ export class ContactPage implements OnInit {
       const res = await fetch('/api/contact-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(this.form.getRawValue()),
+        body: JSON.stringify(enquiryPayload(this.form.getRawValue())),
       });
 
       if (!res.ok) throw new Error(await res.text());
@@ -73,6 +83,7 @@ export class ContactPage implements OnInit {
       });
     } finally {
       this.isLoading = false;
+      this.changeDetector.markForCheck();
     }
   }
 }
