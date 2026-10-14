@@ -1,10 +1,10 @@
 import { hashSecret } from './_security.js';
 import { isIP } from 'node:net';
+import { enquiryText as text, SubmissionValidationError, validateEnquiryDetails } from './_enquiry-details.js';
+export { SubmissionValidationError } from './_enquiry-details.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_ATTEMPTS = 5;
-
-export class SubmissionValidationError extends Error {}
 
 export function escapeHtml(value) {
   return String(value ?? '')
@@ -15,34 +15,26 @@ export function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function text(value, field, { required = false, maxLength }) {
-  if (value === undefined || value === null) {
-    if (required) throw new SubmissionValidationError(`${field} is required`);
-    return '';
-  }
-  if (typeof value !== 'string') throw new SubmissionValidationError(`${field} must be text`);
-  const trimmed = value.trim();
-  if (required && !trimmed) throw new SubmissionValidationError(`${field} is required`);
-  if (/[\u0000-\u001F\u007F]/.test(trimmed)) throw new SubmissionValidationError(`${field} contains unsupported characters`);
-  if (trimmed.length > maxLength) throw new SubmissionValidationError(`${field} is too long`);
-  return trimmed;
-}
-
-export function validatePublicLead(body, { quote = false } = {}) {
+export function validatePublicLead(body, { quote = false, partner = false } = {}) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new SubmissionValidationError('Invalid submission');
-  const allowed = quote
-    ? new Set(['Name', 'Phone', 'Email', 'Message', 'Product', 'Type'])
-    : new Set(['Name', 'Surname', 'Phone', 'Email', 'Message']);
+  const allowed = new Set([
+    'Name', 'Phone', 'Email', 'Message', 'LocationState', 'LocationSuburb', 'DiscoverySource', 'DiscoverySourceDetail',
+    ...(quote ? ['Product', 'Type'] : partner ? ['BusinessName', 'EnquiryType'] : ['Surname']),
+  ]);
   if (Object.keys(body).some((key) => !allowed.has(key))) throw new SubmissionValidationError('Unknown submission fields');
   if (quote && body.Type !== 'Product Quote Request') throw new SubmissionValidationError('Invalid quote request type');
+  if (partner && !['dealer_enquiry', 'fitment_enquiry'].includes(body.EnquiryType)) throw new SubmissionValidationError('Invalid partner enquiry type');
   const lead = {
     Name: text(body.Name, 'Name', { required: true, maxLength: 160 }),
-    Surname: quote ? '' : text(body.Surname, 'Surname', { maxLength: 160 }),
+    Surname: quote || partner ? '' : text(body.Surname, 'Surname', { maxLength: 160 }),
+    ...(partner ? { BusinessName: text(body.BusinessName, 'BusinessName', { required: true, maxLength: 160 }) } : {}),
     Phone: text(body.Phone, 'Phone', { required: true, maxLength: 50 }),
     Email: text(body.Email, 'Email', { required: true, maxLength: 254 }).toLowerCase(),
     Message: text(body.Message, 'Message', { required: true, maxLength: 4000 }),
     Product: quote ? text(body.Product, 'Product', { required: true, maxLength: 160 }) : '',
     ...(quote ? { Type: 'Product Quote Request' } : {}),
+    EnquiryType: quote ? 'product_quote' : partner ? body.EnquiryType : 'general_contact',
+    ...validateEnquiryDetails(body),
   };
   if (!EMAIL_RE.test(lead.Email)) throw new SubmissionValidationError('Email is invalid');
   return lead;

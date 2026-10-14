@@ -2,9 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { buildContactEmailHtml, createContactEmailHandler } from '../../netlify/functions/contact-email.js';
 import { buildQuoteEmailHtml, createQuoteEmailHandler } from '../../netlify/functions/quote-email.js';
-import { createSubmissionRateLimiter, submissionRateKeys } from '../../netlify/functions/_public-submission.js';
+import { createSubmissionRateLimiter, submissionRateKeys, validatePublicLead } from '../../netlify/functions/_public-submission.js';
+
+const details = { LocationState: 'New South Wales', LocationSuburb: 'Sydney', DiscoverySource: 'Google Search', DiscoverySourceDetail: '' };
 
 const maliciousLead = {
+  ...details,
   Name: '<img src=x onerror=alert(1)>',
   Surname: 'Dealer',
   Phone: '+27 82 123 4567',
@@ -15,6 +18,7 @@ const maliciousLead = {
 const maliciousContact = Object.fromEntries(Object.entries(maliciousLead).filter(([key]) => key !== 'Product'));
 
 const validQuote = {
+  ...details,
   Name: 'Avery Customer',
   Phone: '+61 412 345 678',
   Email: 'avery@example.test',
@@ -22,6 +26,27 @@ const validQuote = {
   Product: 'Navrik Canopy Adventure',
   Type: 'Product Quote Request',
 };
+
+test('public leads validate all Australian states and normal Navrik referral choices', () => {
+  for (const LocationState of ['Australian Capital Territory', 'New South Wales', 'Northern Territory', 'Queensland', 'South Australia', 'Tasmania', 'Victoria', 'Western Australia']) {
+    assert.equal(validatePublicLead({ ...maliciousContact, LocationState }).LocationState, LocationState);
+  }
+  for (const DiscoverySource of ['Google Search', 'Other Web Search', 'Facebook', 'Instagram', 'ChatGPT', 'Claude', 'Gemini', 'Other AI Platform', 'Referral', 'Other']) {
+    const DiscoverySourceDetail = ['Other AI Platform', 'Referral', 'Other'].includes(DiscoverySource) ? 'A customer' : '';
+    assert.equal(validatePublicLead({ ...maliciousContact, DiscoverySource, DiscoverySourceDetail }).DiscoverySource, DiscoverySource);
+  }
+});
+
+test('public leads reject forged attribution and invalid or excessive location/referral values', () => {
+  for (const fields of [
+    { source: 'manual' }, { enquiry_type: 'dealer_enquiry' }, { EnquiryType: 'dealer_enquiry' },
+    { LocationState: 'Gauteng' }, { LocationState: '' }, { LocationSuburb: ' ' },
+    { LocationSuburb: 'a'.repeat(161) }, { LocationSuburb: 'Sydney\u0000' },
+    { DiscoverySource: 'Unknown' }, { DiscoverySource: 'Referral' },
+    { DiscoverySource: 'Other AI Platform' }, { DiscoverySource: 'Other' },
+    { DiscoverySourceDetail: 'unexpected' }, { DiscoverySource: 'Referral', DiscoverySourceDetail: 'a'.repeat(121) },
+  ]) assert.throws(() => validatePublicLead({ ...maliciousContact, ...fields }), undefined, JSON.stringify(fields));
+});
 
 test('contact and quote emails escape untrusted HTML in text and attribute contexts', () => {
   const contact = buildContactEmailHtml(maliciousLead);
@@ -107,7 +132,7 @@ test('quote accepts a product request, rate-limits it in the product bucket, and
   let persistedSource;
   const sql = async (strings) => {
     const query = strings.join('');
-    if (query.includes('INSERT INTO leads')) persistedSource = query.match(/VALUES \('([^']+)'/)[1];
+    if (query.includes('INSERT INTO leads')) persistedSource = query.match(/SELECT '([^']+)'/)[1];
     return query.includes('RETURNING id') ? [{ id: 17 }] : [];
   };
   const handler = createQuoteEmailHandler({
@@ -196,6 +221,31 @@ test('quote does not send email when persistence fails', async () => {
 
   assert.equal(response.statusCode, 503);
   assert.equal(delivered, false);
+});
+
+test('public handlers wait for both email attempts before reporting a delivery failure', async () => {
+  for (const [factory, payload] of [[createContactEmailHandler, maliciousContact], [createQuoteEmailHandler, validQuote]]) {
+    let finishSecond;
+    let returned = false;
+    let deliveries = 0;
+    const handler = factory({
+      getSql: () => async () => [{ id: 7 }],
+      rateLimiter: { check: async () => true },
+      sendEmail: async () => {
+        deliveries += 1;
+        if (deliveries === 1) throw new Error('delivery unavailable');
+        await new Promise(resolve => { finishSecond = resolve; });
+      },
+    });
+    const pending = handler({ httpMethod: 'POST', body: JSON.stringify(payload) }).then(response => { returned = true; return response; });
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(typeof finishSecond, 'function');
+    const returnedEarly = returned;
+    finishSecond();
+    const response = await pending;
+    assert.equal(returnedEarly, false, 'A Netlify response must not leave the second delivery running');
+    assert.equal(response.statusCode, 502);
+  }
 });
 
 test('the submission rate limiter uses the migrated table without runtime schema changes', async () => {
