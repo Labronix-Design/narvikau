@@ -427,6 +427,18 @@ mat-icon {
   padding: .55rem .7rem;
 }
 
+.route-load-error {
+  display: grid;
+  place-content: center;
+  min-height: 50vh;
+  padding: 2rem;
+  color: var(--nv-text-main, #f7f5f2);
+  text-align: center;
+
+  h1 { margin: 0; font-size: clamp(1.5rem, 3vw, 2.25rem); }
+  p { margin: .75rem 0 0; color: var(--nv-text-muted, #c7c5c2); }
+}
+
 /* Data Saver and reduced-motion visitors get the same content without the
    paint-heavy texture filters and perpetual skeleton motion. This applies to
    every customer page, not only the landing page. */

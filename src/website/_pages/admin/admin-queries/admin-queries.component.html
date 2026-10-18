@@ -100,6 +100,7 @@
               <th>Name</th>
               <th>Type</th>
               <th>Product</th>
+              <th>Message</th>
               <th>Location</th>
               <th>Status</th>
               <th></th>
@@ -120,6 +121,7 @@
                 </td>
                 <td>{{ typeLabel(row.enquiry_type) }}</td>
                 <td>{{ row.product || '—' }}</td>
+                <td class="message-preview">{{ row.message || '—' }}</td>
                 <td>{{ row.location_suburb || '—' }}@if (row.location_state) {, {{ row.location_state }}}</td>
                 <td>
                   <select class="status-select" [attr.aria-label]="'Status for ' + row.name"
@@ -138,7 +140,7 @@
 
               @if (expandedId() === row.id) {
                 <tr class="expand-row">
-                  <td colspan="7">
+                  <td colspan="8">
                     <div class="expand-body">
                       <dl class="enquiry-details">
                         <dt>Email</dt><dd><a [href]="'mailto:' + row.email">{{ row.email }}</a></dd>

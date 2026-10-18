@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -13,6 +13,7 @@ import { adminLoginErrorMessage } from './admin-login-error';
   styleUrls: ['./admin-login.component.scss'],
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatIconModule],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminLoginComponent {
   private fb = inject(FormBuilder);
@@ -34,7 +35,10 @@ export class AdminLoginComponent {
     try {
       const token = await this.adminService.login(this.form.getRawValue().password);
       sessionStorage.setItem('navrik_admin_token', token);
-      this.router.navigate(['/admin/dashboard']);
+      const navigated = await this.router.navigate(['/admin/dashboard']);
+      if (!navigated) {
+        this.error.set('Sign-in succeeded, but the admin area could not be opened. Please try again.');
+      }
     } catch (error: unknown) {
       this.error.set(adminLoginErrorMessage(error instanceof HttpErrorResponse ? error.status : undefined));
     } finally {

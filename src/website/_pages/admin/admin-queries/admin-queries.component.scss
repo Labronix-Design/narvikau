@@ -109,11 +109,12 @@
 
 .message-preview {
   font-size: 0.78rem;
-  color: #555;
-  cursor: pointer;
-  max-width: 240px;
-
-  &:hover span { color: #888; }
+  color: #d0cfcc;
+  line-height: 1.5;
+  min-width: 14rem;
+  max-width: 28rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .notes-preview {

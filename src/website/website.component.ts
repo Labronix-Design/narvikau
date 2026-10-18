@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, PLATFORM_ID } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, PLATFORM_ID, signal } from '@angular/core';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { filter } from 'rxjs';
-import { NavigationEnd, Event, Router, RouterModule } from '@angular/router';
+import { NavigationEnd, NavigationError, NavigationStart, Event, Router, RouterModule } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, Meta, Title } from '@angular/platform-browser';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -11,6 +10,7 @@ import { ToastComponent } from './_components/toast/toast.component';
 import { NavbarComponent } from './_components/navbar/navbar.component';
 import { FooterComponent } from './_components/footer/footer.component';
 import { AnalyticsConsentComponent } from './_components/analytics-consent/analytics-consent.component';
+import { PageLoaderComponent } from './_components/page-loader/page-loader.component';
 
 // Services & Data
 import { GoogleReviewsService } from './_services/google.service';
@@ -98,24 +98,38 @@ const PUBLIC_PAGE_METADATA: Readonly<Record<string, PublicPageMetadata>> = {
 
 @Component({
   selector: 'website-root',
-  imports: [RouterModule, ToastComponent, NavbarComponent, FooterComponent, AnalyticsConsentComponent],
+  imports: [RouterModule, ToastComponent, NavbarComponent, FooterComponent, AnalyticsConsentComponent, PageLoaderComponent],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
 <website-toast></website-toast>
-<website-navbar></website-navbar>
+@if (!isAdminRoute()) {
+  <website-navbar></website-navbar>
+}
 
 <main id="content" class="main-content" [class.has-settings-alert]="siteSettings.unavailable()">
-  @if (siteSettings.unavailable()) {
+  @if (siteSettings.unavailable() && !isAdminRoute()) {
     <aside class="site-settings-unavailable" aria-live="polite">
       We are refreshing this information. Please try again shortly.
     </aside>
   }
-  <router-outlet></router-outlet>
+  @if (routeError()) {
+    <section class="route-load-error" role="alert">
+      <h1>We could not open this page</h1>
+      <p>Please refresh and try again.</p>
+    </section>
+  } @else {
+    <router-outlet></router-outlet>
+  }
 </main>
 
-<website-footer></website-footer>
+@if (!isAdminRoute()) {
+  <website-footer></website-footer>
+}
 <website-analytics-consent></website-analytics-consent>
+@if (navigationPending()) {
+  <website-page-loader aria-label="Loading page"></website-page-loader>
+}
   `
 })
 export class WebsiteComponent implements OnInit {
@@ -130,15 +144,33 @@ export class WebsiteComponent implements OnInit {
   private document = inject(DOCUMENT);
   private destroyRef = inject(DestroyRef);
   siteSettings = inject(SiteSettingsService);
+  readonly currentPath = signal(this.document.location.pathname || '/');
+  readonly navigationPending = signal(true);
+  readonly routeError = signal(false);
+  readonly isAdminRoute = computed(() => this.currentPath().startsWith('/admin'));
 
   constructor() {
     this.perfService.init();
     this.registerIcons();
     void this.siteSettings.load().then(() => this.updateSearchMetadata(this.router.url));
-    this.router.events.pipe(
-      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(event => {
+    this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.navigationPending.set(true);
+        this.routeError.set(false);
+        return;
+      }
+
+      if (event instanceof NavigationError) {
+        this.navigationPending.set(false);
+        this.routeError.set(true);
+        return;
+      }
+
+      if (!(event instanceof NavigationEnd)) return;
+
+      this.currentPath.set(event.urlAfterRedirects.split(/[?#]/)[0] || '/');
+      this.navigationPending.set(false);
+      this.routeError.set(false);
       this.handleNavigation(event);
       this.googleService.trackPageChange(event.urlAfterRedirects);
       this.updateSearchMetadata(event.urlAfterRedirects);

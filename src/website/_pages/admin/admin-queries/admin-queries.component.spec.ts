@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AdminQueriesComponent } from './admin-queries.component';
 import { AdminQueryRow, AdminService } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
@@ -114,5 +114,38 @@ describe('Admin enquiry note drafts', () => {
     await component.load();
 
     expect(component.notesMap()[first.id]).toBe('Second draft');
+  });
+});
+
+describe('Admin enquiries list', () => {
+  let fixture: ComponentFixture<AdminQueriesComponent>;
+  let service: jasmine.SpyObj<AdminService>;
+
+  beforeEach(async () => {
+    service = jasmine.createSpyObj('AdminService', ['getQueries', 'createQuery', 'updateQuery']);
+    service.getQueries.and.resolveTo({
+      rows: [{
+        id: 1, source: 'website', name: 'Alex', email: 'alex@example.test', phone: null,
+        company: null, product: null, message: 'Could you quote a canopy for my Ranger?',
+        status: 'new', admin_notes: null, enquiry_type: 'product_quote', location_state: null,
+        location_suburb: null, discovery_source: null, discovery_source_detail: null,
+        created_at: '2026-10-14T00:00:00.000Z',
+      }],
+      totals: {},
+    });
+    await TestBed.configureTestingModule({
+      imports: [AdminQueriesComponent],
+      providers: [{ provide: AdminService, useValue: service }, { provide: ModalService, useValue: {} }],
+    }).compileComponents();
+    fixture = TestBed.createComponent(AdminQueriesComponent);
+  });
+
+  it('shows each enquiry message in the list without requiring the details control', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.message-preview')?.textContent)
+      .toContain('Could you quote a canopy for my Ranger?');
   });
 });
