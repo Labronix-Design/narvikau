@@ -45,6 +45,6 @@ export class ProductService {
   }
 
   byCategory(category: string): CatalogProduct[] {
-    return this._products().filter(p => p.category === category);
+    return this._products().filter(p => p.category === category).sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name));
   }
 }

@@ -54,6 +54,12 @@
         }
         <div class="manual-field"><label for="manual-status">Status *</label><select id="manual-status" formControlName="status">@for (status of statusOptions; track status) { <option [value]="status">{{ statusLabels[status] }}</option> }</select></div>
       </div>
+      @if (manualForm.controls.status.value === 'follow_up_later') {
+        <div class="manual-grid">
+          <div class="manual-field"><label for="manual-follow-up-date">Follow-up date (optional)</label><input id="manual-follow-up-date" type="date" formControlName="follow_up_date"></div>
+          <div class="manual-field"><label for="manual-follow-up-note">Follow-up note (optional)</label><textarea id="manual-follow-up-note" formControlName="follow_up_note" maxlength="4000" rows="3"></textarea></div>
+        </div>
+      }
       <div class="manual-field"><label for="manual-message">Message (optional, up to 4,000 characters)</label><textarea id="manual-message" formControlName="message" rows="3" maxlength="4000"></textarea></div>
       <div class="manual-field"><label for="manual-notes">Internal notes (optional, up to 4,000 characters)</label><textarea id="manual-notes" formControlName="admin_notes" rows="3" maxlength="4000"></textarea></div>
       @if (manualSubmitted() && manualForm.invalid) { <p role="alert" class="field-error">Complete the required fields above before saving.</p> }
@@ -124,12 +130,18 @@
                 <td class="message-preview">{{ row.message || '—' }}</td>
                 <td>{{ row.location_suburb || '—' }}@if (row.location_state) {, {{ row.location_state }}}</td>
                 <td>
-                  <select class="status-select" [attr.aria-label]="'Status for ' + row.name"
-                          (change)="updateStatus(row, $any($event.target).value)">
+                  <select class="status-select" [attr.aria-label]="'Status for ' + row.name" [value]="followUpId() === row.id ? 'follow_up_later' : row.status" [disabled]="savingFollowUp()"
+                          (change)="updateStatus(row, $any($event.target).value, $any($event.target))">
+                    @if (row.status === 'contacted' || row.status === 'quoted') { <option [value]="row.status">{{ statusLabels[row.status] }}</option> }
                     @for (s of statusOptions; track s) {
-                      <option [value]="s" [selected]="s === row.status">{{ statusLabels[s] }}</option>
+                      <option [value]="s">{{ statusLabels[s] }}</option>
                     }
                   </select>
+                  @if (row.status === 'follow_up_later' && followUpId() !== row.id) {
+                    @if (row.follow_up_date) { <div>Follow up: {{ row.follow_up_date | date:'d MMM yyyy' }}</div> }
+                    @if (row.follow_up_note) { <div class="message-preview">{{ row.follow_up_note }}</div> }
+                    <button type="button" class="adm-btn ghost small" (click)="updateStatus(row, 'follow_up_later')">Edit follow-up</button>
+                  }
                 </td>
                 <td>
                   <button class="adm-btn ghost small" [attr.aria-label]="'Details for ' + row.name" [attr.aria-expanded]="expandedId() === row.id" (click)="toggleExpand(row.id)">
@@ -137,6 +149,18 @@
                   </button>
                 </td>
               </tr>
+
+              @if (followUpId() === row.id) {
+                <tr class="expand-row"><td colspan="8">
+                  <form class="expand-body" [formGroup]="followUpForm" (ngSubmit)="saveFollowUp(row)">
+                    <h2>Follow up with {{ row.name }}</h2>
+                    <div class="manual-field"><label [for]="'follow-up-date-' + row.id">Follow-up date (optional)</label><input [id]="'follow-up-date-' + row.id" type="date" formControlName="follow_up_date"></div>
+                    <div class="manual-field"><label [for]="'follow-up-note-' + row.id">Follow-up note (optional)</label><textarea [id]="'follow-up-note-' + row.id" formControlName="follow_up_note" maxlength="4000" rows="3"></textarea></div>
+                    @if (followUpError()) { <p role="alert" class="field-error">{{ followUpError() }}</p> }
+                    <div class="expand-quick-actions"><button type="submit" class="adm-btn primary small" [disabled]="savingFollowUp()">{{ savingFollowUp() ? 'Saving…' : 'Save follow-up' }}</button><button type="button" class="adm-btn ghost small" [disabled]="savingFollowUp()" (click)="followUpId.set(null)">Cancel</button></div>
+                  </form>
+                </td></tr>
+              }
 
               @if (expandedId() === row.id) {
                 <tr class="expand-row">
@@ -149,6 +173,8 @@
                         <dt>Referral source</dt><dd>{{ row.discovery_source || 'Not recorded' }}</dd>
                         @if (row.discovery_source_detail) { <dt>Referral details</dt><dd>{{ row.discovery_source_detail }}</dd> }
                         <dt>Captured via</dt><dd>{{ row.source }}</dd>
+                        @if (row.follow_up_date) { <dt>Follow-up date</dt><dd>{{ row.follow_up_date | date:'d MMM yyyy' }}</dd> }
+                        @if (row.follow_up_note) { <dt>Follow-up note</dt><dd>{{ row.follow_up_note }}</dd> }
                       </dl>
 
                       @if (row.message) {

@@ -13,12 +13,13 @@ const request = (httpMethod, body, queryStringParameters) => ({
 
 function addTransaction(sql, execute) {
   sql.transaction = async (buildQueries, options) => {
-    assert.equal(options.isolationLevel, 'Serializable');
+    assert.equal(options.isolationLevel, 'ReadCommitted');
     const tx = (strings, ...values) => ({ query: strings.join('?'), values });
     const queries = buildQueries(tx);
-    assert.equal(queries.length, 3);
-    const results = [];
-    for (const [index, query] of queries.entries()) results.push(await execute(query, index));
+    assert.equal(queries.length, 4);
+    assert.match(queries[0].query, /pg_advisory_xact_lock/);
+    const results = [[]];
+    for (const [index, query] of queries.slice(1).entries()) results.push(await execute(query, index));
     return results;
   };
   return sql;
@@ -230,13 +231,15 @@ function transactionalCategoryDatabase(initialCategories = [], { failSnapshot = 
 
   const sql = async (strings, ...values) => execute(committed, strings, values);
   sql.transaction = async (buildQueries, options) => {
-    assert.equal(options.isolationLevel, 'Serializable');
+    assert.equal(options.isolationLevel, 'ReadCommitted');
     const working = structuredClone(committed);
     const tx = (strings, ...values) => ({ strings, values });
     const results = [];
     const queries = buildQueries(tx);
-    assert.equal(queries.length, 3);
-    for (const query of queries) results.push(execute(working, query.strings, query.values));
+    assert.equal(queries.length, 4);
+    assert.match(queries[0].strings.join('?'), /pg_advisory_xact_lock/);
+    results.push([]);
+    for (const query of queries.slice(1)) results.push(execute(working, query.strings, query.values));
     committed = working;
     return results;
   };

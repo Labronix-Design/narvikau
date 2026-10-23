@@ -20,7 +20,7 @@ const canopies: CatalogProduct[] = ['Adventure', 'Overland', 'Sports', 'Defender
   image_url: '/canopy.jpg',
   gallery_urls: ['/detail.jpg'],
   is_active: index !== 3,
-  sort_order: index,
+  sort_order: index + 1,
 }));
 
 const categories: AdminCategory[] = [
@@ -30,24 +30,27 @@ const categories: AdminCategory[] = [
 ];
 
 async function editor(products = canopies, productsError: unknown = null, managed = categories) {
+  let stored = [...products];
   const submissions: CatalogProduct[] = [];
   const deleted: number[] = [];
   const service = {
     logout: () => undefined,
     getProducts: async () => {
       if (productsError) throw productsError;
-      return products;
+      return stored;
     },
     getCategories: async () => managed,
     createProduct: async (payload: CatalogProduct) => {
       submissions.push(payload);
+      stored = [...stored, { ...payload, id: 20 }];
       return { ...payload, id: 20 };
     },
     updateProduct: async (payload: CatalogProduct) => {
       submissions.push(payload);
+      stored = stored.map(item => item.id === payload.id ? payload : item);
       return payload;
     },
-    deleteProduct: async (id: number) => { deleted.push(id); },
+    deleteProduct: async (id: number) => { deleted.push(id); stored = stored.filter(item => item.id !== id); },
   };
   const injector = Injector.create({ providers: [
     { provide: AdminService, useValue: service },
@@ -58,6 +61,18 @@ async function editor(products = canopies, productsError: unknown = null, manage
   await Promise.resolve();
   return { component, submissions, deleted };
 }
+
+test('shows the occupied product position, including inactive products, within the selected category', async () => {
+  const { component } = await editor();
+  component.openCreate();
+  component.form.controls.category.setValue('canopy');
+  component.categoryChanged();
+  assert.equal(component.form.controls.sort_order.value, 5);
+  component.form.controls.sort_order.setValue(4);
+  assert.equal(component.productPositionOccupant()?.name, canopies[3].name);
+  component.form.controls.category.setValue('roof-equipment');
+  assert.equal(component.productPositionOccupant(), undefined);
+});
 
 test('treats a successful empty catalogue as an informational state', async () => {
   const { component } = await editor([]);

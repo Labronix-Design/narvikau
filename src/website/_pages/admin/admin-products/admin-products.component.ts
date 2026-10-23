@@ -35,7 +35,7 @@ const EMPTY_PRODUCT: Omit<CatalogProduct, 'id'> = {
   description: null,
   image_url: null,
   is_active: true,
-  sort_order: 0,
+  sort_order: 1,
   gallery_urls: [],
 };
 
@@ -79,12 +79,15 @@ export class AdminProductsComponent {
     description: ['', Validators.maxLength(4000)],
     image_url: ['', Validators.maxLength(500)],
     is_active: [true],
-    sort_order: [0, [Validators.required, Validators.min(-100000), Validators.max(100000), Validators.pattern(/^-?\d+$/)]],
+    sort_order: [1, [Validators.required, Validators.min(1), Validators.max(100000), Validators.pattern(/^\d+$/)]],
     gallery_urls: this.fb.nonNullable.control<string[]>([]),
     specifications: this.fb.array<SpecificationRow>([], [uniqueLabels, Validators.maxLength(30)]),
   });
   private readonly selectedCategory = toSignal(this.form.controls.category.valueChanges,
     { initialValue: this.form.controls.category.value });
+  private readonly productPosition = toSignal(this.form.controls.sort_order.valueChanges, { initialValue: 1 });
+  readonly productPositionOccupant = computed(() => this.products().find(product =>
+    product.category === this.selectedCategory() && product.sort_order === this.productPosition() && product.id !== this.editingId()));
   readonly currentInactiveCategory = computed(() => {
     const selected = this.selectedCategory();
     return this.editingId() && selected && !this.activeCategories().some(category => category.slug === selected)
@@ -96,8 +99,12 @@ export class AdminProductsComponent {
     variant_value: ['', Validators.required],
     label: ['', Validators.required],
     is_active: [true],
-    sort_order: [0],
+    sort_order: [1, [Validators.required, Validators.min(1), Validators.max(100000), Validators.pattern(/^\d+$/)]],
   });
+  private readonly variantType = toSignal(this.variantForm.controls.variant_type.valueChanges, { initialValue: 'cab_type' });
+  private readonly variantPosition = toSignal(this.variantForm.controls.sort_order.valueChanges, { initialValue: 1 });
+  readonly variantPositionOccupant = computed(() => this.variants().find(variant =>
+    variant.variant_type === this.variantType() && variant.sort_order === this.variantPosition() && variant.id !== this.editingVariantId()));
 
   readonly variantTypes = ['color', 'cab_type', 'size'];
 
@@ -149,6 +156,12 @@ export class AdminProductsComponent {
     this.editingId.set(null);
   }
 
+  categoryChanged(): void {
+    if (this.editingId() === null) {
+      this.form.controls.sort_order.setValue(this.products().filter(product => product.category === this.form.controls.category.value).length + 1);
+    }
+  }
+
   addSpecification(): void {
     if (this.form.controls.specifications.length < 30) {
       this.form.controls.specifications.push(this.createSpecificationRow());
@@ -195,13 +208,12 @@ export class AdminProductsComponent {
     };
 
     try {
-      const saved = this.editingId()
+      this.editingId()
         ? await this.adminService.updateProduct(payload)
         : await this.adminService.createProduct(payload);
-      this.products.update(items => this.editingId()
-        ? items.map(item => item.id === saved.id ? saved : item)
-        : [...items, saved].sort((left, right) => left.sort_order - right.sort_order));
       this.cancelForm();
+      try { this.products.set(await this.adminService.getProducts()); }
+      catch { this.error.set('Product saved, but the list could not be refreshed. Reload the page to see the latest order.'); }
     } catch (error: any) {
       this.error.set(error.error?.error || error.message || 'Product save failed.');
     } finally {
@@ -220,7 +232,9 @@ export class AdminProductsComponent {
     if (!confirmed) return;
     try {
       await this.adminService.deleteProduct(product.id);
-      this.products.update(items => items.filter(item => item.id !== product.id));
+      if (this.expandedProductId() === product.id) { this.expandedProductId.set(null); this.variants.set([]); }
+      try { this.products.set(await this.adminService.getProducts()); }
+      catch { this.error.set('Product deleted, but the list could not be refreshed. Reload the page to see the latest order.'); }
     } catch (error: any) {
       this.error.set(error.message || 'Product delete failed.');
     }
@@ -269,12 +283,12 @@ export class AdminProductsComponent {
   }
 
   variantsByType(type: string): ProductVariant[] {
-    return this.variants().filter(variant => variant.variant_type === type);
+    return this.variants().filter(variant => variant.variant_type === type).sort((a, b) => a.sort_order - b.sort_order);
   }
 
   openNewVariantForm(): void {
     this.editingVariantId.set(null);
-    this.variantForm.reset({ variant_type: 'cab_type', variant_value: '', label: '', is_active: true, sort_order: 0 });
+    this.variantForm.reset({ variant_type: 'cab_type', variant_value: '', label: '', is_active: true, sort_order: this.variants().filter(variant => variant.variant_type === 'cab_type').length + 1 });
     this.showVariantForm.set(true);
   }
 
@@ -295,21 +309,27 @@ export class AdminProductsComponent {
     this.editingVariantId.set(null);
   }
 
+  variantTypeChanged(): void {
+    if (this.editingVariantId() === null) {
+      this.variantForm.controls.sort_order.setValue(this.variants().filter(variant => variant.variant_type === this.variantForm.controls.variant_type.value).length + 1);
+    }
+  }
+
   async saveVariant(): Promise<void> {
     const productId = this.expandedProductId();
-    if (!productId || this.variantForm.invalid || this.variantSaving()) return;
+    if (!productId || this.variantSaving()) return;
+    if (this.variantForm.invalid) { this.variantForm.markAllAsTouched(); this.error.set('Check the highlighted option fields before saving.'); return; }
     this.variantSaving.set(true);
     try {
       const value = this.variantForm.getRawValue();
-      const saved = await this.adminService.saveVariant({
+      await this.adminService.saveVariant({
         ...(this.editingVariantId() ? { id: this.editingVariantId()! } : {}),
         product_id: productId,
         ...value,
       });
-      this.variants.update(items => this.editingVariantId()
-        ? items.map(item => item.id === saved.id ? saved : item)
-        : [...items, saved]);
       this.cancelVariantForm();
+      try { this.variants.set(await this.adminService.getVariants(productId)); }
+      catch { this.error.set('Option saved, but the list could not be refreshed. Reload the page to see the latest order.'); }
     } catch (error: any) {
       this.error.set(error.error?.error || error.message || 'Product option save failed.');
     } finally {
@@ -318,8 +338,11 @@ export class AdminProductsComponent {
   }
 
   async toggleVariantActive(variant: ProductVariant): Promise<void> {
-    const saved = await this.adminService.saveVariant({ ...variant, is_active: !variant.is_active });
-    this.variants.update(items => items.map(item => item.id === saved.id ? saved : item));
+    try {
+      await this.adminService.saveVariant({ ...variant, is_active: !variant.is_active });
+      try { this.variants.set(await this.adminService.getVariants(variant.product_id)); }
+      catch { this.error.set('Option visibility changed, but the list could not be refreshed. Reload the page to see the latest order.'); }
+    } catch { this.error.set('Option visibility could not be changed.'); }
   }
 
   async deleteVariant(variant: ProductVariant): Promise<void> {
@@ -331,8 +354,11 @@ export class AdminProductsComponent {
       variant: 'danger',
     });
     if (!confirmed) return;
-    await this.adminService.deleteVariant(variant.id);
-    this.variants.update(items => items.filter(item => item.id !== variant.id));
+    try {
+      await this.adminService.deleteVariant(variant.id);
+      try { this.variants.set(await this.adminService.getVariants(variant.product_id)); }
+      catch { this.error.set('Option deleted, but the list could not be refreshed. Reload the page to see the latest order.'); }
+    } catch { this.error.set('Product option could not be deleted.'); }
   }
 
   private toFormValue(product: Omit<CatalogProduct, 'id'> | CatalogProduct) {

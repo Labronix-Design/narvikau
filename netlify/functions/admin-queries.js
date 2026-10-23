@@ -9,11 +9,11 @@ const headers = {
   'Content-Type': 'application/json',
   'Cache-Control': 'private, no-store',
 };
-const VALID_STATUSES = ['new', 'contacted', 'quoted', 'converted', 'closed'];
-const UPDATE_FIELDS = new Set(['id', 'status', 'admin_notes']);
+const VALID_STATUSES = ['new', 'contacted', 'quoted', 'awaiting_customer_information', 'ready_to_quote', 'quote_sent', 'quote_followed_up', 'follow_up_later', 'converted', 'closed'];
+const UPDATE_FIELDS = new Set(['id', 'status', 'admin_notes', 'follow_up_date', 'follow_up_note']);
 const CREATE_FIELDS = new Set([
   'name', 'email', 'phone', 'company', 'product', 'message', 'status', 'admin_notes',
-  'enquiry_type', 'location_state', 'location_suburb', 'discovery_source', 'discovery_source_detail',
+  'enquiry_type', 'location_state', 'location_suburb', 'discovery_source', 'discovery_source_detail', 'follow_up_date', 'follow_up_note',
 ]);
 const log = {
   error: (msg, d = {}) => console.error(JSON.stringify({ level: 'ERROR', fn: 'admin-queries', msg, ...d, ts: new Date().toISOString() })),
@@ -26,16 +26,28 @@ function parseBody(raw) {
   return body;
 }
 
+function followUpDate(value) {
+  if (typeof value !== 'string') throw new SubmissionValidationError('Invalid follow-up date');
+  if (value === '') return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new SubmissionValidationError('Invalid follow-up date');
+  const date = new Date(`${value}T00:00:00Z`);
+  if (!Number.isFinite(date.valueOf()) || date.toISOString().slice(0, 10) !== value || value.startsWith('0000')) throw new SubmissionValidationError('Invalid follow-up date');
+  return value;
+}
+
 function parseUpdateBody(raw) {
   try {
     const body = parseBody(raw);
     if (Object.keys(body).some(key => !UPDATE_FIELDS.has(key))
       || !Number.isSafeInteger(body.id) || body.id < 1
-      || (body.status === undefined && body.admin_notes === undefined)
+      || (body.status === undefined && body.admin_notes === undefined && body.follow_up_date === undefined && body.follow_up_note === undefined)
       || (body.status !== undefined && !VALID_STATUSES.includes(body.status))
-      || (body.admin_notes !== undefined && typeof body.admin_notes !== 'string')) return null;
+      || (body.admin_notes !== undefined && typeof body.admin_notes !== 'string')
+      || (body.follow_up_note !== undefined && typeof body.follow_up_note !== 'string')) return null;
     const adminNotes = body.admin_notes === undefined ? undefined : enquiryText(body.admin_notes, 'admin_notes', { maxLength: 4000, multiline: true });
-    return { id: body.id, status: body.status, admin_notes: adminNotes };
+    return { id: body.id, status: body.status, admin_notes: adminNotes,
+      follow_up_date: body.follow_up_date === undefined ? undefined : followUpDate(body.follow_up_date),
+      follow_up_note: body.follow_up_note === undefined ? undefined : enquiryText(body.follow_up_note, 'follow_up_note', { maxLength: 4000, multiline: true }) };
   } catch {
     return null;
   }
@@ -43,6 +55,7 @@ function parseUpdateBody(raw) {
 
 function validateManualLead(body) {
   if (Object.keys(body).some(key => !CREATE_FIELDS.has(key)) || !ENQUIRY_TYPES.includes(body.enquiry_type)) throw new SubmissionValidationError('Invalid manual enquiry');
+  if (body.follow_up_note !== undefined && typeof body.follow_up_note !== 'string') throw new SubmissionValidationError('Invalid follow-up note');
   const name = enquiryText(body.name, 'name', { required: true, maxLength: 160 });
   const email = enquiryText(body.email, 'email', { required: true, maxLength: 254 }).toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new SubmissionValidationError('Invalid email');
@@ -56,6 +69,8 @@ function validateManualLead(body) {
     product: enquiryText(body.product, 'product', { required: body.enquiry_type === 'product_quote', maxLength: 160 }),
     message: enquiryText(body.message, 'message', { maxLength: 4000, multiline: true }),
     adminNotes: enquiryText(body.admin_notes, 'admin_notes', { maxLength: 4000, multiline: true }),
+    followUpDate: body.follow_up_date === undefined ? null : followUpDate(body.follow_up_date),
+    followUpNote: enquiryText(body.follow_up_note, 'follow_up_note', { maxLength: 4000, multiline: true }),
     ...details,
   };
 }
@@ -104,7 +119,7 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
           sql`
             SELECT id, source, name, email, phone, company, product, message,
                    enquiry_type, location_state, location_suburb, discovery_source, discovery_source_detail,
-                   status, admin_notes, customer_id, created_at, updated_at
+                   status, admin_notes, follow_up_date, follow_up_note, customer_id, created_at, updated_at
             FROM leads
             WHERE (${status}::text IS NULL OR status = ${status})
               AND (${enquiryType}::text IS NULL OR enquiry_type = ${enquiryType})
@@ -114,7 +129,13 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
             SELECT COUNT(*) AS total,
               COUNT(*) FILTER (WHERE status = 'new') AS new_count,
               COUNT(*) FILTER (WHERE status = 'contacted') AS contacted,
-              COUNT(*) FILTER (WHERE status = 'quoted') AS quoted,
+              COUNT(*) FILTER (WHERE status IN ('quoted', 'quote_sent', 'quote_followed_up')) AS quoted,
+              COUNT(*) FILTER (WHERE status = 'quoted') AS legacy_quoted,
+              COUNT(*) FILTER (WHERE status = 'awaiting_customer_information') AS awaiting_customer_information,
+              COUNT(*) FILTER (WHERE status = 'ready_to_quote') AS ready_to_quote,
+              COUNT(*) FILTER (WHERE status = 'quote_sent') AS quote_sent,
+              COUNT(*) FILTER (WHERE status = 'quote_followed_up') AS quote_followed_up,
+              COUNT(*) FILTER (WHERE status = 'follow_up_later') AS follow_up_later,
               COUNT(*) FILTER (WHERE status = 'converted') AS converted,
               COUNT(*) FILTER (WHERE status = 'closed') AS closed
             FROM leads
@@ -143,13 +164,13 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
             RETURNING id
           )
           INSERT INTO leads (source, name, email, phone, company, product, message, customer_id, status, admin_notes,
-            enquiry_type, location_state, location_suburb, discovery_source, discovery_source_detail)
+            enquiry_type, location_state, location_suburb, discovery_source, discovery_source_detail, follow_up_date, follow_up_note)
           SELECT 'manual', ${manual.name}, ${manual.email}, ${manual.phone || null}, ${manual.company || null}, ${manual.product || null},
             ${manual.message || null}, customer.id, ${manual.status}, ${manual.adminNotes || null}, ${manual.enquiryType},
-            ${manual.LocationState}, ${manual.LocationSuburb}, ${manual.DiscoverySource}, ${manual.DiscoverySourceDetail || null}
+            ${manual.LocationState}, ${manual.LocationSuburb}, ${manual.DiscoverySource}, ${manual.DiscoverySourceDetail || null}, ${manual.followUpDate}::date, ${manual.followUpNote || null}
           FROM customer
           RETURNING id, source, name, email, phone, company, product, message, status, admin_notes, customer_id,
-            enquiry_type, location_state, location_suburb, discovery_source, discovery_source_detail, created_at, updated_at
+            enquiry_type, location_state, location_suburb, discovery_source, discovery_source_detail, follow_up_date, follow_up_note, created_at, updated_at
         `;
         if (!row?.id) throw new Error('Lead persistence failed');
         await invalidate(sql);
@@ -163,9 +184,11 @@ export function createHandler({ verifyAdminToken: verify = verifyAdminToken, get
         UPDATE leads SET
           status = COALESCE(${update.status ?? null}::TEXT, status),
           admin_notes = COALESCE(${update.admin_notes ?? null}::TEXT, admin_notes),
+          follow_up_date = CASE WHEN ${update.follow_up_date !== undefined} THEN ${update.follow_up_date ?? null}::date ELSE follow_up_date END,
+          follow_up_note = CASE WHEN ${update.follow_up_note !== undefined} THEN ${update.follow_up_note ?? null}::text ELSE follow_up_note END,
           updated_at = NOW()
         WHERE id = ${update.id}
-        RETURNING id, status, admin_notes, updated_at
+        RETURNING id, status, admin_notes, follow_up_date, follow_up_note, updated_at
       `;
       if (!row) return response(404, { error: 'Lead not found' });
       await invalidate(sql);

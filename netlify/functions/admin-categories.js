@@ -49,8 +49,9 @@ function validateCategory(body, updating) {
   if (body.description !== undefined && body.description !== null && typeof body.description !== 'string') return null;
   const description = validText(body.description, 2000);
   if (body.description !== undefined && body.description !== null && description === null && body.description.trim()) return null;
-  const sortOrder = body.sort_order === undefined ? 0 : body.sort_order;
-  if (typeof sortOrder !== 'number' || !Number.isSafeInteger(sortOrder) || Math.abs(sortOrder) > 100000) return null;
+  const sortOrder = body.sort_order === undefined ? (updating ? null : 100000) : body.sort_order;
+  if (sortOrder === null ? !(updating && body.sort_order === undefined)
+    : (typeof sortOrder !== 'number' || !Number.isSafeInteger(sortOrder) || sortOrder < 1 || sortOrder > 100000)) return null;
   if (body.is_active !== undefined && typeof body.is_active !== 'boolean') return null;
   return {
     ...(updating ? { id: body.id } : {}),
@@ -66,11 +67,13 @@ function sameCategory(row, requested) {
   return row?.slug === requested.slug
     && row.name === requested.name
     && row.description === requested.description
-    && row.sort_order === requested.sort_order
+    && (row.creation_requested_position != null
+      ? row.creation_requested_position === requested.sort_order && row.sort_order === row.creation_saved_position
+      : row.sort_order === requested.sort_order)
     && row.is_active === requested.is_active;
 }
 
-function snapshotQueries(tx) {
+export function snapshotQueries(tx) {
   return [
     tx`
       INSERT INTO catalogue_read_models (section, payload, updated_at)
@@ -107,13 +110,13 @@ async function mutateAndRebuild(sql, mutationQuery) {
   if (typeof sql.transaction !== 'function') throw new Error('Database transaction support is unavailable');
   for (let attempt = 0; attempt < 2; attempt += 1) {
     try {
-      const [rows] = await sql.transaction(
-        (tx) => [mutationQuery(tx), ...snapshotQueries(tx)],
-        { isolationLevel: 'Serializable' },
+      const [, rows] = await sql.transaction(
+        (tx) => [tx`SELECT pg_advisory_xact_lock(1350564182, 1)`, mutationQuery(tx), ...snapshotQueries(tx)],
+        { isolationLevel: 'ReadCommitted' },
       );
       return rows?.[0];
     } catch (error) {
-      if (error?.code !== '40001' || attempt === 1) throw error;
+      if (!['40001', '40P01'].includes(error?.code) || attempt === 1) throw error;
     }
   }
   return null;
@@ -162,7 +165,7 @@ export function createAdminCategoriesHandler({
           : tx`
               UPDATE catalog_categories SET
                 slug = ${category.slug}, name = ${category.name}, description = ${category.description},
-                sort_order = ${category.sort_order}, is_active = ${category.is_active}, updated_at = NOW()
+                sort_order = COALESCE(${category.sort_order}, sort_order), is_active = ${category.is_active}, updated_at = NOW()
               WHERE id = ${category.id}
               RETURNING id, slug, name, description, sort_order, is_active, created_at, updated_at
             `);
@@ -183,7 +186,8 @@ export function createAdminCategoriesHandler({
             const requested = validateCategory(body, false);
             const sql = getSql();
             const [existing] = await sql`
-              SELECT id, slug, name, description, sort_order, is_active, created_at, updated_at
+              SELECT id, slug, name, description, sort_order, is_active, created_at, updated_at,
+                creation_requested_position, creation_saved_position
               FROM catalog_categories WHERE slug = ${requested.slug} LIMIT 1
             `;
             if (sameCategory(existing, requested)) {

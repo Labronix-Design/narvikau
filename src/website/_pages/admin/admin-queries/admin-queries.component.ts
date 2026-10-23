@@ -45,6 +45,8 @@ export class AdminQueriesComponent implements OnInit {
     message: ['', Validators.maxLength(4000)],
     status: ['new', Validators.required],
     admin_notes: ['', Validators.maxLength(4000)],
+    follow_up_date: [''],
+    follow_up_note: ['', Validators.maxLength(4000)],
     enquiry_type: ['general_contact', Validators.required],
     ...enquiryControls(),
   }, { validators: [sourceDetailRequiredValidator, form => {
@@ -53,6 +55,13 @@ export class AdminQueriesComponent implements OnInit {
     if (type === 'product_quote' && !form.get('product')?.value.trim()) return { productRequired: true };
     return null;
   }] });
+  readonly followUpForm = this.fb.group({
+    follow_up_date: [''],
+    follow_up_note: ['', Validators.maxLength(4000)],
+  });
+  readonly followUpId = signal<number | null>(null);
+  readonly savingFollowUp = signal(false);
+  readonly followUpError = signal('');
 
   rows       = signal<AdminQueryRow[]>([]);
   totals     = signal<AdminQueryTotals | null>(null);
@@ -64,21 +73,25 @@ export class AdminQueriesComponent implements OnInit {
 
   readonly tabs = [
     { value: '',          label: 'All'        },
-    { value: 'new',       label: 'New'        },
-    { value: 'contacted', label: 'Contacted'  },
-    { value: 'quoted',    label: 'Quoted'     },
-    { value: 'converted', label: 'Converted'  },
-    { value: 'closed',    label: 'Closed'     },
+    { value: 'new', label: 'New enquiry' },
+    { value: 'awaiting_customer_information', label: 'Awaiting customer information' },
+    { value: 'ready_to_quote', label: 'Ready to quote' },
+    { value: 'quote_sent', label: 'Quote sent' },
+    { value: 'quote_followed_up', label: 'Quote followed up' },
+    { value: 'follow_up_later', label: 'Follow up later' },
+    { value: 'converted', label: 'Converted / Order confirmed' },
+    { value: 'closed', label: 'Closed / Not proceeding' },
+    { value: 'contacted', label: 'Contacted (legacy)' },
+    { value: 'quoted', label: 'Quoted (legacy)' },
   ];
 
-  readonly statusOptions = ['new', 'contacted', 'quoted', 'converted', 'closed'];
+  readonly statusOptions = ['new', 'awaiting_customer_information', 'ready_to_quote', 'quote_sent', 'quote_followed_up', 'follow_up_later', 'converted', 'closed'];
 
   readonly statusLabels: Record<string, string> = {
-    new:       'New',
-    contacted: 'Contacted',
-    quoted:    'Quoted',
-    converted: 'Converted',
-    closed:    'Closed',
+    new: 'New enquiry', awaiting_customer_information: 'Awaiting customer information',
+    ready_to_quote: 'Ready to quote', quote_sent: 'Quote sent', quote_followed_up: 'Quote followed up',
+    follow_up_later: 'Follow up later', converted: 'Converted / Order confirmed', closed: 'Closed / Not proceeding',
+    contacted: 'Contacted (legacy)', quoted: 'Quoted (legacy)',
   };
 
   async ngOnInit(): Promise<void> { await this.load(); }
@@ -139,10 +152,11 @@ export class AdminQueriesComponent implements OnInit {
     }
     this.savingManual.set(true);
     this.manualError.set('');
-    const { LocationState, LocationSuburb, DiscoverySource, DiscoverySourceDetail, ...fields } = enquiryPayload(this.manualForm.getRawValue());
+    const { LocationState, LocationSuburb, DiscoverySource, DiscoverySourceDetail, follow_up_date, follow_up_note, ...fields } = enquiryPayload(this.manualForm.getRawValue());
     const payload: ManualQueryInput = { ...fields, name: fields.name.trim(), email: fields.email.trim(),
       location_state: LocationState, location_suburb: LocationSuburb,
-      discovery_source: DiscoverySource, discovery_source_detail: DiscoverySourceDetail };
+      discovery_source: DiscoverySource, discovery_source_detail: DiscoverySourceDetail,
+      ...(fields.status === 'follow_up_later' ? { follow_up_date, follow_up_note: follow_up_note.trim() } : {}) };
     try {
       await this.adminService.createQuery(payload);
       this.showManualForm.set(false);
@@ -161,13 +175,36 @@ export class AdminQueriesComponent implements OnInit {
     this.expandedId.set(this.expandedId() === id ? null : id);
   }
 
-  async updateStatus(row: AdminQueryRow, status: string): Promise<void> {
+  async updateStatus(row: AdminQueryRow, status: string, select?: HTMLSelectElement): Promise<void> {
+    if (status === 'follow_up_later') {
+      this.followUpForm.reset({ follow_up_date: row.follow_up_date?.slice(0, 10) ?? '', follow_up_note: row.follow_up_note ?? '' });
+      this.followUpError.set('');
+      this.followUpId.set(row.id);
+      return;
+    }
+    this.followUpId.set(null);
     try {
       await this.adminService.updateQuery(row.id, { status });
       await this.load();
     } catch (e: any) {
+      if (select) select.value = row.status;
       await this.modal.alert({ title: 'Update Failed', message: e.message, variant: 'danger' });
     }
+  }
+
+  async saveFollowUp(row: AdminQueryRow): Promise<void> {
+    if (this.savingFollowUp()) return;
+    if (this.followUpForm.invalid) { this.followUpForm.markAllAsTouched(); return; }
+    const { follow_up_date, follow_up_note } = this.followUpForm.getRawValue();
+    this.savingFollowUp.set(true);
+    this.followUpError.set('');
+    try {
+      await this.adminService.updateQuery(row.id, { status: 'follow_up_later', follow_up_date, follow_up_note: follow_up_note.trim() });
+      this.followUpId.set(null);
+      await this.load();
+    } catch (error: unknown) {
+      this.followUpError.set(error instanceof Error ? error.message : 'Unable to save follow-up.');
+    } finally { this.savingFollowUp.set(false); }
   }
 
   setNote(id: number, value: string): void {
@@ -194,7 +231,9 @@ export class AdminQueriesComponent implements OnInit {
     if (!t) return 0;
     const map: Record<string, string> = {
       '': 'total', new: 'new_count', contacted: 'contacted',
-      quoted: 'quoted', converted: 'converted', closed: 'closed',
+      quoted: 'legacy_quoted', converted: 'converted', closed: 'closed',
+      awaiting_customer_information: 'awaiting_customer_information', ready_to_quote: 'ready_to_quote',
+      quote_sent: 'quote_sent', quote_followed_up: 'quote_followed_up', follow_up_later: 'follow_up_later',
     };
     return Number(t[map[tab]] || 0);
   }

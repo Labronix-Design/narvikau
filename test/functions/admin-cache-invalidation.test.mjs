@@ -12,6 +12,22 @@ const request = (body) => ({
   body: JSON.stringify(body),
 });
 
+function transactional(sql, onSnapshot = () => {}) {
+  sql.transaction = async (factory) => {
+    const tx = (strings, ...values) => {
+      const query = strings.join(' ');
+      if (query.includes('pg_advisory_xact_lock')) return Promise.resolve([]);
+      if (query.includes('INSERT INTO catalogue_read_models')) {
+        onSnapshot(query.includes("SELECT 'products'") ? 'products' : 'categories');
+        return Promise.resolve([]);
+      }
+      return sql(strings, ...values);
+    };
+    return Promise.all(factory(tx));
+  };
+  return sql;
+}
+
 test('a successful lead status or notes update invalidates only the affected operations snapshots', async () => {
   const invalidated = [];
   const sql = async () => [{ id: 8, status: 'contacted', admin_notes: 'Called', updated_at: '2026-08-24T04:00:00.000Z' }];
@@ -119,11 +135,13 @@ for (const mutationCase of publicMutationCases) {
     let actualRebuild;
     const handler = mutationCase.createHandler({
       verifyToken: async () => true,
-      getSql: () => async (...args) => {
+      getSql: () => transactional(async (...args) => {
         if (!args[0].join(' ').includes('catalog_categories')) timeline.push('write');
         return successfulSql(...args);
-      },
-      rebuild: async (_sql, sections) => { timeline.push('rebuild'); actualRebuild = sections; },
+      }, (section) => {
+        if (!actualRebuild) { actualRebuild = []; timeline.push('rebuild'); }
+        actualRebuild.push(section);
+      }),
       purgeTags: async (...args) => {
         timeline.push('purge');
         purgeCalls.push(args);
@@ -145,8 +163,7 @@ test('product variants rebuild and purge the catalogue snapshots', async () => {
   const purges = [];
   const handler = createAdminProductsHandler({
     verifyToken: async () => true,
-    getSql: () => async () => [{ id: 17, product_id: 4 }],
-    rebuild: async (_sql, sections) => { rebuilds.push(sections); },
+    getSql: () => transactional(async () => [{ id: 17, product_id: 4 }], (section) => rebuilds.push(section)),
     purgeTags: async (tags) => { purges.push(tags); },
   });
 
@@ -157,7 +174,7 @@ test('product variants rebuild and purge the catalogue snapshots', async () => {
   });
 
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(rebuilds, [['products', 'categories']]);
+  assert.deepEqual(rebuilds, ['products', 'categories']);
   assert.deepEqual(purges, [['catalogue:products', 'catalogue:categories', 'catalogue:storefront']]);
 });
 
@@ -182,17 +199,16 @@ for (const sourceMutation of [
     const purges = [];
     const handler = sourceMutation.createHandler({
       verifyToken: async () => true,
-      getSql: () => async (strings) => strings.join(' ').includes('catalog_categories')
+      getSql: () => transactional(async (strings) => strings.join(' ').includes('catalog_categories')
         ? [{ slug: 'canopy', is_active: true }]
-        : [{ id: 4 }],
-      rebuild: async (_sql, sections) => { rebuilds.push(sections); },
+        : [{ id: 4 }], (section) => rebuilds.push(section)),
       purgeTags: async (tags) => { purges.push(tags); },
     });
 
     const response = await handler({ headers: {}, ...sourceMutation.event });
 
     assert.equal(response.statusCode, 200);
-    assert.deepEqual(rebuilds, [sourceMutation.rebuild]);
+    assert.deepEqual(rebuilds, sourceMutation.rebuild);
     assert.deepEqual(purges, [sourceMutation.tags]);
   });
 }
@@ -216,7 +232,7 @@ test('every default admin mutation path passes the Lambda purge token with only 
     for (const mutationCase of publicMutationCases) {
       const handler = mutationCase.createHandler({
         verifyToken: async () => true,
-        getSql: () => successfulSql,
+        getSql: () => transactional(successfulSql),
         rebuild: async () => {},
       });
       const requestBody = JSON.parse(mutationCase.event.body);
@@ -284,9 +300,9 @@ for (const mutationCase of missingPublicMutationCases) {
     const purged = [];
     const handler = mutationCase.createHandler({
       verifyToken: async () => true,
-      getSql: () => async (strings) => strings.join(' ').includes('catalog_categories')
+      getSql: () => transactional(async (strings) => strings.join(' ').includes('catalog_categories')
         ? [{ slug: 'canopy', is_active: true }]
-        : [],
+        : []),
       rebuild: async (...args) => { rebuilt.push(args); },
       purgeTags: async (tags) => { purged.push(tags); },
     });
@@ -302,7 +318,7 @@ for (const mutationCase of missingPublicMutationCases) {
 test('a public cache purge failure is visible after a successful product write', async () => {
   const handler = createAdminProductsHandler({
     verifyToken: async () => true,
-    getSql: () => successfulSql,
+    getSql: () => transactional(successfulSql),
     rebuild: async () => {},
     purgeTags: async () => { throw new Error('edge unavailable'); },
   });

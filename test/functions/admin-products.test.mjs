@@ -4,6 +4,22 @@ import test from 'node:test';
 import { createAdminProductsHandler } from '../../netlify/functions/admin-products.js';
 
 const authenticated = async () => true;
+function transactional(sql, snapshots = []) {
+  sql.transaction = async (factory) => {
+    const tx = (strings, ...values) => {
+      const query = strings.join(' ');
+      if (query.includes('pg_advisory_xact_lock')) return Promise.resolve([]);
+      if (query.includes('INSERT INTO catalogue_read_models')) {
+        if (query.includes("SELECT 'products'")) snapshots.push('products');
+        if (query.includes("SELECT 'categories'")) snapshots.push('categories');
+        return Promise.resolve([]);
+      }
+      return sql(strings, ...values);
+    };
+    return Promise.all(factory(tx));
+  };
+  return sql;
+}
 const validProduct = {
   slug: 'navrik-canopy-adventure',
   name: 'Navrik Canopy — Adventure',
@@ -40,7 +56,7 @@ test('an authenticated admin can create an accessory product with specifications
   };
   const handler = createAdminProductsHandler({
     verifyToken: authenticated,
-    getSql: () => sql,
+    getSql: () => transactional(sql, rebuilds),
     rebuild: async (_sql, sections) => { rebuilds.push(sections); },
     purgeTags: async (tags) => { purges.push(tags); },
   });
@@ -53,7 +69,7 @@ test('an authenticated admin can create an accessory product with specifications
   assert.match(queries[1], /specifications/);
   assert.ok(values[1].includes('accessory'));
   assert.ok(values[1].includes(JSON.stringify(accessory.specifications)));
-  assert.deepEqual(rebuilds, [['products', 'categories']]);
+  assert.deepEqual(rebuilds, ['products', 'categories']);
   assert.deepEqual(purges, [['catalogue:products', 'catalogue:categories', 'catalogue:storefront']]);
 });
 
@@ -68,7 +84,7 @@ test('an authenticated admin can edit and delete a non-canopy product by product
   };
   const handler = createAdminProductsHandler({
     verifyToken: authenticated,
-    getSql: () => sql,
+    getSql: () => transactional(sql),
     rebuild: async () => {},
     purgeTags: async () => {},
   });
@@ -165,7 +181,7 @@ test('admin product creation persists an active canopy and refreshes catalogue c
   };
   const handler = createAdminProductsHandler({
     verifyToken: authenticated,
-    getSql: () => sql,
+    getSql: () => transactional(sql, rebuilds),
     rebuild: async (_sql, sections) => { rebuilds.push(sections); },
     purgeTags: async (tags) => { purges.push(tags); },
   });
@@ -179,7 +195,7 @@ test('admin product creation persists an active canopy and refreshes catalogue c
   assert.match(queries[1], /specifications/);
   assert.doesNotMatch(queries[1], /price|purchase|tray/i);
   assert.ok(values[1].includes('canopy'));
-  assert.deepEqual(rebuilds, [['products', 'categories']]);
+  assert.deepEqual(rebuilds, ['products', 'categories']);
   assert.deepEqual(purges, [['catalogue:products', 'catalogue:categories', 'catalogue:storefront']]);
 });
 
@@ -239,13 +255,13 @@ test('product create accepts an active 120-character category slug and refreshes
   const purges = [];
   const handler = createAdminProductsHandler({
     verifyToken: authenticated,
-    getSql: () => async (strings, ...values) => {
+    getSql: () => transactional(async (strings, ...values) => {
       const query = strings.join('?');
       queries.push({ query, values });
       return query.includes('catalog_categories')
         ? [{ slug: longSlug, is_active: true }]
         : [{ id: 1, ...validProduct, category: longSlug }];
-    },
+    }, rebuilds),
     rebuild: async (_sql, sections) => rebuilds.push(sections),
     purgeTags: async (tags) => purges.push(tags),
   });
@@ -258,6 +274,6 @@ test('product create accepts an active 120-character category slug and refreshes
   assert.match(queries[0].query, /catalog_categories/);
   assert.match(queries[1].query, /INSERT INTO catalog_products/);
   assert.ok(queries[1].values.includes(longSlug));
-  assert.deepEqual(rebuilds, [['products', 'categories']]);
+  assert.deepEqual(rebuilds, ['products', 'categories']);
   assert.deepEqual(purges, [['catalogue:products', 'catalogue:categories', 'catalogue:storefront']]);
 });

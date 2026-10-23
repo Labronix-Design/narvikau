@@ -29,9 +29,10 @@
               <small id="category-description-error" class="field-error">@if (form.controls.description.touched && form.controls.description.invalid) { Use up to 2000 characters without control characters. }</small>
             </div>
             <div class="adm-field">
-              <label for="category-sort">Sort Order</label>
-              <input id="category-sort" type="number" formControlName="sort_order" min="-100000" max="100000" step="1" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid" aria-describedby="category-sort-error">
-              <small id="category-sort-error" class="field-error" aria-live="polite">@if (form.controls.sort_order.touched && form.controls.sort_order.invalid) { Enter a whole number from -100000 to 100000. }</small>
+              <label for="category-sort">Position</label>
+              <input id="category-sort" type="number" formControlName="sort_order" min="1" max="100000" step="1" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid" aria-describedby="category-sort-help category-sort-error">
+              <small id="category-sort-help" aria-live="polite">Positions include inactive categories. @if (positionOccupant(); as occupant) { Position {{ occupant.sort_order }} is currently {{ occupant.name }}{{ occupant.is_active ? '' : ' (inactive)' }}. Saving shifts the affected categories and closes any gap. } @else { 1 appears first; a position beyond the end places it last. }</small>
+              <small id="category-sort-error" class="field-error" aria-live="polite">@if (form.controls.sort_order.touched && form.controls.sort_order.invalid) { Enter a whole number from 1 to 100000. }</small>
             </div>
             <div class="adm-field"><label class="toggle-row"><input type="checkbox" formControlName="is_active"><span>Active in catalogue</span></label></div>
           </div>

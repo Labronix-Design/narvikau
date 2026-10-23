@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { verifyAdminToken } from './admin-auth.js';
-import { rebuildCatalogueReadModels } from './_catalogue-cache.js';
+import { snapshotQueries } from './admin-categories.js';
 import { purgeMutationCache } from './_mutation-cache-invalidation.js';
 
 const headers = {
@@ -61,9 +61,9 @@ function identifier(value, maximum) {
   return normalised !== null && SAFE_PRODUCT_IDENTIFIER.test(normalised) ? normalised : null;
 }
 
-function boundedInteger(value, { fallback = 0 } = {}) {
-  const integer = value === undefined ? fallback : Number(value);
-  return Number.isSafeInteger(integer) && Math.abs(integer) <= MAX_SORT_ORDER ? integer : null;
+function boundedInteger(value, { fallback = MAX_SORT_ORDER } = {}) {
+  const integer = value === undefined ? fallback : value;
+  return typeof integer === 'number' && Number.isSafeInteger(integer) && integer >= 1 && integer <= MAX_SORT_ORDER ? integer : null;
 }
 
 function plainObject(value) {
@@ -101,8 +101,8 @@ function validateProduct(body, { updating = false } = {}) {
   const productSpecifications = specifications(body.specifications);
   if ((updating && !id) || slug === null || name === null || category === null || productSpecifications === null) return null;
   if (body.is_active !== undefined && typeof body.is_active !== 'boolean') return null;
-  const sortOrder = boundedInteger(body.sort_order);
-  if (sortOrder === null) return null;
+  const sortOrder = body.sort_order === undefined && updating ? null : boundedInteger(body.sort_order);
+  if (sortOrder === null && !(body.sort_order === undefined && updating)) return null;
   if (body.gallery_urls !== undefined && (!Array.isArray(body.gallery_urls)
     || body.gallery_urls.length > 30
     || body.gallery_urls.some((url) => text(url, { required: true, maximum: 500 }) === null))) return null;
@@ -148,9 +148,9 @@ function validateVariant(body) {
   const variantType = text(body.variant_type, { required: true, maximum: 80 });
   const variantValue = text(body.variant_value, { required: true, maximum: 120 });
   const label = text(body.label, { required: true, maximum: 160 });
-  const sortOrder = boundedInteger(body.sort_order);
+  const sortOrder = body.sort_order === undefined && updating ? null : boundedInteger(body.sort_order);
   if ((updating && !id) || !productId || variantType === null || variantValue === null || label === null
-    || sortOrder === null || (body.is_active !== undefined && typeof body.is_active !== 'boolean')) return null;
+    || (sortOrder === null && !(body.sort_order === undefined && updating)) || (body.is_active !== undefined && typeof body.is_active !== 'boolean')) return null;
   return {
     ...(updating ? { id } : {}),
     product_id: productId,
@@ -171,10 +171,24 @@ async function hasActiveCategory(sql, categorySlug) {
   return category?.is_active === true;
 }
 
+async function mutateAndRebuild(sql, mutation) {
+  if (typeof sql.transaction !== 'function') throw new Error('Database transaction support is unavailable');
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const [, rows] = await sql.transaction(
+        (tx) => [tx`SELECT pg_advisory_xact_lock(1350564182, 1)`, mutation(tx), ...snapshotQueries(tx)],
+        { isolationLevel: 'ReadCommitted' },
+      );
+      return rows?.[0];
+    } catch (error) {
+      if (!['40001', '40P01'].includes(error?.code) || attempt === 2) throw error;
+    }
+  }
+}
+
 export function createAdminProductsHandler({
   verifyToken = verifyAdminToken,
   getSql = () => neon(process.env.NETLIFY_DATABASE_URL || process.env.NETLIFY_DB_URL),
-  rebuild = rebuildCatalogueReadModels,
   purgeTags,
 } = {}) {
   return async (event = {}, context) => {
@@ -223,7 +237,7 @@ export function createAdminProductsHandler({
         if (!await hasActiveCategory(sql, product.category)) {
           return response(422, { error: 'Select an active catalogue category' });
         }
-        const [row] = await sql`
+        const row = await mutateAndRebuild(sql, (tx) => tx`
           INSERT INTO catalog_products (
             slug, name, category, size, color, description, image_url, is_active, sort_order,
             gallery_urls, material, thickness, front_door_window, side_door, rear_door, vehicle_fit,
@@ -235,8 +249,7 @@ export function createAdminProductsHandler({
             ${product.side_door}, ${product.rear_door}, ${product.vehicle_fit}, ${JSON.stringify(product.specifications)}::jsonb
           )
           RETURNING *
-        `;
-        await rebuild(sql, ['products', 'categories']);
+        `);
         await purgeMutationCache('product', purgeTags, context);
         return response(201, row);
       }
@@ -245,22 +258,21 @@ export function createAdminProductsHandler({
         const variant = validateVariant(body);
         if (!variant) return response(400, { error: 'A valid variant is required' });
         const sql = getSql();
-        const [row] = variant.id
-          ? await sql`
+        const row = await mutateAndRebuild(sql, (tx) => variant.id
+          ? tx`
               UPDATE product_variants SET
                 product_id = ${variant.product_id}, variant_type = ${variant.variant_type},
                 variant_value = ${variant.variant_value}, label = ${variant.label},
-                is_active = ${variant.is_active}, sort_order = ${variant.sort_order}
+                is_active = ${variant.is_active}, sort_order = COALESCE(${variant.sort_order}, sort_order)
               WHERE id = ${variant.id}
               RETURNING *
             `
-          : await sql`
+          : tx`
               INSERT INTO product_variants (product_id, variant_type, variant_value, label, is_active, sort_order)
               VALUES (${variant.product_id}, ${variant.variant_type}, ${variant.variant_value}, ${variant.label}, ${variant.is_active}, ${variant.sort_order})
               RETURNING *
-            `;
+            `);
         if (!row) return response(404, { error: 'Variant not found' });
-        await rebuild(sql, ['products', 'categories']);
         await purgeMutationCache('product', purgeTags, context);
         return response(200, row);
       }
@@ -272,20 +284,19 @@ export function createAdminProductsHandler({
         if (!await hasActiveCategory(sql, product.category)) {
           return response(422, { error: 'Select an active catalogue category' });
         }
-        const [row] = await sql`
+        const row = await mutateAndRebuild(sql, (tx) => tx`
           UPDATE catalog_products SET
             slug = ${product.slug}, name = ${product.name}, category = ${product.category},
             size = ${product.size}, color = ${product.color}, description = ${product.description},
-            image_url = ${product.image_url}, is_active = ${product.is_active}, sort_order = ${product.sort_order},
+            image_url = ${product.image_url}, is_active = ${product.is_active}, sort_order = COALESCE(${product.sort_order}, sort_order),
             gallery_urls = ${product.gallery_urls}, material = ${product.material}, thickness = ${product.thickness},
             front_door_window = ${product.front_door_window}, side_door = ${product.side_door},
             rear_door = ${product.rear_door}, vehicle_fit = ${product.vehicle_fit},
             specifications = ${JSON.stringify(product.specifications)}::jsonb, updated_at = NOW()
           WHERE id = ${product.id}
           RETURNING *
-        `;
+        `);
         if (!row) return response(404, { error: 'Product not found' });
-        await rebuild(sql, ['products', 'categories']);
         await purgeMutationCache('product', purgeTags, context);
         return response(200, row);
       }
@@ -294,11 +305,10 @@ export function createAdminProductsHandler({
       const id = positiveInteger(body.id);
       if (!id) return response(400, { error: 'A valid id is required' });
       const sql = getSql();
-      const [deleted] = body.variant === true
-        ? await sql`DELETE FROM product_variants WHERE id = ${id} RETURNING id`
-        : await sql`DELETE FROM catalog_products WHERE id = ${id} RETURNING id`;
+      const deleted = await mutateAndRebuild(sql, (tx) => body.variant === true
+        ? tx`DELETE FROM product_variants WHERE id = ${id} RETURNING id`
+        : tx`DELETE FROM catalog_products WHERE id = ${id} RETURNING id`);
       if (!deleted) return response(404, { error: body.variant === true ? 'Variant not found' : 'Product not found' });
-      await rebuild(sql, ['products', 'categories']);
       await purgeMutationCache('product', purgeTags, context);
       return response(200, { ok: true });
     } catch (error) {

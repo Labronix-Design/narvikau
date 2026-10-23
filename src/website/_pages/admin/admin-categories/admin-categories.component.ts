@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -44,9 +45,12 @@ export class AdminCategoriesComponent {
     slug: ['', categorySlug],
     name: ['', categoryName],
     description: ['', categoryDescription],
-    sort_order: [0, [Validators.required, Validators.min(-100000), Validators.max(100000), Validators.pattern(/^-?\d+$/)]],
+    sort_order: [1, [Validators.required, Validators.min(1), Validators.max(100000), Validators.pattern(/^\d+$/)]],
     is_active: [true],
   });
+  private readonly position = toSignal(this.form.controls.sort_order.valueChanges, { initialValue: 1 });
+  readonly positionOccupant = computed(() => this.categories().find(category =>
+    category.sort_order === this.position() && category.id !== this.editingId()));
 
   constructor() {
     void this.load();
@@ -73,7 +77,7 @@ export class AdminCategoriesComponent {
   openCreate(): void {
     this.error.set('');
     this.editingId.set(null);
-    this.form.reset({ slug: '', name: '', description: '', sort_order: 0, is_active: true });
+    this.form.reset({ slug: '', name: '', description: '', sort_order: this.categories().length + 1, is_active: true });
     this.showForm.set(true);
   }
 
@@ -114,14 +118,12 @@ export class AdminCategoriesComponent {
     this.error.set('');
     try {
       const id = this.editingId();
-      const saved = id === null
+      id === null
         ? await this.admin.createCategory(input)
         : await this.admin.updateCategory({ id, ...input });
-      this.categories.update(items => (id === null
-        ? [...items, saved]
-        : items.map(item => item.id === id ? saved : item)
-      ).sort((left, right) => left.sort_order - right.sort_order || left.name.localeCompare(right.name)));
       this.cancelForm();
+      try { this.categories.set(await this.admin.getCategories()); }
+      catch { this.error.set('Category saved, but the list could not be refreshed. Reload the page to see the latest order.'); }
     } catch (error: unknown) {
       this.error.set(this.errorMessage(error, 'Category could not be saved.'));
     } finally {
@@ -134,8 +136,9 @@ export class AdminCategoriesComponent {
     this.saving.set(true);
     this.error.set('');
     try {
-      const saved = await this.admin.updateCategory({ ...category, is_active: !category.is_active });
-      this.categories.update(items => items.map(item => item.id === saved.id ? saved : item));
+      await this.admin.updateCategory({ ...category, is_active: !category.is_active });
+      try { this.categories.set(await this.admin.getCategories()); }
+      catch { this.error.set('Category status changed, but the list could not be refreshed. Reload the page to see the latest order.'); }
     } catch (error: unknown) {
       this.error.set(this.errorMessage(error, 'Category status could not be changed.'));
     } finally {
@@ -154,7 +157,8 @@ export class AdminCategoriesComponent {
     this.error.set('');
     try {
       await this.admin.deleteCategory(category.id);
-      this.categories.update(items => items.filter(item => item.id !== category.id));
+      try { this.categories.set(await this.admin.getCategories()); }
+      catch { this.error.set('Category deleted, but the list could not be refreshed. Reload the page to see the latest order.'); }
     } catch (error: unknown) {
       this.error.set(this.errorMessage(error, 'Category could not be deleted.'));
     }

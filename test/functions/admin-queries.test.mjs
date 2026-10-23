@@ -5,6 +5,22 @@ import {createHandler} from '../../netlify/functions/admin-queries.js';
 
 const payload={name:'Avery',email:'AVERY@example.test',phone:'+61 412 345 678',company:'Fitters',message:'Please call',product:'Canopy',enquiry_type:'general_contact',location_state:'Victoria',location_suburb:'Melbourne',discovery_source:'Referral',discovery_source_detail:'Friend',status:'new',admin_notes:'Call Friday'};
 const request=(method,body,queryStringParameters)=>({httpMethod:method,body:body===undefined?undefined:JSON.stringify(body),queryStringParameters});
+test('workflow statuses and optional follow-up details are accepted and returned',async()=>{
+ const queries=[]; const handler=createHandler({verifyAdminToken:async()=>true,getSql:()=>async(strings,...values)=>{queries.push({query:strings.join('?'),values});return [{id:4}];},invalidateSections:async()=>{}});
+ for(const status of ['awaiting_customer_information','ready_to_quote','quote_sent','quote_followed_up','follow_up_later','converted','closed','new']) assert.equal((await handler(request('PUT',{id:4,status}))).statusCode,200,status);
+ assert.equal((await handler(request('PUT',{id:4,status:'follow_up_later',follow_up_date:'2026-11-30',follow_up_note:'Call\r\nnext week'}))).statusCode,200);
+ assert.ok(queries.at(-1).values.includes('2026-11-30')); assert.ok(queries.at(-1).values.includes('Call\nnext week'));
+ assert.match(queries.at(-1).query,/RETURNING id, status, admin_notes, follow_up_date, follow_up_note/);
+ assert.equal((await handler(request('POST',{...payload,status:'follow_up_later',follow_up_date:'2026-11-30',follow_up_note:'Call'}))).statusCode,201);
+ for(const date of ['2026-02-30','tomorrow','2026-1-01',null]) assert.equal((await handler(request('PUT',{id:4,follow_up_date:date}))).statusCode,400);
+ for(const note of [null,'x'.repeat(4001),'bad\tnote']) assert.equal((await handler(request('PUT',{id:4,follow_up_note:note}))).statusCode,400);
+ assert.equal((await handler(request('PUT',{id:4,follow_up_date:'',follow_up_note:''}))).statusCode,200);
+});
+test('legacy quoted total is separately available from the aggregate quote total',async()=>{
+ const queries=[]; const handler=createHandler({verifyAdminToken:async()=>true,getSql:()=>async(strings)=>{const query=strings.join('?'); queries.push(query); return query.includes('COUNT(*)') ? [{}] : [];}});
+ assert.equal((await handler(request('GET'))).statusCode,200);
+ assert.match(queries[1],/COUNT\(\*\) FILTER \(WHERE status = 'quoted'\) AS legacy_quoted/);
+});
 test('manual creation requires authentication before database access',async()=>{
  const handler=createHandler({verifyAdminToken:async()=>false,getSql:()=>{throw new Error('unexpected');}});
  assert.equal((await handler(request('POST',payload))).statusCode,401);

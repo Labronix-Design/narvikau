@@ -26,7 +26,7 @@
           </div>
           <div class="adm-field">
             <label for="product-category">Category *</label>
-            <select id="product-category" formControlName="category" required aria-describedby="product-category-help product-category-error" [attr.aria-invalid]="form.controls.category.touched && (form.controls.category.invalid || currentInactiveCategory())">
+            <select id="product-category" formControlName="category" (change)="categoryChanged()" required aria-describedby="product-category-help product-category-error" [attr.aria-invalid]="form.controls.category.touched && (form.controls.category.invalid || currentInactiveCategory())">
               <option value="">Select a category</option>
               @for (category of activeCategories(); track category.id) {
                 <option [value]="category.slug">{{ category.name }}</option>
@@ -39,9 +39,9 @@
             <small id="product-category-error" class="field-error">@if (form.controls.category.touched && (form.controls.category.invalid || currentInactiveCategory())) { Select an active category. }</small>
           </div>
           <div class="adm-field">
-            <label for="product-sort">Sort Order</label><input id="product-sort" type="number" formControlName="sort_order" min="-100000" max="100000" step="1" aria-describedby="product-sort-help product-sort-error" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid">
-            <small id="product-sort-help">Whole number between -100000 and 100000. Lower numbers appear first.</small>
-            <small id="product-sort-error" class="field-error">@if (form.controls.sort_order.touched && form.controls.sort_order.invalid) { Enter a whole number within the allowed range. }</small>
+            <label for="product-sort">Position in category</label><input id="product-sort" type="number" formControlName="sort_order" min="1" max="100000" step="1" aria-describedby="product-sort-help product-sort-error" [attr.aria-invalid]="form.controls.sort_order.touched && form.controls.sort_order.invalid">
+            <small id="product-sort-help" aria-live="polite">Positions include inactive products. @if (productPositionOccupant(); as occupant) { Position {{ occupant.sort_order }} is currently {{ occupant.name }}{{ occupant.is_active ? '' : ' (inactive)' }}. Saving shifts the affected products and closes any gap. } @else { 1 appears first; a position beyond the end places it last. }</small>
+            <small id="product-sort-error" class="field-error">@if (form.controls.sort_order.touched && form.controls.sort_order.invalid) { Enter a whole number from 1 to 100000. }</small>
           </div>
           <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible in catalogue</label></div>
           <div class="adm-field span-full">
@@ -151,10 +151,10 @@
                   @else {
                     @if (showVariantForm()) {
                       <div class="variant-form"><form [formGroup]="variantForm"><div class="variant-form-grid">
-                        <div class="adm-field"><label for="variant-type">Type</label><select id="variant-type" formControlName="variant_type">@for (type of variantTypes; track type) { <option [value]="type">{{ type }}</option> }</select></div>
+                        <div class="adm-field"><label for="variant-type">Type</label><select id="variant-type" formControlName="variant_type" (change)="variantTypeChanged()">@for (type of variantTypes; track type) { <option [value]="type">{{ type }}</option> }</select></div>
                         <div class="adm-field"><label for="variant-value">Value</label><input id="variant-value" formControlName="variant_value"></div>
                         <div class="adm-field"><label for="variant-label">Display Label</label><input id="variant-label" formControlName="label"></div>
-                        <div class="adm-field"><label for="variant-sort">Sort Order</label><input id="variant-sort" type="number" formControlName="sort_order" min="0"></div>
+                        <div class="adm-field"><label for="variant-sort">Position within this option type</label><input id="variant-sort" type="number" formControlName="sort_order" min="1" max="100000" step="1" aria-describedby="variant-sort-help variant-sort-error" [attr.aria-invalid]="variantForm.controls.sort_order.touched && variantForm.controls.sort_order.invalid"><small id="variant-sort-help" aria-live="polite">Positions include inactive options. @if (variantPositionOccupant(); as occupant) { Position {{ occupant.sort_order }} is currently {{ occupant.label }}{{ occupant.is_active ? '' : ' (inactive)' }}. Saving shifts the affected options and closes any gap. } @else { 1 appears first; a position beyond the end places it last. }</small><small id="variant-sort-error" class="field-error">@if (variantForm.controls.sort_order.touched && variantForm.controls.sort_order.invalid) { Enter a whole number from 1 to 100000. }</small></div>
                         <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible</label></div>
                       </div><div class="adm-form-actions">
                         <button type="button" class="adm-btn primary small" (click)="saveVariant()" [disabled]="variantSaving()"><mat-icon svgIcon="save"></mat-icon>{{ variantSaving() ? 'Saving…' : 'Save Option' }}</button>
@@ -167,7 +167,7 @@
                         <div class="variant-group"><div class="variant-group-label">{{ type }}</div><div class="variant-rows">
                           @for (variant of variantsByType(type); track variant.id) {
                             <div class="variant-item" [class.inactive]="!variant.is_active">
-                              <span class="variant-label">{{ variant.label }}</span><span class="variant-value mono">{{ variant.variant_value }}</span>
+                              <span class="variant-label">{{ variant.sort_order }}. {{ variant.label }}</span><span class="variant-value mono">{{ variant.variant_value }}</span>
                               <div class="variant-actions">
                                 <button class="adm-btn ghost small" (click)="toggleVariantActive(variant)" [attr.aria-label]="(variant.is_active ? 'Hide ' : 'Show ') + variant.label"><mat-icon [svgIcon]="variant.is_active ? 'pause_circle' : 'play_circle'"></mat-icon></button>
                                 <button class="adm-btn ghost small" (click)="editVariant(variant)" [attr.aria-label]="'Edit ' + variant.label"><mat-icon svgIcon="edit"></mat-icon></button>

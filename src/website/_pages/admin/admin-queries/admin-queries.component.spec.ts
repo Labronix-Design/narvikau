@@ -22,6 +22,12 @@ describe('Admin enquiry capture', () => {
     await component.saveManual();
     expect(service.createQuery).not.toHaveBeenCalled();
   });
+  it('includes follow-up details when creating a follow-up enquiry', async () => {
+    component.manualForm.patchValue({ ...base, status: 'follow_up_later' });
+    component.manualForm.patchValue({ follow_up_date: '2026-11-01', follow_up_note: 'Call customer' });
+    await component.saveManual();
+    expect(service.createQuery).toHaveBeenCalledWith(jasmine.objectContaining({ status: 'follow_up_later', follow_up_date: '2026-11-01', follow_up_note: 'Call customer' }));
+  });
   it('creates a manual lead with the strict snake_case contract and refreshes filters', async () => {
     component.manualForm.patchValue({ ...base, enquiry_type: 'dealer_enquiry', company: 'Alex Motors' });
     component.activeTab.set('new');
@@ -65,6 +71,28 @@ describe('Admin enquiry note drafts', () => {
 
     expect(component.notesMap()[first.id]).toBe('Draft note');
     expect(component.notesMap()[second.id]).toBe('Other note');
+  });
+
+  it('offers follow-up details before saving the follow-up status', async () => {
+    const row = lead(1, '');
+    await component.updateStatus(row, 'follow_up_later');
+    expect(service.updateQuery).not.toHaveBeenCalled();
+    component.followUpForm.patchValue({ follow_up_date: '2026-11-01', follow_up_note: 'Call customer' });
+    await component.saveFollowUp(row);
+    expect(service.updateQuery).toHaveBeenCalledWith(row.id, { status: 'follow_up_later', follow_up_date: '2026-11-01', follow_up_note: 'Call customer' });
+  });
+
+  it('restores the saved selection when a status update fails', async () => {
+    const row = lead(1, '');
+    const select = document.createElement('select');
+    for (const status of ['new', 'ready_to_quote']) select.add(new Option(status, status));
+    select.value = 'ready_to_quote';
+    service.updateQuery.and.rejectWith(new Error('Save failed'));
+    TestBed.inject(ModalService).alert = jasmine.createSpy('alert').and.resolveTo();
+
+    await component.updateStatus(row, 'ready_to_quote', select);
+
+    expect(select.value).toBe('new');
   });
 
   it('keeps a draft through a manual creation refresh and a filter that hides the lead', async () => {

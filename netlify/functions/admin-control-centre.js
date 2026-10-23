@@ -187,7 +187,7 @@ async function loadBusinessMetrics(sql) {
       COUNT(*)::INTEGER AS enquiry_count,
       COUNT(*) FILTER (WHERE status = 'new')::INTEGER AS new_enquiries,
       COUNT(*) FILTER (WHERE status = 'contacted')::INTEGER AS contacted_enquiries,
-      COUNT(*) FILTER (WHERE status = 'quoted')::INTEGER AS quoted_enquiries,
+      COUNT(*) FILTER (WHERE status IN ('quoted', 'quote_sent', 'quote_followed_up'))::INTEGER AS quoted_enquiries,
       COUNT(*) FILTER (WHERE status = 'converted')::INTEGER AS converted_enquiries,
       COUNT(*) FILTER (WHERE status = 'closed')::INTEGER AS closed_enquiries
     FROM leads
