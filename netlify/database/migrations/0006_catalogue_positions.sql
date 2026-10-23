@@ -1,6 +1,7 @@
+BEGIN;
+
 -- Lock in parent-to-child order and retain locks through snapshot and trigger setup.
--- Reads continue, while concurrent catalogue mutations wait until Netlify's
--- migration transaction commits.
+-- Reads continue, while concurrent catalogue mutations wait until commit.
 -- Netlify normally invalidates these responses on atomic deployment (the
 -- catalogue responses do not opt out using Netlify-Cache-ID). Verify the
 -- live payload and Cache-Status after deployment; purge catalogue:products,
@@ -107,3 +108,5 @@ $$;
 CREATE TRIGGER category_positions BEFORE INSERT OR UPDATE OR DELETE ON catalog_categories FOR EACH ROW EXECUTE FUNCTION maintain_catalogue_positions();
 CREATE TRIGGER product_positions BEFORE INSERT OR UPDATE OR DELETE ON catalog_products FOR EACH ROW EXECUTE FUNCTION maintain_catalogue_positions();
 CREATE TRIGGER variant_positions BEFORE INSERT OR UPDATE OR DELETE ON product_variants FOR EACH ROW EXECUTE FUNCTION maintain_catalogue_positions();
+
+COMMIT;
