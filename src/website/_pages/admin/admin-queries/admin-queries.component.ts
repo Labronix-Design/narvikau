@@ -3,7 +3,7 @@ import { enquiryControls, enquiryPayload } from '../../../_models/enquiry-locati
 import { ENQUIRY_SOURCE_OPTIONS, sourceRequiresDetail, sourceDetailRequiredValidator } from '../../../_models/enquiry-source.models';
 import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminQueryUpdateResult, AdminService, AdminQueryRow, AdminQueryTotals, ManualQueryInput } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
@@ -14,7 +14,7 @@ import { ModalService } from '../../../_services/modal.service';
   styleUrls: ['./admin-queries.component.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, ReactiveFormsModule, EnquiryLocationComponent, MatIconModule],
+  imports: [CommonModule, DatePipe, FormsModule, ReactiveFormsModule, EnquiryLocationComponent, MatIconModule],
 })
 export class AdminQueriesComponent implements OnInit {
   private adminService = inject(AdminService);

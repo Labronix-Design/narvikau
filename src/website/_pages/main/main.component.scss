@@ -788,7 +788,7 @@
 }
 
 .enquiry-referral { display: grid; gap: .5rem; margin-block: 1rem; }
-.enquiry-referral :is(input, select) { width: 100%; box-sizing: border-box; min-height: 48px; padding: .75rem; font: inherit; border: 2px solid var(--nv-border-strong); background: var(--nv-bg-dark); color: var(--nv-text-main); color-scheme: dark; }
+.enquiry-referral :is(input, select) { width: 100%; box-sizing: border-box; min-height: 3rem; padding: .75rem; font: inherit; border: 2px solid var(--nv-border-strong); background: var(--nv-bg-dark); color: var(--nv-text-main); color-scheme: dark; }
 .enquiry-referral :is(input, select):focus-visible { outline: 2px solid var(--nv-orange); outline-offset: 2px; }
 .enquiry-referral :is(.field-error, .qm-error) { color: #f87171; margin: 0; font-size: .85rem; }
 .enquiry-referral p:empty { display: none; }

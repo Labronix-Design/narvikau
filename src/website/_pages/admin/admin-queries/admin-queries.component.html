@@ -130,8 +130,8 @@
                 <td class="message-preview">{{ row.message || '—' }}</td>
                 <td>{{ row.location_suburb || '—' }}@if (row.location_state) {, {{ row.location_state }}}</td>
                 <td>
-                  <select class="status-select" [attr.aria-label]="'Status for ' + row.name" [value]="followUpId() === row.id ? 'follow_up_later' : row.status" [disabled]="savingFollowUp() || savingStatusId() === row.id"
-                          (change)="updateStatus(row, $any($event.target).value, $any($event.target))">
+                  <select class="status-select" [attr.aria-label]="'Status for ' + row.name" [ngModel]="followUpId() === row.id ? 'follow_up_later' : row.status" [ngModelOptions]="{standalone: true}" [disabled]="savingFollowUp() || savingStatusId() === row.id"
+                          (ngModelChange)="updateStatus(row, $event)">
                     @if (row.status === 'contacted' || row.status === 'quoted') { <option [value]="row.status">{{ statusLabels[row.status] }}</option> }
                     @for (s of statusOptions; track s) {
                       <option [value]="s">{{ statusLabels[s] }}</option>

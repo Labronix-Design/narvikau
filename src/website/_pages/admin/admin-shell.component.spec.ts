@@ -2,7 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AdminShellComponent } from './admin-shell.component';
 import { AdminService } from '../../_services/admin.service';
+import { SiteSettingsService } from '../../_services/site-settings.service';
 import { websiteRoutes } from '../../website.routes';
+import { signal } from '@angular/core';
 
 describe('AdminShellComponent catalogue navigation', () => {
   let fixture: ComponentFixture<AdminShellComponent>;
@@ -10,7 +12,16 @@ describe('AdminShellComponent catalogue navigation', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminShellComponent, RouterTestingModule],
-      providers: [{ provide: AdminService, useValue: { logout: () => undefined } }],
+      providers: [
+        { provide: AdminService, useValue: { logout: () => undefined } },
+        {
+          provide: SiteSettingsService,
+          useValue: {
+            settings: signal({ logo_url: '/uploads/navrik-admin-logo.svg' }),
+            uploadVariantUrl: (url: string) => url,
+          },
+        },
+      ],
     }).compileComponents();
     fixture = TestBed.createComponent(AdminShellComponent);
   });
@@ -47,5 +58,13 @@ describe('AdminShellComponent catalogue navigation', () => {
     expect(finance).toEqual(jasmine.objectContaining({ redirectTo: 'products', pathMatch: 'full' }));
     expect(adminRoutes.some(route => retiredAdminPaths.includes(route.path ?? ''))).toBeFalse();
     expect(adminRoutes.some(route => route.path === 'categories' && route.loadComponent)).toBeTrue();
+  });
+
+  it('uses the configured site logo in the navigation shell', () => {
+    fixture.detectChanges();
+
+    const logo = fixture.nativeElement.querySelector<HTMLImageElement>('.admin-brand-logo');
+    expect(logo?.src).toContain('/uploads/navrik-admin-logo.svg');
+    expect(logo?.alt).toBe('Navrik');
   });
 });

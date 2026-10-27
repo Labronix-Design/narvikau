@@ -4,7 +4,11 @@
 
   <aside class="admin-sidebar">
     <div class="sidebar-brand">
-      <div class="brand-mark">NV</div>
+      @if (siteSettings.settings().logo_url; as logoUrl) {
+        <img class="admin-brand-logo" [src]="siteSettings.uploadVariantUrl(logoUrl, 320)" alt="Navrik">
+      } @else {
+        <div class="brand-mark" aria-label="Navrik">NV</div>
+      }
       <div class="brand-text">
         <span class="brand-name">NAVRIK</span>
         <span class="brand-sub">Business control</span>
@@ -56,7 +60,13 @@
       <button class="hamburger" (click)="toggleSidebar()">
         <mat-icon svgIcon="menu"></mat-icon>
       </button>
-      <span class="mobile-brand">NAVRIK <span>CONTROL</span></span>
+      <span class="mobile-brand">
+        @if (siteSettings.settings().logo_url; as logoUrl) {
+          <img class="admin-brand-logo mobile-brand-logo" [src]="siteSettings.uploadVariantUrl(logoUrl, 320)" alt="Navrik">
+        } @else {
+          <span>NAVRIK <span>CONTROL</span></span>
+        }
+      </span>
     </div>
     <router-outlet></router-outlet>
   </main>

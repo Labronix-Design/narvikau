@@ -90,6 +90,15 @@
     flex-shrink: 0;
   }
 
+  .admin-brand-logo {
+    display: block;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    flex: 0 0 auto;
+    object-fit: contain;
+    filter: contrast(1.15);
+  }
+
   .brand-text {
     flex: 1;
     display: flex;
@@ -318,6 +327,14 @@
 
   span {
     color: var(--nv-orange, #ea580c);
+  }
+
+  .mobile-brand-logo {
+    display: block;
+    max-inline-size: 8rem;
+    block-size: 2.25rem;
+    object-fit: contain;
+    filter: contrast(1.15);
   }
 }
 

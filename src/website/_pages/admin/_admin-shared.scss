@@ -23,6 +23,32 @@
   margin: 0 0 6px;
 }
 
+/* Every native select in the admin is a full-size form control. This keeps
+   filters and table status controls aligned with the editable fields instead
+   of leaving browser-default, visually smaller dropdowns in the interface. */
+.adm-page select {
+  min-block-size: 2.75rem;
+  padding-inline: 0.75rem 2.5rem;
+  border: 1px solid var(--admin-border, var(--nv-metal));
+  border-radius: var(--border-radius);
+  background-color: var(--admin-surface-sunken, var(--nv-bg-dark));
+  background-image: linear-gradient(45deg, transparent 50%, var(--admin-text-muted, var(--nv-text-muted)) 50%), linear-gradient(135deg, var(--admin-text-muted, var(--nv-text-muted)) 50%, transparent 50%);
+  background-position: calc(100% - 1.1rem) 50%, calc(100% - 0.8rem) 50%;
+  background-repeat: no-repeat;
+  background-size: 0.32rem 0.32rem, 0.32rem 0.32rem;
+  color: var(--admin-text, var(--nv-text-main));
+  color-scheme: dark;
+  cursor: pointer;
+  font: inherit;
+  appearance: none;
+}
+
+.adm-page select:focus-visible {
+  border-color: var(--nv-orange);
+  outline: 0.125rem solid var(--nv-focus-ring);
+  outline-offset: 0.125rem;
+}
+
 .adm-sub {
   font-size: 0.82rem;
   color: var(--admin-text-muted, var(--nv-text-muted));
@@ -206,8 +232,8 @@
 
 // ── INLINE FORM ────────────────────────────────────────────────
 .adm-form-wrap {
-  background: #141414;
-  border: 1px solid var(--nv-metal);
+  background: var(--admin-surface-raised, var(--nv-carbon));
+  border: 1px solid var(--admin-border, var(--nv-metal));
   border-left: 3px solid var(--nv-orange);
   border-radius: 0;
   padding: clamp(16px, 3vw, 28px);
@@ -251,7 +277,7 @@
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--nv-aluminum-light);
+    color: var(--admin-text-subtle, var(--nv-aluminum-light));
   }
 
   .field-hint {
@@ -259,18 +285,20 @@
     font-weight: 400;
     text-transform: none;
     letter-spacing: normal;
-    color: #555;
+    color: var(--admin-text-subtle, var(--nv-alloy-muted));
     margin-left: 4px;
   }
 
   input, select, textarea {
-    background: #0b0b0b;
-    border: 1px solid var(--nv-metal);
+    background: var(--admin-surface-sunken, var(--nv-bg-dark));
+    border: 1px solid var(--admin-border, var(--nv-metal));
     border-radius: 0;
-    color: var(--nv-text-main);
+    color: var(--admin-text, var(--nv-text-main));
     font-family: inherit;
     font-size: 0.82rem;
+    min-block-size: 2.75rem;
     padding: 9px 12px;
+    min-height: 42px;
     outline: none;
     transition: border-color 0.15s, background 0.15s;
 
@@ -282,7 +310,7 @@
 
   textarea { resize: vertical; min-height: 80px; }
 
-  select option { background: #141414; }
+  select option { background: var(--admin-surface-raised, var(--nv-carbon)); color: var(--admin-text, var(--nv-text-main)); }
 
   .toggle-row {
     display: flex;

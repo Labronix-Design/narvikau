@@ -33,6 +33,20 @@ function toRgbTriplet(hex: string): string | null {
   return `${(num >> 16) & 0xff}, ${(num >> 8) & 0xff}, ${num & 0xff}`;
 }
 
+function mix(hex: string, target: string, targetWeight: number): string {
+  const sourceMatch = /^#([0-9a-f]{6})$/i.exec(hex);
+  const targetMatch = /^#([0-9a-f]{6})$/i.exec(target);
+  if (!sourceMatch || !targetMatch) return hex;
+
+  const source = parseInt(sourceMatch[1], 16);
+  const targetValue = parseInt(targetMatch[1], 16);
+  const channel = (shift: number) => Math.round(
+    (((source >> shift) & 0xff) * (1 - targetWeight))
+      + (((targetValue >> shift) & 0xff) * targetWeight),
+  );
+  return `#${[channel(16), channel(8), channel(0)].map(value => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class SiteSettingsService {
   private storefront = inject(StorefrontReadModelService);
@@ -44,6 +58,7 @@ export class SiteSettingsService {
   /** True when the public settings endpoint could not provide a real configuration. */
   readonly unavailable = signal(false);
   private loaded = false;
+  private previewing = false;
   private injectedFontLink: HTMLLinkElement | null = null;
 
   async load(): Promise<void> {
@@ -80,7 +95,27 @@ export class SiteSettingsService {
     this.apply(this.settings());
   }
 
-  /** Re-applies theme immediately — used by the admin settings page for a live preview before saving. */
+  /** Applies a temporary theme without changing the saved public configuration. */
+  preview(settings: SiteSettings): void {
+    this.previewing = true;
+    this.apply(settings);
+  }
+
+  /** Applies a saved configuration and makes it the theme restored after a preview. */
+  commit(settings: SiteSettings): void {
+    this.previewing = false;
+    this.settings.set(settings);
+    this.apply(settings);
+  }
+
+  /** Restores the saved configuration after an admin dismisses a preview. */
+  cancelPreview(): void {
+    if (!this.previewing) return;
+    this.previewing = false;
+    this.apply(this.settings());
+  }
+
+  /** Re-applies theme immediately. Prefer preview() or commit() when changing settings. */
   apply(settings: SiteSettings): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
@@ -93,10 +128,37 @@ export class SiteSettingsService {
     root.setProperty('--nv-ink', backgroundColor);
     root.setProperty('--nv-bg-dark', backgroundColor);
     root.setProperty('--nv-text-main', fontColor);
+    root.setProperty('--nv-carbon', mix(backgroundColor, fontColor, 0.075));
+    root.setProperty('--nv-gunmetal', mix(backgroundColor, fontColor, 0.14));
+    root.setProperty('--nv-alloy-muted', mix(backgroundColor, fontColor, 0.55));
+    root.setProperty('--nv-alloy', mix(backgroundColor, fontColor, 0.78));
+    root.setProperty('--nv-metal', mix(backgroundColor, fontColor, 0.2));
+    root.setProperty('--nv-metal-light', mix(backgroundColor, fontColor, 0.55));
+    root.setProperty('--nv-text-muted', mix(backgroundColor, fontColor, 0.76));
+    root.setProperty('--nv-scrollbar-track', mix(backgroundColor, fontColor, 0.075));
+    root.setProperty('--nv-scrollbar-thumb', mix(backgroundColor, fontColor, 0.55));
+    root.setProperty('--nv-scrollbar-thumb-hover', mix(backgroundColor, fontColor, 0.78));
     const rgb = toRgbTriplet(color);
     if (rgb) root.setProperty('--nv-orange-rgb', rgb);
 
+    this.applyAdminTheme(backgroundColor, fontColor);
+
     this.applyFont(settings.font_family || DEFAULTS.font_family);
+  }
+
+  private applyAdminTheme(backgroundColor: string, fontColor: string): void {
+    const adminShell = document.querySelector<HTMLElement>('website-admin-shell');
+    if (!adminShell) return;
+
+    const set = (name: string, value: string) => adminShell.style.setProperty(name, value);
+    set('--admin-page', backgroundColor);
+    set('--admin-surface-sunken', mix(backgroundColor, fontColor, 0.045));
+    set('--admin-surface-raised', mix(backgroundColor, fontColor, 0.09));
+    set('--admin-surface-hover', mix(backgroundColor, fontColor, 0.15));
+    set('--admin-text', fontColor);
+    set('--admin-text-muted', mix(backgroundColor, fontColor, 0.76));
+    set('--admin-text-subtle', mix(backgroundColor, fontColor, 0.6));
+    set('--admin-border', mix(backgroundColor, fontColor, 0.25));
   }
 
   /** Returns a right-sized Netlify Image CDN URL for a same-site admin upload. */

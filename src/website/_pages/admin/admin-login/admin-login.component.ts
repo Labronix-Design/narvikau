@@ -5,6 +5,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminService } from '../../../_services/admin.service';
+import { SiteSettingsService } from '../../../_services/site-settings.service';
 import { adminLoginErrorMessage } from './admin-login-error';
 
 @Component({
@@ -19,6 +20,7 @@ export class AdminLoginComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private adminService = inject(AdminService);
+  readonly siteSettings = inject(SiteSettingsService);
 
   form = this.fb.nonNullable.group({
     password: ['', Validators.required],

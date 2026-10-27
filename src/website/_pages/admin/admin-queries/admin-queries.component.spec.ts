@@ -195,4 +195,23 @@ describe('Admin enquiries list', () => {
     expect(fixture.nativeElement.querySelector('.message-preview')?.textContent)
       .toContain('Could you quote a canopy for my Ranger?');
   });
+
+  it('shows the server status in a row dropdown after its dynamic options render', async () => {
+    service.getQueries.and.resolveTo({
+      rows: [{
+        id: 1, source: 'website', name: 'Alex', email: 'alex@example.test', phone: null,
+        company: null, product: null, message: null, status: 'ready_to_quote', admin_notes: null,
+        enquiry_type: 'product_quote', location_state: null, location_suburb: null,
+        discovery_source: null, discovery_source_detail: null, created_at: '2026-10-14T00:00:00.000Z',
+      }],
+      totals: {},
+    });
+
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement.querySelector('.status-select') as HTMLSelectElement).value)
+      .toBe('ready_to_quote');
+  });
 });

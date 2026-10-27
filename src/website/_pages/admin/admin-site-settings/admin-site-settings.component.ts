@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,6 +13,12 @@ import {
 } from '../../../_models/site-settings.models';
 
 type SettingsSection = 'branding' | 'contact' | 'hero' | 'compatibility';
+type ThemeFields = {
+  font_family: string;
+  primary_color: string;
+  background_color: string;
+  font_color: string;
+};
 
 @Component({
   selector: 'website-admin-site-settings',
@@ -22,7 +28,7 @@ type SettingsSection = 'branding' | 'contact' | 'hero' | 'compatibility';
   imports: [CommonModule, ReactiveFormsModule, MatIconModule, ImageUploadComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminSiteSettingsComponent implements OnInit {
+export class AdminSiteSettingsComponent implements OnInit, OnDestroy {
   private adminService = inject(AdminService);
   private modal = inject(ModalService);
   private siteSettingsService = inject(SiteSettingsService);
@@ -33,6 +39,7 @@ export class AdminSiteSettingsComponent implements OnInit {
   loading = signal(true);
   saving  = signal(false);
   error   = signal('');
+  previewingTheme = signal(false);
 
   readonly sections: { id: SettingsSection; label: string }[] = [
     { id: 'branding',      label: 'Branding'                },
@@ -68,6 +75,13 @@ export class AdminSiteSettingsComponent implements OnInit {
     compat_note: [''],
   });
 
+  private savedTheme: ThemeFields = {
+    font_family: 'Inter',
+    primary_color: '#ea580c',
+    background_color: '#0a0908',
+    font_color: '#f2ede7',
+  };
+
   async ngOnInit(): Promise<void> {
     this.loading.set(true);
     try {
@@ -87,6 +101,12 @@ export class AdminSiteSettingsComponent implements OnInit {
         contact_location: contact.location || DEFAULT_CONTACT_INFO.location,
         compat_note: s.compat_note || DEFAULT_COMPAT_NOTE,
       });
+      this.savedTheme = {
+        font_family: s.font_family || 'Inter',
+        primary_color: s.primary_color || '#ea580c',
+        background_color: s.background_color || '#0a0908',
+        font_color: s.font_color || '#f2ede7',
+      };
       this.businessHours.set(hasHours ? contact.business_hours : DEFAULT_CONTACT_INFO.business_hours.map(x => ({ ...x })));
       this.usingDefaultContact.set(!hasContact);
 
@@ -104,6 +124,10 @@ export class AdminSiteSettingsComponent implements OnInit {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.siteSettingsService.cancelPreview();
   }
 
   // ── Hero slides ────────────────────────────────────────────
@@ -208,7 +232,7 @@ export class AdminSiteSettingsComponent implements OnInit {
 
   // ── Live preview ───────────────────────────────────────────
   previewTheme(): void {
-    this.siteSettingsService.apply({
+    this.siteSettingsService.preview({
       logo_url: this.form.value.logo_url || null,
       font_family: this.form.value.font_family || 'Inter',
       primary_color: this.form.value.primary_color || '#ea580c',
@@ -220,6 +244,13 @@ export class AdminSiteSettingsComponent implements OnInit {
       compat_note: this.form.value.compat_note || DEFAULT_COMPAT_NOTE,
       contact: this.buildContactPayload(),
     });
+    this.previewingTheme.set(true);
+  }
+
+  resetThemePreview(): void {
+    this.form.patchValue(this.savedTheme);
+    this.siteSettingsService.cancelPreview();
+    this.previewingTheme.set(false);
   }
 
   // ── Save ───────────────────────────────────────────────────
@@ -251,7 +282,14 @@ export class AdminSiteSettingsComponent implements OnInit {
       this.brandLogos.set(updated.brand_logos || []);
       this.trustBar.set(updated.trust_bar || []);
       this.businessHours.set(updated.contact?.business_hours || []);
-      this.siteSettingsService.apply(updated);
+      this.savedTheme = {
+        font_family: updated.font_family || 'Inter',
+        primary_color: updated.primary_color || '#ea580c',
+        background_color: updated.background_color || '#0a0908',
+        font_color: updated.font_color || '#f2ede7',
+      };
+      this.previewingTheme.set(false);
+      this.siteSettingsService.commit(updated);
       await this.modal.alert({ title: 'Saved', message: 'Site settings updated — changes are live on the storefront now.' });
     } catch (e: any) {
       await this.modal.alert({ title: 'Save Failed', message: e.error?.error || e.message || 'Unknown error', variant: 'danger' });

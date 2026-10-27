@@ -36,13 +36,13 @@
             <label>Logo <span class="field-hint">Shown in navbar &amp; footer — leave empty to use the NAVRIK wordmark</span></label>
             <website-image-upload
               [url]="form.value.logo_url"
-              (urlChange)="form.patchValue({ logo_url: $event }); previewTheme()">
+              (urlChange)="form.patchValue({ logo_url: $event })">
             </website-image-upload>
           </div>
 
           <div class="adm-field">
             <label>Font Family</label>
-            <select [formControl]="form.controls.font_family" (change)="previewTheme()">
+            <select [formControl]="form.controls.font_family">
               @for (f of fontOptions; track f) { <option [value]="f">{{ f }}</option> }
             </select>
           </div>
@@ -50,8 +50,8 @@
           <div class="adm-field">
             <label>Primary / Accent Colour</label>
             <div class="color-field-row">
-              <input type="color" [formControl]="form.controls.primary_color" (input)="previewTheme()">
-              <input type="text" [formControl]="form.controls.primary_color" (input)="previewTheme()" placeholder="#ea580c">
+              <input type="color" [formControl]="form.controls.primary_color">
+              <input type="text" [formControl]="form.controls.primary_color" placeholder="#ea580c">
             </div>
             @if (form.controls.primary_color.touched && form.controls.primary_color.invalid) {
               <span class="field-err">Must be a 6-digit hex colour</span>
@@ -61,8 +61,8 @@
           <div class="adm-field">
             <label>Site Background Colour</label>
             <div class="color-field-row">
-              <input type="color" [formControl]="form.controls.background_color" (input)="previewTheme()">
-              <input type="text" [formControl]="form.controls.background_color" (input)="previewTheme()" placeholder="#0a0908">
+              <input type="color" [formControl]="form.controls.background_color">
+              <input type="text" [formControl]="form.controls.background_color" placeholder="#0a0908">
             </div>
             @if (form.controls.background_color.touched && form.controls.background_color.invalid) {
               <span class="field-err">Must be a 6-digit hex colour</span>
@@ -72,17 +72,29 @@
           <div class="adm-field">
             <label>Main Font Colour</label>
             <div class="color-field-row">
-              <input type="color" [formControl]="form.controls.font_color" (input)="previewTheme()">
-              <input type="text" [formControl]="form.controls.font_color" (input)="previewTheme()" placeholder="#f2ede7">
+              <input type="color" [formControl]="form.controls.font_color">
+              <input type="text" [formControl]="form.controls.font_color" placeholder="#f2ede7">
             </div>
             @if (form.controls.font_color.touched && form.controls.font_color.invalid) {
               <span class="field-err">Must be a 6-digit hex colour</span>
             }
           </div>
         </div>
+        <div class="theme-preview-actions">
+          <button type="button" class="adm-btn ghost" (click)="previewTheme()" [disabled]="form.controls.font_family.invalid || form.controls.primary_color.invalid || form.controls.background_color.invalid || form.controls.font_color.invalid">
+            <mat-icon svgIcon="visibility"></mat-icon>
+            {{ previewingTheme() ? 'Refresh Preview' : 'Preview Theme' }}
+          </button>
+          @if (previewingTheme()) {
+            <button type="button" class="adm-btn ghost" (click)="resetThemePreview()">
+              <mat-icon svgIcon="restart_alt"></mat-icon>
+              Reset Preview
+            </button>
+          }
+        </div>
         <p class="preview-note">
           <mat-icon svgIcon="visibility"></mat-icon>
-          Changes preview live across the site as you edit — nothing is saved until you click "Save Settings" below.
+          Preview colours across the public site and admin workspace before saving. Reset returns the fields and UI to the currently saved theme.
         </p>
       </div>
       }

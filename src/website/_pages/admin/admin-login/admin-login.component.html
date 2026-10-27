@@ -1,7 +1,11 @@
 <div class="login-wrap">
   <div class="login-card">
     <div class="login-brand">
-      <div class="brand-mark">NV</div>
+      @if (siteSettings.settings().logo_url; as logoUrl) {
+        <img class="admin-brand-logo" [src]="siteSettings.uploadVariantUrl(logoUrl, 320)" alt="Navrik">
+      } @else {
+        <div class="brand-mark" aria-label="Navrik">NV</div>
+      }
       <div>
         <div class="brand-name">NAVRIK</div>
         <div class="brand-sub">Admin Portal</div>

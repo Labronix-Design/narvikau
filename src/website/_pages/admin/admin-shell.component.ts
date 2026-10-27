@@ -5,6 +5,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { AdminService } from '../../_services/admin.service';
+import { SiteSettingsService } from '../../_services/site-settings.service';
 import { ConfirmModalComponent } from '../../_components/confirm-modal/confirm-modal.component';
 
 @Component({
@@ -18,6 +19,7 @@ import { ConfirmModalComponent } from '../../_components/confirm-modal/confirm-m
 export class AdminShellComponent {
   private router = inject(Router);
   private adminService = inject(AdminService);
+  readonly siteSettings = inject(SiteSettingsService);
   private destroyRef = inject(DestroyRef);
 
   sidebarOpen = signal(false);
