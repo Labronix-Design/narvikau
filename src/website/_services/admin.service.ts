@@ -68,6 +68,14 @@ export interface AdminQueryRow {
   created_at: string;
 }
 
+export interface AdminQueryUpdateResult {
+  id: number;
+  status: string;
+  admin_notes: string | null;
+  follow_up_date?: string | null;
+  follow_up_note?: string | null;
+}
+
 export type AdminQueryTotals = Partial<Record<string, number | string>>;
 
 export interface WarrantyRegistrationRecord {
@@ -430,8 +438,8 @@ export class AdminService {
     return firstValueFrom(this.http.post<AdminQueryRow>('/api/admin-queries', payload, { headers: this.authHeaders }));
   }
 
-  updateQuery(id: number, payload: { status?: string; admin_notes?: string; follow_up_date?: string; follow_up_note?: string }): Promise<any> {
-    return firstValueFrom(this.http.put<any>('/api/admin-queries', { id, ...payload }, { headers: this.authHeaders }));
+  updateQuery(id: number, payload: { status?: string; admin_notes?: string; follow_up_date?: string; follow_up_note?: string }): Promise<AdminQueryUpdateResult> {
+    return firstValueFrom(this.http.put<AdminQueryUpdateResult>('/api/admin-queries', { id, ...payload }, { headers: this.authHeaders }));
   }
 
   // ── Site Settings ─────────────────────────────────────────────

@@ -26,6 +26,8 @@ const DEFAULTS = {
   logo_url: null,
   font_family: 'Inter',
   primary_color: '#ea580c',
+  background_color: '#0a0908',
+  font_color: '#f2ede7',
   hero_slides: [],
   brand_logos: [],
   contact: {},
@@ -47,7 +49,7 @@ export function createSiteSettingsHandler({ getSql = defaultGetSql } = {}) {
 
     try {
       const sql = getSql();
-      const [row] = await sql`SELECT logo_url, font_family, primary_color, hero_slides, brand_logos, contact, trust_bar FROM site_settings WHERE id = 1`;
+      const [row] = await sql`SELECT logo_url, font_family, primary_color, background_color, font_color, hero_slides, brand_logos, contact, trust_bar FROM site_settings WHERE id = 1`;
       return { statusCode: 200, headers, body: JSON.stringify(row || DEFAULTS) };
     } catch (err) {
       log.error('Database read failed', { error: err?.name || 'Error', code: err?.code });

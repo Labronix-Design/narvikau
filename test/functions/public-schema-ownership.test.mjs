@@ -8,6 +8,8 @@ const freshSettings = {
   logo_url: null,
   font_family: 'Inter',
   primary_color: '#ea580c',
+  background_color: '#0a0908',
+  font_color: '#f2ede7',
   hero_slides: [],
   brand_logos: [],
   contact: {},
@@ -56,7 +58,12 @@ test('admin site settings updates the migration-owned AU row without runtime sch
   const response = await handler({
     httpMethod: 'PUT',
     headers: {},
-    body: JSON.stringify({ font_family: 'Inter', primary_color: '#ea580c' }),
+    body: JSON.stringify({
+      font_family: 'Inter',
+      primary_color: '#ea580c',
+      background_color: '#101112',
+      font_color: '#f8f6f2',
+    }),
   });
 
   assert.equal(response.statusCode, 200);
@@ -64,4 +71,28 @@ test('admin site settings updates the migration-owned AU row without runtime sch
   assert.equal(queries.length, 1);
   assert.match(queries[0], /^\s*UPDATE site_settings SET/);
   assert.doesNotMatch(queries[0], /compat_note/i);
+});
+
+test('site settings reject invalid background and font colours', async () => {
+  const sql = async () => [freshSettings];
+  const handler = createAdminSiteSettingsHandler({
+    verifyToken: async () => true,
+    getSql: () => sql,
+    purgeTags: async () => {},
+  });
+
+  for (const field of ['background_color', 'font_color']) {
+    const response = await handler({
+      httpMethod: 'PUT',
+      headers: {},
+      body: JSON.stringify({
+        font_family: 'Inter',
+        primary_color: '#ea580c',
+        [field]: 'not-a-colour',
+      }),
+    });
+
+    assert.equal(response.statusCode, 400);
+    assert.match(JSON.parse(response.body).error, new RegExp(field));
+  }
 });

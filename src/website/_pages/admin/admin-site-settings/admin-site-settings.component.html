@@ -57,6 +57,28 @@
               <span class="field-err">Must be a 6-digit hex colour</span>
             }
           </div>
+
+          <div class="adm-field">
+            <label>Site Background Colour</label>
+            <div class="color-field-row">
+              <input type="color" [formControl]="form.controls.background_color" (input)="previewTheme()">
+              <input type="text" [formControl]="form.controls.background_color" (input)="previewTheme()" placeholder="#0a0908">
+            </div>
+            @if (form.controls.background_color.touched && form.controls.background_color.invalid) {
+              <span class="field-err">Must be a 6-digit hex colour</span>
+            }
+          </div>
+
+          <div class="adm-field">
+            <label>Main Font Colour</label>
+            <div class="color-field-row">
+              <input type="color" [formControl]="form.controls.font_color" (input)="previewTheme()">
+              <input type="text" [formControl]="form.controls.font_color" (input)="previewTheme()" placeholder="#f2ede7">
+            </div>
+            @if (form.controls.font_color.touched && form.controls.font_color.invalid) {
+              <span class="field-err">Must be a 6-digit hex colour</span>
+            }
+          </div>
         </div>
         <p class="preview-note">
           <mat-icon svgIcon="visibility"></mat-icon>

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,7 @@ type SettingsSection = 'branding' | 'contact' | 'hero' | 'compatibility';
   styleUrls: ['./admin-site-settings.component.scss'],
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MatIconModule, ImageUploadComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminSiteSettingsComponent implements OnInit {
   private adminService = inject(AdminService);
@@ -58,6 +59,8 @@ export class AdminSiteSettingsComponent implements OnInit {
     logo_url:      [''],
     font_family:   ['Inter', Validators.required],
     primary_color: ['#ea580c', [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)]],
+    background_color: ['#0a0908', [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)]],
+    font_color: ['#f2ede7', [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)]],
     contact_email:    ['', [Validators.required, Validators.email]],
     contact_phone:    [''],
     contact_whatsapp: [''],
@@ -76,6 +79,8 @@ export class AdminSiteSettingsComponent implements OnInit {
         logo_url: s.logo_url || '',
         font_family: s.font_family || 'Inter',
         primary_color: s.primary_color || '#ea580c',
+        background_color: s.background_color || '#0a0908',
+        font_color: s.font_color || '#f2ede7',
         contact_email: contact.email || DEFAULT_CONTACT_INFO.email,
         contact_phone: contact.phone || '',
         contact_whatsapp: contact.whatsapp || '',
@@ -207,6 +212,8 @@ export class AdminSiteSettingsComponent implements OnInit {
       logo_url: this.form.value.logo_url || null,
       font_family: this.form.value.font_family || 'Inter',
       primary_color: this.form.value.primary_color || '#ea580c',
+      background_color: this.form.value.background_color || '#0a0908',
+      font_color: this.form.value.font_color || '#f2ede7',
       hero_slides: this.heroSlides(),
       brand_logos: this.brandLogos(),
       trust_bar: this.trustBar(),
@@ -228,6 +235,8 @@ export class AdminSiteSettingsComponent implements OnInit {
         logo_url: this.form.value.logo_url || null,
         font_family: this.form.value.font_family!,
         primary_color: this.form.value.primary_color!,
+        background_color: this.form.value.background_color!,
+        font_color: this.form.value.font_color!,
         hero_slides: this.heroSlides().filter(s => s.image_url.trim()),
         brand_logos: this.brandLogos().filter(b => b.logo_url.trim() && b.brand.trim()),
         trust_bar: this.trustBar().filter(t => t.label.trim()),

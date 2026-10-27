@@ -6,7 +6,7 @@
 
 
   <button type="button" class="adm-btn primary" (click)="openManualCreate()" [disabled]="savingManual()">Add manual enquiry</button>
-  @if (notice()) { <p role="status">{{ notice() }}</p> }
+  @if (notice()) { <p role="status" aria-live="polite">{{ notice() }}</p> }
   @if (showManualForm()) {
     <form class="manual-form" [formGroup]="manualForm" (ngSubmit)="saveManual()" novalidate aria-labelledby="manual-heading">
       <h2 id="manual-heading">New manual enquiry</h2>
@@ -130,7 +130,7 @@
                 <td class="message-preview">{{ row.message || '—' }}</td>
                 <td>{{ row.location_suburb || '—' }}@if (row.location_state) {, {{ row.location_state }}}</td>
                 <td>
-                  <select class="status-select" [attr.aria-label]="'Status for ' + row.name" [value]="followUpId() === row.id ? 'follow_up_later' : row.status" [disabled]="savingFollowUp()"
+                  <select class="status-select" [attr.aria-label]="'Status for ' + row.name" [value]="followUpId() === row.id ? 'follow_up_later' : row.status" [disabled]="savingFollowUp() || savingStatusId() === row.id"
                           (change)="updateStatus(row, $any($event.target).value, $any($event.target))">
                     @if (row.status === 'contacted' || row.status === 'quoted') { <option [value]="row.status">{{ statusLabels[row.status] }}</option> }
                     @for (s of statusOptions; track s) {
@@ -154,10 +154,11 @@
                 <tr class="expand-row"><td colspan="8">
                   <form class="expand-body" [formGroup]="followUpForm" (ngSubmit)="saveFollowUp(row)">
                     <h2>Follow up with {{ row.name }}</h2>
+                    <p class="adm-sub">The enquiry is already marked as Follow up later. Adding a date or note is optional.</p>
                     <div class="manual-field"><label [for]="'follow-up-date-' + row.id">Follow-up date (optional)</label><input [id]="'follow-up-date-' + row.id" type="date" formControlName="follow_up_date"></div>
                     <div class="manual-field"><label [for]="'follow-up-note-' + row.id">Follow-up note (optional)</label><textarea [id]="'follow-up-note-' + row.id" formControlName="follow_up_note" maxlength="4000" rows="3"></textarea></div>
                     @if (followUpError()) { <p role="alert" class="field-error">{{ followUpError() }}</p> }
-                    <div class="expand-quick-actions"><button type="submit" class="adm-btn primary small" [disabled]="savingFollowUp()">{{ savingFollowUp() ? 'Saving…' : 'Save follow-up' }}</button><button type="button" class="adm-btn ghost small" [disabled]="savingFollowUp()" (click)="followUpId.set(null)">Cancel</button></div>
+                    <div class="expand-quick-actions"><button type="submit" class="adm-btn primary small" [disabled]="savingFollowUp()">{{ savingFollowUp() ? 'Saving…' : 'Save follow-up' }}</button><button type="button" class="adm-btn ghost small" [disabled]="savingFollowUp()" (click)="followUpId.set(null)">Keep without details</button></div>
                   </form>
                 </td></tr>
               }

@@ -32,6 +32,8 @@ export interface SiteSettings {
   logo_url: string | null;
   font_family: string;
   primary_color: string;
+  background_color: string;
+  font_color: string;
   hero_slides: HeroSlide[];
   brand_logos: BrandLogo[];
   contact: ContactInfo;

@@ -272,10 +272,21 @@
   display: flex;
   flex-direction: column;
 
-  &::-webkit-scrollbar { width: 6px; }
-  &::-webkit-scrollbar-track { background: var(--nv-bg-dark); }
-  &::-webkit-scrollbar-thumb { background: var(--nv-metal); border-radius: 0; }
-  &::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+  /* Match the global scroll treatment so long admin screens retain an
+     obvious, theme-aware position cue on every supported browser. */
+  scrollbar-color: var(--nv-scrollbar-thumb) var(--nv-scrollbar-track);
+  scrollbar-width: auto;
+  scrollbar-gutter: stable;
+
+  &::-webkit-scrollbar { width: var(--nv-scrollbar-size); }
+  &::-webkit-scrollbar-track { background: var(--nv-scrollbar-track); }
+  &::-webkit-scrollbar-thumb {
+    min-height: 3rem;
+    background: var(--nv-scrollbar-thumb);
+    border: 0.1875rem solid var(--nv-scrollbar-track);
+    border-radius: var(--border-radius);
+  }
+  &::-webkit-scrollbar-thumb:hover { background: var(--nv-scrollbar-thumb-hover); }
 }
 
 /* ── MOBILE TOPBAR ── */

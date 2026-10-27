@@ -80,10 +80,26 @@ export function createAdminSiteSettingsHandler({
 
     if (event.httpMethod === 'PUT') {
       const body = JSON.parse(event.body || '{}');
-      const { logo_url, font_family, primary_color, hero_slides, brand_logos, contact, trust_bar } = body;
+      const {
+        logo_url,
+        font_family,
+        primary_color,
+        background_color,
+        font_color,
+        hero_slides,
+        brand_logos,
+        contact,
+        trust_bar,
+      } = body;
 
       if (primary_color && !HEX_COLOR_RE.test(primary_color)) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'primary_color must be a 6-digit hex value, e.g. #ea580c' }) };
+      }
+      if (background_color && !HEX_COLOR_RE.test(background_color)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'background_color must be a 6-digit hex value, e.g. #0a0908' }) };
+      }
+      if (font_color && !HEX_COLOR_RE.test(font_color)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'font_color must be a 6-digit hex value, e.g. #f2ede7' }) };
       }
       if (!font_family || typeof font_family !== 'string') {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'font_family is required' }) };
@@ -94,6 +110,8 @@ export function createAdminSiteSettingsHandler({
           logo_url      = ${logo_url || null},
           font_family   = ${font_family},
           primary_color = ${primary_color || '#ea580c'},
+          background_color = ${background_color || '#0a0908'},
+          font_color    = ${font_color || '#f2ede7'},
           hero_slides   = ${JSON.stringify(sanitizeSlides(hero_slides))}::jsonb,
           brand_logos   = ${JSON.stringify(sanitizeBrandLogos(brand_logos))}::jsonb,
           contact       = ${JSON.stringify(sanitizeContact(contact))}::jsonb,

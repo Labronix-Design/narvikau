@@ -5,7 +5,7 @@ import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@ang
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
-import { AdminService, AdminQueryRow, AdminQueryTotals, ManualQueryInput } from '../../../_services/admin.service';
+import { AdminQueryUpdateResult, AdminService, AdminQueryRow, AdminQueryTotals, ManualQueryInput } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
 
 @Component({
@@ -62,6 +62,7 @@ export class AdminQueriesComponent implements OnInit {
   readonly followUpId = signal<number | null>(null);
   readonly savingFollowUp = signal(false);
   readonly followUpError = signal('');
+  readonly savingStatusId = signal<number | null>(null);
 
   rows       = signal<AdminQueryRow[]>([]);
   totals     = signal<AdminQueryTotals | null>(null);
@@ -175,20 +176,45 @@ export class AdminQueriesComponent implements OnInit {
     this.expandedId.set(this.expandedId() === id ? null : id);
   }
 
+  private applyQueryUpdate(row: AdminQueryRow, updated: AdminQueryUpdateResult): AdminQueryRow {
+    const next = { ...row, ...updated };
+    this.rows.update(rows => rows.map(item => item.id === row.id ? next : item));
+    return next;
+  }
+
   async updateStatus(row: AdminQueryRow, status: string, select?: HTMLSelectElement): Promise<void> {
+    if (this.savingStatusId() !== null || this.savingFollowUp()) return;
+    this.notice.set('');
+    this.savingStatusId.set(row.id);
     if (status === 'follow_up_later') {
-      this.followUpForm.reset({ follow_up_date: row.follow_up_date?.slice(0, 10) ?? '', follow_up_note: row.follow_up_note ?? '' });
-      this.followUpError.set('');
-      this.followUpId.set(row.id);
+      try {
+        const updated = await this.adminService.updateQuery(row.id, { status });
+        const saved = this.applyQueryUpdate(row, updated);
+        this.followUpForm.reset({
+          follow_up_date: saved.follow_up_date?.slice(0, 10) ?? '',
+          follow_up_note: saved.follow_up_note ?? '',
+        });
+        this.followUpError.set('');
+        this.followUpId.set(row.id);
+        this.notice.set('Status saved: Follow up later. Add a date or note if helpful.');
+      } catch (e: any) {
+        if (select) select.value = row.status;
+        await this.modal.alert({ title: 'Update Failed', message: e.message, variant: 'danger' });
+      } finally {
+        this.savingStatusId.set(null);
+      }
       return;
     }
     this.followUpId.set(null);
     try {
-      await this.adminService.updateQuery(row.id, { status });
-      await this.load();
+      const updated = await this.adminService.updateQuery(row.id, { status });
+      this.applyQueryUpdate(row, updated);
+      this.notice.set(`Status saved: ${this.statusLabels[updated.status] ?? updated.status}.`);
     } catch (e: any) {
       if (select) select.value = row.status;
       await this.modal.alert({ title: 'Update Failed', message: e.message, variant: 'danger' });
+    } finally {
+      this.savingStatusId.set(null);
     }
   }
 
@@ -199,9 +225,10 @@ export class AdminQueriesComponent implements OnInit {
     this.savingFollowUp.set(true);
     this.followUpError.set('');
     try {
-      await this.adminService.updateQuery(row.id, { status: 'follow_up_later', follow_up_date, follow_up_note: follow_up_note.trim() });
+      const updated = await this.adminService.updateQuery(row.id, { status: 'follow_up_later', follow_up_date, follow_up_note: follow_up_note.trim() });
+      this.applyQueryUpdate(row, updated);
       this.followUpId.set(null);
-      await this.load();
+      this.notice.set('Follow-up details saved.');
     } catch (error: unknown) {
       this.followUpError.set(error instanceof Error ? error.message : 'Unable to save follow-up.');
     } finally { this.savingFollowUp.set(false); }

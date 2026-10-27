@@ -73,13 +73,32 @@ describe('Admin enquiry note drafts', () => {
     expect(component.notesMap()[second.id]).toBe('Other note');
   });
 
-  it('offers follow-up details before saving the follow-up status', async () => {
+  it('saves Follow up later before opening optional details and keeps it saved when the editor closes', async () => {
     const row = lead(1, '');
-    await component.updateStatus(row, 'follow_up_later');
-    expect(service.updateQuery).not.toHaveBeenCalled();
-    component.followUpForm.patchValue({ follow_up_date: '2026-11-01', follow_up_note: 'Call customer' });
-    await component.saveFollowUp(row);
-    expect(service.updateQuery).toHaveBeenCalledWith(row.id, { status: 'follow_up_later', follow_up_date: '2026-11-01', follow_up_note: 'Call customer' });
+    service.getQueries.and.resolveTo({ rows: [row], totals: {} });
+    service.updateQuery.and.resolveTo({ id: row.id, status: 'follow_up_later', admin_notes: '', follow_up_date: null, follow_up_note: null } as never);
+    await component.load();
+
+    await component.updateStatus(component.rows()[0], 'follow_up_later');
+
+    expect(service.updateQuery).toHaveBeenCalledWith(row.id, { status: 'follow_up_later' });
+    expect(component.rows()[0].status).toBe('follow_up_later');
+    expect(component.followUpId()).toBe(row.id);
+
+    component.followUpId.set(null);
+    expect(component.rows()[0].status).toBe('follow_up_later');
+  });
+
+  it('shows a saved result after a normal status update', async () => {
+    const row = lead(1, '');
+    service.getQueries.and.resolveTo({ rows: [row], totals: {} });
+    service.updateQuery.and.resolveTo({ id: row.id, status: 'ready_to_quote', admin_notes: '', follow_up_date: null, follow_up_note: null } as never);
+    await component.load();
+
+    await component.updateStatus(component.rows()[0], 'ready_to_quote');
+
+    expect(component.rows()[0].status).toBe('ready_to_quote');
+    expect(component.notice()).toContain('Ready to quote');
   });
 
   it('restores the saved selection when a status update fails', async () => {

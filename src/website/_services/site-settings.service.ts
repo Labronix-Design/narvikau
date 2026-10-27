@@ -7,6 +7,8 @@ const DEFAULTS: SiteSettings = {
   logo_url: null,
   font_family: 'Inter',
   primary_color: '#ea580c',
+  background_color: '#0a0908',
+  font_color: '#f2ede7',
   hero_slides: [],
   brand_logos: [],
   contact: DEFAULT_CONTACT_INFO,
@@ -84,8 +86,13 @@ export class SiteSettingsService {
 
     const root = document.documentElement.style;
     const color = settings.primary_color || DEFAULTS.primary_color;
+    const backgroundColor = settings.background_color || DEFAULTS.background_color;
+    const fontColor = settings.font_color || DEFAULTS.font_color;
     root.setProperty('--nv-orange', color);
     root.setProperty('--nv-orange-hover', darken(color));
+    root.setProperty('--nv-ink', backgroundColor);
+    root.setProperty('--nv-bg-dark', backgroundColor);
+    root.setProperty('--nv-text-main', fontColor);
     const rgb = toRgbTriplet(color);
     if (rgb) root.setProperty('--nv-orange-rgb', rgb);
 
