@@ -46,27 +46,6 @@ function notFound() {
   });
 }
 
-/**
- * Netlify's Node serverless runtime expects binary bodies to be base64 encoded.
- * Returning a Fetch Response directly lets the runtime attempt to parse raw
- * image bytes as JSON, which breaks every uploaded image with a 502.
- */
-export async function toNetlifyResponse(response) {
-  const headers = Object.fromEntries(response.headers.entries());
-  const contentType = contentTypeFrom(headers['content-type']);
-  const isBinary = contentType.startsWith('image/');
-  const body = isBinary
-    ? Buffer.from(await response.arrayBuffer()).toString('base64')
-    : await response.text();
-
-  return {
-    statusCode: response.status,
-    headers,
-    body,
-    ...(isBinary ? { isBase64Encoded: true } : {}),
-  };
-}
-
 export function createServeUploadHandler({
   getImageStore = getStore,
   fetchImage = fetch,
@@ -127,15 +106,13 @@ export function createServeUploadHandler({
 
 const serveUpload = createServeUploadHandler();
 
-export async function handler(event) {
-  const host = event.headers?.host || event.headers?.Host || 'www.navrik.com.au';
-  const path = event.path || event.rawPath || '/uploads/';
-  const query = event.rawQuery ? `?${event.rawQuery}` : '';
-  const request = new Request(`https://${host}${path}${query}`, {
-    method: event.httpMethod || 'GET',
-    headers: event.headers,
-  });
-  return toNetlifyResponse(await serveUpload(request));
+/**
+ * Keep the web-request handler as a direct default function. Netlify then
+ * selects its Response-aware runtime, which preserves binary image bodies and
+ * honours the custom /uploads/* route.
+ */
+export default async function handler(request) {
+  return serveUpload(request);
 }
 
 export const config = { path: '/uploads/*' };
