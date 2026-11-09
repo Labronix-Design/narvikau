@@ -4,12 +4,10 @@
     <p class="adm-sub">Manage website and manual enquiries, update status and add internal notes.</p>
   </div>
 
-
   <button type="button" class="adm-btn primary" (click)="openManualCreate()" [disabled]="savingManual()">Add manual enquiry</button>
   @if (notice()) { <p role="status" aria-live="polite">{{ notice() }}</p> }
-  @if (showManualForm()) {
-    <form class="manual-form" [formGroup]="manualForm" (ngSubmit)="saveManual()" novalidate aria-labelledby="manual-heading">
-      <h2 id="manual-heading">New manual enquiry</h2>
+  <website-admin-dialog [open]="showManualForm()" title="New manual enquiry" [busy]="savingManual()" (closed)="closeManual()">
+    <form class="manual-form" [formGroup]="manualForm" (ngSubmit)="saveManual()" novalidate>
       <div class="manual-grid">
         <div class="manual-field">
           <label for="manual-name">Full name *</label>
@@ -64,160 +62,88 @@
       <div class="manual-field"><label for="manual-notes">Internal notes (optional, up to 4,000 characters)</label><textarea id="manual-notes" formControlName="admin_notes" rows="3" maxlength="4000"></textarea></div>
       @if (manualSubmitted() && manualForm.invalid) { <p role="alert" class="field-error">Complete the required fields above before saving.</p> }
       @if (manualError()) { <p role="alert" class="field-error">{{ manualError() }}</p> }
-      <div class="expand-quick-actions"><button type="submit" class="adm-btn primary" [disabled]="savingManual()">{{ savingManual() ? 'Saving…' : 'Save enquiry' }}</button><button type="button" class="adm-btn ghost" [disabled]="savingManual()" (click)="showManualForm.set(false)">Cancel</button></div>
+      <div class="expand-quick-actions"><button type="submit" class="adm-btn primary" [disabled]="savingManual()">{{ savingManual() ? 'Saving…' : 'Save enquiry' }}</button><button type="button" class="adm-btn ghost" [disabled]="savingManual()" (click)="closeManual()">Cancel</button></div>
     </form>
-  }
+  </website-admin-dialog>
+
   <div class="query-filters"><label for="enquiry-type-filter">Enquiry type</label><select id="enquiry-type-filter" class="status-select" [value]="activeType()" (change)="setType($event)"><option value="">All types (including legacy enquiries)</option>@for (type of typeOptions; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select><p class="adm-sub">Status counts include all enquiry types.</p></div>
 
+  <div class="status-tabs">
+    @for (tab of tabs; track tab.value) {
+      <button type="button" class="status-tab" [class.active]="activeTab() === tab.value" [attr.aria-pressed]="activeTab() === tab.value" (click)="setTab(tab.value)">
+        {{ tab.label }}
+        @if (tabCount(tab.value) > 0) { <span class="tab-badge">{{ tabCount(tab.value) }}</span> }
+      </button>
+    }
+  </div>
+
   @if (loading()) {
-    <div class="adm-loading">
-      <div class="spin"></div>
-      <span class="spin-label">Loading Queries…</span>
-    </div>
+    <div class="adm-loading" role="status"><div class="spin"></div><span class="spin-label">Loading Queries…</span></div>
   } @else if (error()) {
-    <div class="adm-error"><mat-icon svgIcon="error"></mat-icon> {{ error() }}</div>
+    <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon> {{ error() }}</div>
   } @else {
+    <website-admin-data-table tableId="enquiries" caption="Enquiries" [rows]="rows()" [columns]="tableColumns" [rowId]="queryRowId" emptyMessage="No queries in this category.">
+      <ng-template adminTableCell="date" let-row><span class="mono date-cell">{{ row.created_at | date:'d MMM yy' }}</span></ng-template>
+      <ng-template adminTableCell="customer" let-row>
+        <span class="name-cell"><span class="lead-name">{{ row.name }}</span>@if (row.status === 'new') { <span class="new-badge">New</span> }</span>
+      </ng-template>
+      <ng-template adminTableCell="message" let-row><span class="message-preview">{{ row.message || '—' }}</span></ng-template>
+      <ng-template adminTableCell="status" let-row>
+        <select class="status-select" [attr.aria-label]="'Status for ' + row.name" [disabled]="savingFollowUp() || savingStatusId() === row.id" (change)="updateStatus(row, $any($event.target).value)">
+          @if (row.status === 'contacted' || row.status === 'quoted') { <option [value]="row.status" [selected]="statusValue(row) === row.status">{{ statusLabels[row.status] }}</option> }
+          @for (status of statusOptions; track status) { <option [value]="status" [selected]="statusValue(row) === status">{{ statusLabels[status] }}</option> }
+        </select>
+        @if (row.status === 'follow_up_later') {
+          @if (row.follow_up_date) { <div>Follow up: {{ row.follow_up_date | date:'d MMM yyyy' }}</div> }
+          @if (row.follow_up_note) { <div class="message-preview">{{ row.follow_up_note }}</div> }
+          <button type="button" class="adm-btn ghost small" [disabled]="savingStatusId() === row.id" (click)="updateStatus(row, 'follow_up_later')">Edit follow-up</button>
+        }
+      </ng-template>
+      <ng-template adminTableActions let-row>
+        <button type="button" class="adm-btn ghost small" [attr.aria-label]="'Details for ' + row.name" (click)="toggleExpand(row.id)">Details</button>
+      </ng-template>
+    </website-admin-data-table>
+  }
 
-    <!-- ── STATUS TABS ── -->
-    <div class="status-tabs">
-      @for (tab of tabs; track tab.value) {
-        <button class="status-tab" [class.active]="activeTab() === tab.value" [attr.aria-pressed]="activeTab() === tab.value"
-                (click)="setTab(tab.value)">
-          {{ tab.label }}
-          @if (tabCount(tab.value) > 0) {
-            <span class="tab-badge">{{ tabCount(tab.value) }}</span>
-          }
-        </button>
-      }
-    </div>
+  <website-admin-dialog [open]="followUpId() !== null" [title]="'Follow up with ' + (followUpRow()?.name ?? 'customer')" description="The enquiry is already marked as Follow up later. Adding a date or note is optional." [busy]="savingFollowUp()" (closed)="closeFollowUp()">
+    @if (followUpRow(); as row) {
+      <form class="dialog-form" [formGroup]="followUpForm" (ngSubmit)="saveFollowUp(row)">
+        <div class="manual-field"><label for="follow-up-date">Follow-up date (optional)</label><input id="follow-up-date" type="date" formControlName="follow_up_date"></div>
+        <div class="manual-field"><label for="follow-up-note">Follow-up note (optional)</label><textarea id="follow-up-note" formControlName="follow_up_note" maxlength="4000" rows="3"></textarea></div>
+        @if (followUpError()) { <p role="alert" class="field-error">{{ followUpError() }}</p> }
+        <div class="expand-quick-actions"><button type="submit" class="adm-btn primary small" [disabled]="savingFollowUp()">{{ savingFollowUp() ? 'Saving…' : 'Save follow-up' }}</button><button type="button" class="adm-btn ghost small" [disabled]="savingFollowUp()" (click)="closeFollowUp()">Keep without details</button></div>
+      </form>
+    }
+  </website-admin-dialog>
 
-    @if (rows().length === 0) {
-      <div class="adm-empty">
-        <mat-icon class="empty-icon" svgIcon="inbox"></mat-icon>
-        <p class="empty-title">No queries</p>
-        <p class="empty-desc">No queries in this category.</p>
-      </div>
-    } @else {
-      <div class="adm-table-wrap">
-        <table class="adm-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Name</th>
-              <th>Type</th>
-              <th>Product</th>
-              <th>Message</th>
-              <th>Location</th>
-              <th>Status</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of rows(); track row.id) {
-              <tr class="query-row" [class.is-expanded]="expandedId() === row.id"
-                  [class.is-new]="row.status === 'new'">
-                <td class="mono date-cell">{{ row.created_at | date:'d MMM yy' }}</td>
-                <td>
-                  <div class="name-cell">
-                    <span class="lead-name">{{ row.name }}</span>
-                    @if (row.status === 'new') {
-                      <span class="new-badge">New</span>
-                    }
-                  </div>
-                </td>
-                <td>{{ typeLabel(row.enquiry_type) }}</td>
-                <td>{{ row.product || '—' }}</td>
-                <td class="message-preview">{{ row.message || '—' }}</td>
-                <td>{{ row.location_suburb || '—' }}@if (row.location_state) {, {{ row.location_state }}}</td>
-                <td>
-                  <select class="status-select" [attr.aria-label]="'Status for ' + row.name" [disabled]="savingFollowUp() || savingStatusId() === row.id"
-                          (change)="updateStatus(row, $any($event.target).value)">
-                    @if (row.status === 'contacted' || row.status === 'quoted') { <option [value]="row.status" [selected]="statusValue(row) === row.status">{{ statusLabels[row.status] }}</option> }
-                    @for (s of statusOptions; track s) {
-                      <option [value]="s" [selected]="statusValue(row) === s">{{ statusLabels[s] }}</option>
-                    }
-                  </select>
-                  @if (row.status === 'follow_up_later' && followUpId() !== row.id) {
-                    @if (row.follow_up_date) { <div>Follow up: {{ row.follow_up_date | date:'d MMM yyyy' }}</div> }
-                    @if (row.follow_up_note) { <div class="message-preview">{{ row.follow_up_note }}</div> }
-                    <button type="button" class="adm-btn ghost small" (click)="updateStatus(row, 'follow_up_later')">Edit follow-up</button>
-                  }
-                </td>
-                <td>
-                  <button class="adm-btn ghost small" [attr.aria-label]="'Details for ' + row.name" [attr.aria-expanded]="expandedId() === row.id" (click)="toggleExpand(row.id)">
-                    <mat-icon [svgIcon]="expandedId() === row.id ? 'expand_less' : 'expand_more'"></mat-icon>
-                  </button>
-                </td>
-              </tr>
-
-              @if (followUpId() === row.id) {
-                <tr class="expand-row"><td colspan="8">
-                  <form class="expand-body" [formGroup]="followUpForm" (ngSubmit)="saveFollowUp(row)">
-                    <h2>Follow up with {{ row.name }}</h2>
-                    <p class="adm-sub">The enquiry is already marked as Follow up later. Adding a date or note is optional.</p>
-                    <div class="manual-field"><label [for]="'follow-up-date-' + row.id">Follow-up date (optional)</label><input [id]="'follow-up-date-' + row.id" type="date" formControlName="follow_up_date"></div>
-                    <div class="manual-field"><label [for]="'follow-up-note-' + row.id">Follow-up note (optional)</label><textarea [id]="'follow-up-note-' + row.id" formControlName="follow_up_note" maxlength="4000" rows="3"></textarea></div>
-                    @if (followUpError()) { <p role="alert" class="field-error">{{ followUpError() }}</p> }
-                    <div class="expand-quick-actions"><button type="submit" class="adm-btn primary small" [disabled]="savingFollowUp()">{{ savingFollowUp() ? 'Saving…' : 'Save follow-up' }}</button><button type="button" class="adm-btn ghost small" [disabled]="savingFollowUp()" (click)="followUpId.set(null)">Keep without details</button></div>
-                  </form>
-                </td></tr>
-              }
-
-              @if (expandedId() === row.id) {
-                <tr class="expand-row">
-                  <td colspan="8">
-                    <div class="expand-body">
-                      <dl class="enquiry-details">
-                        <dt>Email</dt><dd><a [href]="'mailto:' + row.email">{{ row.email }}</a></dd>
-                        <dt>Phone</dt><dd>{{ row.phone || '—' }}</dd>
-                        <dt>Business</dt><dd>{{ row.company || '—' }}</dd>
-                        <dt>Referral source</dt><dd>{{ row.discovery_source || 'Not recorded' }}</dd>
-                        @if (row.discovery_source_detail) { <dt>Referral details</dt><dd>{{ row.discovery_source_detail }}</dd> }
-                        <dt>Captured via</dt><dd>{{ row.source }}</dd>
-                        @if (row.follow_up_date) { <dt>Follow-up date</dt><dd>{{ row.follow_up_date | date:'d MMM yyyy' }}</dd> }
-                        @if (row.follow_up_note) { <dt>Follow-up note</dt><dd>{{ row.follow_up_note }}</dd> }
-                      </dl>
-
-                      @if (row.message) {
-                        <div class="expand-section">
-                          <div class="expand-label">Full Message</div>
-                          <div class="expand-message">{{ row.message }}</div>
-                        </div>
-                      }
-
-                      <div class="expand-section">
-                        <label class="expand-label" [for]="'notes-' + row.id">Internal Notes</label>
-                        <textarea class="notes-input" [id]="'notes-' + row.id" maxlength="4000"
-                                  rows="3"
-                                  [value]="notesMap()[row.id] ?? ''"
-                                  (input)="setNote(row.id, $any($event.target).value)">
-                        </textarea>
-                        <button class="adm-btn primary small" (click)="saveNotes(row)">
-                          <mat-icon svgIcon="save"></mat-icon> Save Notes
-                        </button>
-                      </div>
-
-                      <div class="expand-quick-actions">
-                        <a [href]="'mailto:' + row.email" class="adm-btn ghost small">
-                          <mat-icon svgIcon="email"></mat-icon> Reply via Email
-                        </a>
-                        @if (row.phone) {
-                          <a [href]="'https://wa.me/' + row.phone.replace(/\D/g, '')"
-                             target="_blank" rel="noopener" class="adm-btn ghost small">
-                            <mat-icon svgIcon="chat"></mat-icon> WhatsApp
-                          </a>
-                        }
-                      </div>
-
-                    </div>
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
+  <website-admin-dialog [open]="expandedId() !== null" [title]="'Enquiry from ' + (detailRow()?.name ?? 'customer')" (closed)="closeDetails()">
+    @if (detailRow(); as row) {
+      <div class="detail-body">
+        <dl class="enquiry-details">
+          <dt>Email</dt><dd><a [href]="'mailto:' + row.email">{{ row.email }}</a></dd>
+          <dt>Phone</dt><dd>{{ row.phone || '—' }}</dd>
+          <dt>Business</dt><dd>{{ row.company || '—' }}</dd>
+          <dt>Type</dt><dd>{{ typeLabel(row.enquiry_type) }}</dd>
+          <dt>Product</dt><dd>{{ row.product || '—' }}</dd>
+          <dt>Location</dt><dd>{{ locationLabel(row) }}</dd>
+          <dt>Referral source</dt><dd>{{ row.discovery_source || 'Not recorded' }}</dd>
+          @if (row.discovery_source_detail) { <dt>Referral details</dt><dd>{{ row.discovery_source_detail }}</dd> }
+          <dt>Captured via</dt><dd>{{ row.source }}</dd>
+          @if (row.follow_up_date) { <dt>Follow-up date</dt><dd>{{ row.follow_up_date | date:'d MMM yyyy' }}</dd> }
+          @if (row.follow_up_note) { <dt>Follow-up note</dt><dd>{{ row.follow_up_note }}</dd> }
+        </dl>
+        @if (row.message) { <div class="expand-section"><div class="expand-label">Full Message</div><div class="expand-message">{{ row.message }}</div></div> }
+        <div class="expand-section">
+          <label class="expand-label" [for]="'notes-' + row.id">Internal Notes</label>
+          <textarea class="notes-input" [id]="'notes-' + row.id" maxlength="4000" rows="3" [value]="notesMap()[row.id] ?? ''" (input)="setNote(row.id, $any($event.target).value)"></textarea>
+          <button type="button" class="adm-btn primary small" (click)="saveNotes(row)"><mat-icon svgIcon="save"></mat-icon> Save Notes</button>
+        </div>
+        <div class="expand-quick-actions">
+          <a [href]="'mailto:' + row.email" class="adm-btn ghost small"><mat-icon svgIcon="email"></mat-icon> Reply via Email</a>
+          @if (row.phone) { <a [href]="'https://wa.me/' + row.phone.replace(/\D/g, '')" target="_blank" rel="noopener" class="adm-btn ghost small"><mat-icon svgIcon="chat"></mat-icon> WhatsApp</a> }
+          <button type="button" class="adm-btn ghost small" (click)="closeDetails()">Close</button>
+        </div>
       </div>
     }
-
-  }
+  </website-admin-dialog>
 </div>

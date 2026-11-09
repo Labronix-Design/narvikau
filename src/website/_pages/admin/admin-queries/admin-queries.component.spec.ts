@@ -226,4 +226,82 @@ describe('Admin enquiries list', () => {
     expect((fixture.nativeElement.querySelector('tbody .status-select') as HTMLSelectElement).value)
       .toBe('ready_to_quote');
   });
+
+  it('uses configurable sortable columns and keeps the status select in each row', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const table = fixture.nativeElement.querySelector('website-admin-data-table');
+    expect(table).not.toBeNull();
+    expect(table.querySelector('th[data-column="customer"]')).not.toBeNull();
+    expect(table.querySelector('[data-column="status"] .status-select')).not.toBeNull();
+    expect(table.querySelector('button.adt-sort')).not.toBeNull();
+    expect(table.querySelector('details.adt-chooser')).not.toBeNull();
+  });
+
+  it('sorts enquiries by customer when its table header is selected', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const first = fixture.componentInstance.rows()[0];
+    fixture.componentInstance.rows.set([first, { ...first, id: 2, name: 'Aaron', email: 'aaron@example.test' }]);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('th[data-column="customer"] button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const names = [...fixture.nativeElement.querySelectorAll('tbody tr.adt-data-row th[data-column="customer"]')]
+      .map((cell: Element) => cell.textContent?.trim());
+    expect(names[0]).toContain('Aaron');
+    expect(names[1]).toContain('Alex');
+  });
+
+  it('shows the pending status in the row select until the server responds', async () => {
+    let resolveUpdate!: (value: unknown) => void;
+    service.updateQuery.and.returnValue(new Promise(resolve => { resolveUpdate = resolve; }) as never);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const save = component.updateStatus(component.rows()[0], 'ready_to_quote');
+    fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('tbody .status-select') as HTMLSelectElement).value).toBe('ready_to_quote');
+    resolveUpdate({ id: 1, status: 'ready_to_quote', admin_notes: null });
+    await save;
+  });
+
+  it('opens and cancels manual entry in a dialog', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('button.adm-btn.primary') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"] form.manual-form')).not.toBeNull();
+    (fixture.nativeElement.querySelector('[role="dialog"] button[type="button"].adm-btn.ghost') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('opens details and notes in a dialog from the row action', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[aria-label="Details for Alex"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"] .expand-message')?.textContent)
+      .toContain('Could you quote a canopy for my Ranger?');
+    expect(fixture.nativeElement.querySelector('[role="dialog"] .notes-input')).not.toBeNull();
+  });
+
+  it('keeps a saved follow-up status when its optional dialog is cancelled', async () => {
+    service.updateQuery.and.resolveTo({ id: 1, status: 'follow_up_later', admin_notes: null, follow_up_date: null, follow_up_note: null });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    await component.updateStatus(component.rows()[0], 'follow_up_later');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"] #follow-up-date')).not.toBeNull();
+    (fixture.nativeElement.querySelector('[role="dialog"] button.adm-btn.ghost') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.rows()[0].status).toBe('follow_up_later');
+    expect(component.followUpId()).toBeNull();
+  });
 });

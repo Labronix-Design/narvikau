@@ -1,6 +1,8 @@
 @use '../admin-shared' as adm;
 
 .manual-form { display: grid; gap: 1rem; padding: 1.5rem; margin-block: 1.5rem; border: 1px solid var(--nv-border-strong); }
+.dialog-form, .detail-body { display: grid; gap: 1rem; }
+.manual-form { margin: 0; padding: 0; border: 0; }
 .manual-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .manual-field { display: grid; gap: .4rem; min-width: 0; }
 .manual-field input, .manual-field select, .manual-field textarea {
@@ -13,7 +15,7 @@
 .query-filters { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-block: 1.5rem; }
 .enquiry-details { display: grid; grid-template-columns: auto 1fr; gap: .6rem 1rem; margin: 0; }
 .enquiry-details dd { margin: 0; overflow-wrap: anywhere; }
-@media (max-width: 600px) { .manual-grid { grid-template-columns: minmax(0, 1fr); } .manual-form { padding: 1rem; } }
+@media (max-width: 600px) { .manual-grid { grid-template-columns: minmax(0, 1fr); } }
 
 // ── STATUS TABS ───────────────────────────────────────────────
 .status-tabs {

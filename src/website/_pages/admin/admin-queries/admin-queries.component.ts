@@ -1,12 +1,15 @@
 import { EnquiryLocationComponent } from '../../../_components/enquiry-location/enquiry-location.component';
 import { enquiryControls, enquiryPayload } from '../../../_models/enquiry-location.models';
 import { ENQUIRY_SOURCE_OPTIONS, sourceRequiresDetail, sourceDetailRequiredValidator } from '../../../_models/enquiry-source.models';
-import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminQueryUpdateResult, AdminService, AdminQueryRow, AdminQueryTotals, ManualQueryInput } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
+import { AdminDataTableComponent, AdminTableActionsDirective, AdminTableCellDirective } from '../../../_components/admin-data-table/admin-data-table.component';
+import { AdminTableColumn } from '../../../_components/admin-data-table/admin-data-table.models';
+import { AdminDialogComponent } from '../../../_components/admin-dialog/admin-dialog.component';
 
 @Component({
   selector: 'website-admin-queries',
@@ -14,7 +17,7 @@ import { ModalService } from '../../../_services/modal.service';
   styleUrls: ['./admin-queries.component.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, ReactiveFormsModule, EnquiryLocationComponent, MatIconModule],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, EnquiryLocationComponent, MatIconModule, AdminDataTableComponent, AdminTableActionsDirective, AdminTableCellDirective, AdminDialogComponent],
 })
 export class AdminQueriesComponent implements OnInit {
   private adminService = inject(AdminService);
@@ -30,6 +33,16 @@ export class AdminQueriesComponent implements OnInit {
   readonly notice = signal('');
   readonly sourceOptions = ENQUIRY_SOURCE_OPTIONS;
   readonly sourceRequiresDetail = sourceRequiresDetail;
+  readonly tableColumns: readonly AdminTableColumn<AdminQueryRow>[] = [
+    { id: 'customer', label: 'Customer', value: row => row.name, sortValue: row => row.name, required: true, mobilePriority: 0 },
+    { id: 'date', label: 'Date', value: row => row.created_at, sortValue: row => row.created_at, mobilePriority: 4 },
+    { id: 'type', label: 'Type', value: row => this.typeLabel(row.enquiry_type), sortValue: row => this.typeLabel(row.enquiry_type), mobilePriority: 2 },
+    { id: 'product', label: 'Product', value: row => row.product, sortValue: row => row.product, mobilePriority: 3 },
+    { id: 'message', label: 'Message', value: row => row.message, sortValue: row => row.message, mobilePriority: 5 },
+    { id: 'location', label: 'Location', value: row => this.locationLabel(row), sortValue: row => this.locationLabel(row), mobilePriority: 6 },
+    { id: 'status', label: 'Status', value: row => this.statusLabels[row.status] ?? row.status, sortValue: row => this.statusLabels[row.status] ?? row.status, required: true, mobilePriority: 1 },
+  ];
+  readonly queryRowId = (row: AdminQueryRow): number => row.id;
   readonly typeOptions = [
     { value: 'general_contact', label: 'General contact' },
     { value: 'product_quote', label: 'Product quote' },
@@ -71,6 +84,8 @@ export class AdminQueriesComponent implements OnInit {
   error      = signal('');
   activeTab  = signal<string>('');
   expandedId = signal<number | null>(null);
+  readonly detailRow = computed(() => this.rows().find(row => row.id === this.expandedId()) ?? null);
+  readonly followUpRow = computed(() => this.rows().find(row => row.id === this.followUpId()) ?? null);
   notesMap   = signal<Partial<Record<number, string>>>({});
 
   readonly tabs = [
@@ -137,6 +152,10 @@ export class AdminQueriesComponent implements OnInit {
     return this.typeOptions.find(type => type.value === value)?.label ?? 'Legacy enquiry';
   }
 
+  locationLabel(row: AdminQueryRow): string {
+    return [row.location_suburb, row.location_state].filter(Boolean).join(', ') || '—';
+  }
+
   openManualCreate(): void {
     this.manualForm.reset();
     this.manualSubmitted.set(false);
@@ -176,6 +195,10 @@ export class AdminQueriesComponent implements OnInit {
   toggleExpand(id: number): void {
     this.expandedId.set(this.expandedId() === id ? null : id);
   }
+
+  closeDetails(): void { this.expandedId.set(null); }
+  closeManual(): void { this.showManualForm.set(false); }
+  closeFollowUp(): void { this.followUpId.set(null); }
 
   private applyQueryUpdate(row: AdminQueryRow, updated: AdminQueryUpdateResult): AdminQueryRow {
     const next = { ...row, ...updated };
