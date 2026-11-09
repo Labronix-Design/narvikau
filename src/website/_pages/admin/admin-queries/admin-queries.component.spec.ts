@@ -101,17 +101,29 @@ describe('Admin enquiry note drafts', () => {
     expect(component.notice()).toContain('Ready to quote');
   });
 
+  it('keeps the chosen status selected while its save is in progress', async () => {
+    const row = lead(1, '');
+    service.getQueries.and.resolveTo({ rows: [row], totals: {} });
+    let resolveUpdate!: (value: unknown) => void;
+    service.updateQuery.and.returnValue(new Promise(resolve => { resolveUpdate = resolve; }) as never);
+    await component.load();
+
+    const save = component.updateStatus(component.rows()[0], 'ready_to_quote');
+
+    expect(component.statusValue(component.rows()[0])).toBe('ready_to_quote');
+    resolveUpdate({ id: row.id, status: 'ready_to_quote', admin_notes: '', follow_up_date: null, follow_up_note: null });
+    await save;
+    expect(component.statusValue(component.rows()[0])).toBe('ready_to_quote');
+  });
+
   it('restores the saved selection when a status update fails', async () => {
     const row = lead(1, '');
-    const select = document.createElement('select');
-    for (const status of ['new', 'ready_to_quote']) select.add(new Option(status, status));
-    select.value = 'ready_to_quote';
     service.updateQuery.and.rejectWith(new Error('Save failed'));
     TestBed.inject(ModalService).alert = jasmine.createSpy('alert').and.resolveTo();
 
-    await component.updateStatus(row, 'ready_to_quote', select);
+    await component.updateStatus(row, 'ready_to_quote');
 
-    expect(select.value).toBe('new');
+    expect(component.statusValue(row)).toBe('new');
   });
 
   it('keeps a draft through a manual creation refresh and a filter that hides the lead', async () => {
@@ -211,7 +223,7 @@ describe('Admin enquiries list', () => {
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect((fixture.nativeElement.querySelector('.status-select') as HTMLSelectElement).value)
+    expect((fixture.nativeElement.querySelector('tbody .status-select') as HTMLSelectElement).value)
       .toBe('ready_to_quote');
   });
 });

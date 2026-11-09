@@ -3,7 +3,7 @@ import { enquiryControls, enquiryPayload } from '../../../_models/enquiry-locati
 import { ENQUIRY_SOURCE_OPTIONS, sourceRequiresDetail, sourceDetailRequiredValidator } from '../../../_models/enquiry-source.models';
 import { ChangeDetectionStrategy, Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminQueryUpdateResult, AdminService, AdminQueryRow, AdminQueryTotals, ManualQueryInput } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
@@ -14,7 +14,7 @@ import { ModalService } from '../../../_services/modal.service';
   styleUrls: ['./admin-queries.component.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, DatePipe, FormsModule, ReactiveFormsModule, EnquiryLocationComponent, MatIconModule],
+  imports: [CommonModule, DatePipe, ReactiveFormsModule, EnquiryLocationComponent, MatIconModule],
 })
 export class AdminQueriesComponent implements OnInit {
   private adminService = inject(AdminService);
@@ -63,6 +63,7 @@ export class AdminQueriesComponent implements OnInit {
   readonly savingFollowUp = signal(false);
   readonly followUpError = signal('');
   readonly savingStatusId = signal<number | null>(null);
+  private readonly pendingStatuses = signal<Readonly<Record<number, string>>>({});
 
   rows       = signal<AdminQueryRow[]>([]);
   totals     = signal<AdminQueryTotals | null>(null);
@@ -182,10 +183,19 @@ export class AdminQueriesComponent implements OnInit {
     return next;
   }
 
-  async updateStatus(row: AdminQueryRow, status: string, select?: HTMLSelectElement): Promise<void> {
+  statusValue(row: AdminQueryRow): string {
+    return this.pendingStatuses()[row.id] ?? (this.followUpId() === row.id ? 'follow_up_later' : row.status);
+  }
+
+  private clearPendingStatus(id: number): void {
+    this.pendingStatuses.update(({ [id]: _pendingStatus, ...remaining }) => remaining);
+  }
+
+  async updateStatus(row: AdminQueryRow, status: string): Promise<void> {
     if (this.savingStatusId() !== null || this.savingFollowUp()) return;
     this.notice.set('');
     this.savingStatusId.set(row.id);
+    this.pendingStatuses.update(statuses => ({ ...statuses, [row.id]: status }));
     if (status === 'follow_up_later') {
       try {
         const updated = await this.adminService.updateQuery(row.id, { status });
@@ -198,9 +208,10 @@ export class AdminQueriesComponent implements OnInit {
         this.followUpId.set(row.id);
         this.notice.set('Status saved: Follow up later. Add a date or note if helpful.');
       } catch (e: any) {
-        if (select) select.value = row.status;
+        this.clearPendingStatus(row.id);
         await this.modal.alert({ title: 'Update Failed', message: e.message, variant: 'danger' });
       } finally {
+        this.clearPendingStatus(row.id);
         this.savingStatusId.set(null);
       }
       return;
@@ -211,9 +222,10 @@ export class AdminQueriesComponent implements OnInit {
       this.applyQueryUpdate(row, updated);
       this.notice.set(`Status saved: ${this.statusLabels[updated.status] ?? updated.status}.`);
     } catch (e: any) {
-      if (select) select.value = row.status;
+      this.clearPendingStatus(row.id);
       await this.modal.alert({ title: 'Update Failed', message: e.message, variant: 'danger' });
     } finally {
+      this.clearPendingStatus(row.id);
       this.savingStatusId.set(null);
     }
   }

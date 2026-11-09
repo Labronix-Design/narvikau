@@ -148,7 +148,7 @@
 // ── TABLE ──────────────────────────────────────────────────────
 .adm-table-wrap {
   max-width: 100%;
-  overflow-x: auto;
+  overflow-x: scroll;
   overscroll-behavior-inline: contain;
   border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
   border-radius: 4px;
