@@ -7,9 +7,11 @@
   inset: 0;
   z-index: 10000;
   display: grid;
-  place-items: center;
+  align-items: safe center;
+  justify-items: center;
   padding: clamp(0.75rem, 3vw, 2rem);
   background: color-mix(in srgb, var(--nv-shadow-color) 75%, transparent);
+  overflow-y: auto;
   overscroll-behavior: contain;
 }
 
@@ -19,7 +21,7 @@
   inline-size: min(100%, 56rem);
   max-block-size: calc(100dvh - clamp(1.5rem, 6vw, 4rem));
   min-inline-size: 0;
-  overflow: hidden;
+  overflow-y: auto;
   border: 1px solid var(--admin-border);
   border-radius: var(--ui-radius);
   background: var(--admin-surface-raised);
@@ -72,9 +74,8 @@
 }
 
 .adlg-body {
+  flex: 0 0 auto;
   min-block-size: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   padding: var(--ui-density-padding);
 }
 
