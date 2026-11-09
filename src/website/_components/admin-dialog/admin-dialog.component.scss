@@ -1,0 +1,97 @@
+:host {
+  display: contents;
+}
+
+.adlg-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: clamp(0.75rem, 3vw, 2rem);
+  background: color-mix(in srgb, var(--nv-shadow-color) 75%, transparent);
+  overscroll-behavior: contain;
+}
+
+.adlg-dialog {
+  display: flex;
+  flex-direction: column;
+  inline-size: min(100%, 56rem);
+  max-block-size: calc(100dvh - clamp(1.5rem, 6vw, 4rem));
+  min-inline-size: 0;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--ui-radius);
+  background: var(--admin-surface-raised);
+  color: var(--admin-text);
+  box-shadow: 0 1.5rem 5rem color-mix(in srgb, var(--nv-shadow-color) 45%, transparent);
+  font-family: var(--font-family-base);
+}
+
+.adlg-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  gap: var(--ui-density-gap);
+  padding: var(--ui-density-padding);
+  border-block-end: 1px solid var(--admin-border);
+}
+
+.adlg-heading { flex: 1; min-inline-size: 0; }
+.adlg-title {
+  margin: 0;
+  font-size: clamp(1.1rem, 3vw, 1.4rem);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.adlg-description {
+  margin: 0.5rem 0 0;
+  color: var(--admin-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.adlg-close {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--ui-radius);
+  background: var(--admin-surface-raised);
+  color: var(--admin-text);
+  font: inherit;
+  font-size: 1.5rem;
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: var(--admin-surface-hover); }
+  &:disabled { cursor: wait; opacity: 0.5; }
+  &:focus-visible { outline: 2px solid var(--nv-focus-ring); outline-offset: 2px; }
+}
+
+.adlg-body {
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--ui-density-padding);
+}
+
+.adlg-footer {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui-density-gap);
+  padding: var(--ui-density-padding);
+  border-block-start: 1px solid var(--admin-border);
+
+  &:empty { display: none; }
+}
+
+@media (max-width: 600px) {
+  .adlg-overlay { padding: 0.5rem; }
+  .adlg-dialog { max-block-size: calc(100dvh - 1rem); }
+}

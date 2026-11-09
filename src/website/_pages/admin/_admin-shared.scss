@@ -1,6 +1,21 @@
 // Shared admin page styles — imported into each admin component stylesheet
 // via: @use 'src/website/_pages/admin/admin-shared' as adm;
 
+// Projected forms keep their page-owned controls without a second card inside the dialog.
+website-admin-dialog .adm-form-wrap {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+website-admin-dialog [adminDialogActions] {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ui-density-gap);
+}
+
 .adm-page {
   padding: clamp(20px, 4vw, 48px) clamp(16px, 4vw, 48px);
   max-width: 1280px;

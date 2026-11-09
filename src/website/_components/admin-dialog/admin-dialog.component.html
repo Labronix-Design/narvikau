@@ -1,0 +1,29 @@
+@if (open()) {
+  <div class="adlg-overlay" (click)="onBackdropClick($event)">
+    <section class="adlg-dialog" role="dialog" aria-modal="true"
+      [attr.aria-labelledby]="titleId"
+      [attr.aria-describedby]="description() ? descriptionId : null"
+      [attr.aria-busy]="busy() ? 'true' : null"
+      cdkTrapFocus [cdkTrapFocusAutoCapture]="true"
+      (keydown.escape)="onEscape($event)">
+      <header class="adlg-header">
+        <div class="adlg-heading">
+          <h2 class="adlg-title" [id]="titleId" tabindex="-1" cdkFocusInitial>{{ title() }}</h2>
+          @if (description()) {
+            <p class="adlg-description" [id]="descriptionId">{{ description() }}</p>
+          }
+        </div>
+        <button class="adlg-close" type="button" aria-label="Close dialog"
+          [disabled]="dismissDisabled()" (click)="requestClose()">
+          <span aria-hidden="true">×</span>
+        </button>
+      </header>
+      <div class="adlg-body">
+        <ng-content />
+      </div>
+      <footer class="adlg-footer">
+        <ng-content select="[adminDialogActions]" />
+      </footer>
+    </section>
+  </div>
+}
