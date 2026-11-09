@@ -60,8 +60,8 @@ export class AdminProductsComponent {
   readonly activeCategories = computed(() => this.categories().filter(category => category.is_active));
   readonly categoryNames = computed(() => new Map(this.categories().map(category => [category.slug, category.name])));
   readonly tableColumns: readonly AdminTableColumn<CatalogProduct>[] = [
-    { id: 'index', label: '#', value: product => product.id, sortValue: product => product.id, mobilePriority: 5 },
     { id: 'name', label: 'Name', value: product => product.name, sortValue: product => product.name, required: true, mobilePriority: 0 },
+    { id: 'index', label: '#', value: product => product.id, sortValue: product => product.id, mobilePriority: 5 },
     { id: 'slug', label: 'Slug', value: product => product.slug, sortValue: product => product.slug, mobilePriority: 3 },
     { id: 'category', label: 'Category', value: product => this.categoryNames().get(product.category) ?? product.category, sortValue: product => this.categoryNames().get(product.category) ?? product.category, mobilePriority: 1 },
     { id: 'position', label: 'Position', value: product => product.sort_order, sortValue: product => product.sort_order, mobilePriority: 4 },

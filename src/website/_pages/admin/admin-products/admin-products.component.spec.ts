@@ -77,7 +77,9 @@ test('shows the occupied product position, including inactive products, within t
 
 test('exposes named product columns and opens create and edit forms in dialog state', async () => {
   const { component } = await editor();
-  assert.deepEqual(component.tableColumns.map(column => column.id), ['index', 'name', 'slug', 'category', 'position', 'visibility']);
+  assert.deepEqual(component.tableColumns.map(column => column.id), ['name', 'index', 'slug', 'category', 'position', 'visibility']);
+  assert.equal(component.tableColumns[0].required, true);
+  assert.equal(component.tableColumns[0].value(canopies[0]), 'Navrik Canopy — Adventure');
   component.openCreate();
   assert.equal(component.showForm(), true);
   assert.equal(component.editingId(), null);
