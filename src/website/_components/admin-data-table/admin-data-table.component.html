@@ -31,6 +31,7 @@
                 <span aria-hidden="true">{{ ariaSort(column.id) === 'ascending' ? '↑' : ariaSort(column.id) === 'descending' ? '↓' : '↕' }}</span>
               </button>
             } @else { {{ column.label }} }
+            <span class="adt-resize-handle" role="separator" aria-label="Resize {{ column.label }} column" (pointerdown)="beginResize($event, column.id)"></span>
           </th>
         }
         @if (actionsTemplate()) { <th scope="col" role="columnheader" class="adt-actions-heading">Actions</th> }

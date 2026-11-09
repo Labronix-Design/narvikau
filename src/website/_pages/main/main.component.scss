@@ -217,8 +217,10 @@
 
 .hero-cta-btn { background: var(--nv-orange); box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.32); }
 .hero-quote-btn { background: rgba(10, 9, 8, 0.62); border-color: var(--nv-border-strong); }
+.hero-quote-btn { color: var(--nv-text-main); background: color-mix(in srgb, var(--nv-surface) 78%, transparent); }
+.hero-quote-btn mat-icon { color: var(--nv-text-main); }
 .hero-cta-btn:hover { background: color-mix(in srgb, var(--nv-orange) 88%, white); box-shadow: 0 0.8rem 1.8rem rgba(0, 0, 0, 0.4); }
-.hero-quote-btn:hover { border-color: var(--nv-alloy); background: var(--nv-carbon); }
+.hero-quote-btn:hover { border-color: var(--nv-alloy); background: var(--nv-carbon); color: var(--nv-text-main); }
 
 @media (max-width: 480px) {
   .hero-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
@@ -556,7 +558,7 @@
 .category-browse-link:hover, .catalogue-all-link:hover { color: var(--nv-text-main); }
 .category-browse-link mat-icon, .catalogue-all-link mat-icon { inline-size: 1rem; block-size: 1rem; font-size: 1rem; }
 .catalogue-all-action { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; margin-block-start: 2rem; }
-.catalogue-all-link { padding-inline: 0.85rem; border: 1px solid var(--nv-border-strong); background: var(--nv-carbon); }
+.catalogue-all-link { padding-inline: 0.85rem; border: 1px solid var(--nv-border-strong); background: var(--nv-carbon); color: var(--nv-text-main); }
 .catalogue-all-link--secondary { border-color: transparent; background: transparent; }
 .catalogue-empty { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: clamp(1.25rem, 3vw, 2.2rem); }
 .catalogue-empty > mat-icon { color: var(--nv-orange); }

@@ -3,7 +3,7 @@
 .adt-toolbar { display: flex; align-items: start; justify-content: flex-end; flex-wrap: wrap; gap: var(--ui-density-gap); margin-block-end: 1rem; }
 .adt-chooser { position: relative; max-width: 100%; font-size: .82rem; }
 .adt-options-trigger { min-height: 2.75rem; padding: var(--ui-density-padding); border: 1px solid var(--admin-border); border-radius: var(--ui-radius); background: var(--admin-surface-raised); color: var(--admin-text); font: inherit; font-weight: 700; cursor: pointer; }
-.adt-choices { position: absolute; z-index: 20; inset-inline-end: 0; margin-top: .5rem; width: min(26rem, calc(100vw - 2rem)); padding: var(--ui-density-padding); border: 1px solid var(--admin-border); border-radius: var(--ui-radius); background: var(--admin-surface-raised); box-shadow: 0 1rem 2.5rem var(--nv-shadow-color); }
+.adt-choices { position: absolute; z-index: 20; inset-inline-end: 0; margin-top: .5rem; width: min(26rem, calc(100vw - 2rem)); padding: var(--ui-density-padding); border: 1px solid var(--admin-border); border-radius: var(--ui-radius); background: var(--admin-surface-raised); box-shadow: 0 1rem 2.5rem var(--nv-shadow-color); transform-origin: top right; }
 .adt-choice {
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   label { display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; cursor: pointer; }
@@ -21,12 +21,14 @@ button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px 
 .adt-table {
   width: 100%; border-collapse: collapse; font-size: .82rem; background: var(--admin-surface-raised);
   caption { text-align: start; font-weight: 700; padding: var(--ui-density-padding); color: var(--admin-text); }
-  th, td { padding: var(--ui-density-padding); text-align: start; vertical-align: middle; border-block-end: 1px solid var(--admin-border); overflow-wrap: anywhere; }
+  th, td { padding: var(--ui-density-padding); text-align: start; vertical-align: middle; border-block-end: 1px solid var(--admin-border); overflow-wrap: anywhere; min-width: 9rem; }
   thead th { background: var(--admin-surface-hover); color: var(--admin-text-subtle); font-size: .72rem; }
   tbody th, tbody td { font-weight: 400; color: var(--admin-text-muted); }
-  tbody .is-bold { font-weight: 800; color: var(--admin-text); }
+  tbody .is-bold, tbody .is-bold .adt-cell-content, tbody .is-bold .adt-cell-content * { font-weight: 800 !important; color: var(--admin-text); }
   .adt-data-row:hover { background: var(--admin-surface-hover); }
 }
+.adt-resize-handle { position: absolute; inset-inline-end: -4px; inset-block: 0; inline-size: 8px; cursor: col-resize; touch-action: none; z-index: 2; }
+.adt-table thead th { position: relative; }
 .adt-sort { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; text-align: start; }
 .adt-action-content { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; min-width: max-content; }
 .adt-expanded-row > td { padding: 0; }

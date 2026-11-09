@@ -42,6 +42,7 @@ export class AdminDataTableComponent<T> implements OnChanges {
   readonly expandedTemplate = contentChild<AdminTableExpandedDirective<T>>(AdminTableExpandedDirective);
   readonly sort = signal<{ id: string; direction: 'ascending' | 'descending' } | null>(null);
   readonly optionsOpen = signal(false);
+  private resizeStart: { id: string; x: number; width: number } | null = null;
   private readonly document = inject(DOCUMENT);
   private readonly preferences = signal<AdminTablePreferences>({ version: 2, visibleColumnIds: [], boldColumnIds: [], columnWidths: {} });
   private loadedTableId: string | null = null;
@@ -109,6 +110,19 @@ export class AdminDataTableComponent<T> implements OnChanges {
     if (width) widths[id] = width; else delete widths[id];
     this.save({ ...this.preferences(), columnWidths: widths });
   }
+  beginResize(event: PointerEvent, id: string): void {
+    if (event.pointerType === 'touch') return;
+    const header = (event.currentTarget as HTMLElement).parentElement;
+    this.resizeStart = { id, x: event.clientX, width: header?.getBoundingClientRect().width ?? 160 };
+    this.document.defaultView?.addEventListener('pointermove', this.resizeColumn);
+    this.document.defaultView?.addEventListener('pointerup', this.endResize, { once: true });
+    event.preventDefault();
+  }
+  private readonly resizeColumn = (event: PointerEvent): void => {
+    if (!this.resizeStart) return;
+    this.setColumnWidth(this.resizeStart.id, String(this.resizeStart.width + event.clientX - this.resizeStart.x));
+  };
+  private readonly endResize = (): void => { this.resizeStart = null; this.document.defaultView?.removeEventListener('pointermove', this.resizeColumn); };
 
   sortBy(id: string): void {
     if (!this.columns().some(column => column.id === id && column.sortValue)) return;
