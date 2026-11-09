@@ -10,17 +10,18 @@
 
 button {
   /* --- NAVRIK DESIGN TOKENS --- */
-  --btn-orange: var(--nv-orange, #ea580c);
-  --btn-bg: #111;
-  --btn-border: #5a6068;
-  --btn-text: #ffffff;
+  --btn-orange: var(--nv-orange);
+  --btn-bg: var(--nv-surface-raised);
+  --btn-border: var(--nv-border);
+  --btn-text: var(--nv-text-main);
 
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  min-height: 64px;
+  min-height: max(2.75rem, var(--ui-density-control-height));
+  padding-block: var(--ui-density-padding);
   padding: 0 40px;
   width: 100%;
 
@@ -39,9 +40,9 @@ button {
   /* Orange left-rail marks it as interactive at a glance */
   border: 2px solid var(--btn-border);
   border-left: 3px solid var(--btn-orange);
-  border-radius: 2px;
+  border-radius: var(--ui-radius);
 
-  box-shadow: 5px 5px 0 #000, inset 0 1px 0 rgba(190, 195, 200, 0.06);
+  box-shadow: 5px 5px 0 var(--nv-shadow-color), inset 0 1px 0 color-mix(in srgb, var(--nv-text-muted) 6%, transparent);
 
   cursor: pointer;
   z-index: 1;
@@ -72,28 +73,28 @@ button {
   &:hover:not(:disabled) {
     background-position: left center;
     border-color: var(--btn-orange);
-    color: #000;
-    box-shadow: 7px 7px 0 #000;
-    ::ng-deep mat-icon { color: #000; }
+    color: var(--nv-accent-text);
+    box-shadow: 7px 7px 0 var(--nv-shadow-color);
+    ::ng-deep mat-icon { color: var(--nv-accent-text); }
   }
 
   /* --- PRESS: physically drops to meet the shadow --- */
   &.button-animate, &:active:not(:disabled) {
     transform: translate(5px, 5px);
-    box-shadow: 0 0 0 #000;
+    box-shadow: 0 0 0 var(--nv-shadow-color);
   }
 
   /* --- DISABLED --- */
   &:disabled {
     background-image: none;
-    background-color: #0c0c0c;
-    border-color: #222;
-    border-left-color: #333;
-    color: #3a3a3a;
+    background-color: var(--nv-surface);
+    border-color: var(--nv-border);
+    border-left-color: var(--nv-border);
+    color: var(--nv-text-muted);
     box-shadow: none;
     transform: translate(5px, 5px);
     cursor: not-allowed;
-    ::ng-deep mat-icon { color: #3a3a3a; }
+    ::ng-deep mat-icon { color: var(--nv-text-muted); }
   }
 
   /* --- LOADING STATE --- */

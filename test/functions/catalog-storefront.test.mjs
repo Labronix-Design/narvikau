@@ -27,7 +27,7 @@ test('storefront read model returns only cached public catalogue and site config
       { id: 1, slug: 'navrik-canopy-adventure', name: 'Navrik Canopy — Adventure', category: 'canopy', gallery_urls: [], specifications: { Material: '5052-grade aluminium' } },
       { id: 2, slug: 'navrik-recovery-kit', name: 'Navrik Recovery Kit', category: 'accessory', gallery_urls: ['/uploads/recovery-kit.jpg'], specifications: { Material: 'Nylon' } },
     ],
-    settings: { logo_url: '/uploads/logo.svg', primary_color: '#ea580c' },
+    settings: { logo_url: '/uploads/logo.svg', primary_color: '#ea580c', theme: { version: 1, surface: '#0a0908', surface_raised: '#171513', text: '#f2ede7', text_muted: '#c4bdb4', border: '#514c46', accent: '#ea580c', accent_text: '#0a0908', focus: '#c1bbb3', radius: 'subtle', density: 'standard' } },
   });
   assert.doesNotMatch(response.body, /purchaseMode|price_cents|checkout|yoco|compatibility|packages/i);
   assert.equal(queries.length, 1);

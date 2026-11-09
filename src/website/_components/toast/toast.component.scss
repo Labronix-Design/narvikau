@@ -1,16 +1,16 @@
 /* --- NAVRIK HEAVY-DUTY VARIABLES --- */
 :host {
-  --navrik-bg-dark: #0a0a0a;       /* Deepest black */
-  --navrik-bg-panel: #141414;      /* Matte textured black */
-  --navrik-metal: #2d2d2d;         /* Dark brushed border */
-  --navrik-text: #ffffff;
-  --navrik-text-muted: #a3a3a3;
+  --navrik-bg-dark: var(--nv-surface);       /* Deepest black */
+  --navrik-bg-panel: var(--nv-surface-raised);      /* Matte textured black */
+  --navrik-metal: var(--nv-border);         /* Dark brushed border */
+  --navrik-text: var(--nv-text-main);
+  --navrik-text-muted: var(--nv-text-muted);
   
   /* High-Contrast Industrial Status Colors */
-  --status-success: #10b981;       /* Technical Green */
-  --status-error: #ef4444;         /* Danger Red */
-  --status-warning: #f59e0b;       /* Caution Yellow */
-  --status-info: var(--nv-orange, #ea580c);          /* Navrik Brand Orange */
+  --status-success: var(--nv-success);       /* Technical Green */
+  --status-error: var(--nv-danger);         /* Danger Red */
+  --status-warning: var(--nv-warning);       /* Caution Yellow */
+  --status-info: var(--nv-orange);          /* Navrik Brand Orange */
 }
 
 .toast-container {
@@ -36,7 +36,7 @@
   /* Machined metal aesthetic */
   background: var(--navrik-bg-panel);
   border: 1px solid var(--navrik-metal);
-  border-radius: 0; /* Completely sharp corners */
+  border-radius: var(--ui-radius); /* Completely sharp corners */
   
   /* Hard mechanical drop shadow */
   box-shadow: 4px 4px 0 var(--navrik-bg-dark);
@@ -45,7 +45,6 @@
   pointer-events: auto;
 
   /* Performance & Animation */
-  will-change: transform, opacity;
   backface-visibility: hidden;
   animation: mechanical-drop 0.25s cubic-bezier(0.0, 0.0, 0.2, 1) forwards;
 

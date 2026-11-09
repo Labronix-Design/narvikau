@@ -1,23 +1,29 @@
 import { ChangeDetectionStrategy, Component, inject, signal, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminService } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
-import { SiteSettingsService } from '../../../_services/site-settings.service';
+import { normaliseSiteTheme, SiteSettingsService, themeContrast } from '../../../_services/site-settings.service';
 import { ImageUploadComponent } from '../../../_components/image-upload/image-upload.component';
 import {
   HeroSlide, BrandLogo, BusinessHoursRow, TrustBarItem, GOOGLE_FONT_OPTIONS,
   DEFAULT_HERO_SLIDES, DEFAULT_BRAND_LOGOS, DEFAULT_CONTACT_INFO,
-  DEFAULT_TRUST_BAR, DEFAULT_COMPAT_NOTE,
+  DEFAULT_TRUST_BAR, DEFAULT_COMPAT_NOTE, DEFAULT_SITE_THEME, SiteTheme, SiteSettings,
 } from '../../../_models/site-settings.models';
 
 type SettingsSection = 'branding' | 'contact' | 'hero' | 'compatibility';
-type ThemeFields = {
-  font_family: string;
-  primary_color: string;
-  background_color: string;
-  font_color: string;
+type ThemeColourKey = 'accent' | 'surface' | 'surface_raised' | 'text' | 'text_muted' | 'border' | 'accent_text';
+const hexValidators = [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)];
+const oneOf = (values: readonly string[]): ValidatorFn => (control: AbstractControl): ValidationErrors | null =>
+  values.includes(control.value) ? null : { option: true };
+const themeContrastValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
+  const theme = control.value as SiteTheme;
+  if (themeContrast(theme.text, theme.surface) < 4.5 || themeContrast(theme.text, theme.surface_raised) < 4.5
+      || themeContrast(theme.text_muted, theme.surface) < 4.5 || themeContrast(theme.text_muted, theme.surface_raised) < 4.5
+      || themeContrast(theme.accent, theme.surface) < 4.5 || themeContrast(theme.accent, theme.surface_raised) < 4.5
+      || themeContrast(theme.accent_text, theme.accent) < 4.5) return { contrast: true };
+  return null;
 };
 
 @Component({
@@ -35,6 +41,15 @@ export class AdminSiteSettingsComponent implements OnInit, OnDestroy {
   private fb = inject(FormBuilder);
 
   readonly fontOptions = GOOGLE_FONT_OPTIONS;
+  readonly themeColours: { key: ThemeColourKey; label: string; help: string }[] = [
+    { key: 'accent', label: 'Accent colour', help: 'Buttons, links and highlighted details.' },
+    { key: 'surface', label: 'Page background', help: 'The background of the public site and admin workspace.' },
+    { key: 'surface_raised', label: 'Panel / surface colour', help: 'Cards, navigation, form controls and dialogs.' },
+    { key: 'text', label: 'Primary text colour', help: 'Headings and body copy on pages and panels.' },
+    { key: 'text_muted', label: 'Muted text colour', help: 'Supporting labels and secondary information.' },
+    { key: 'border', label: 'Border colour', help: 'Dividers and outlines around controls and panels.' },
+    { key: 'accent_text', label: 'Accent text colour', help: 'Text and icons on accent-coloured buttons.' },
+  ];
 
   loading = signal(true);
   saving  = signal(false);
@@ -64,10 +79,18 @@ export class AdminSiteSettingsComponent implements OnInit, OnDestroy {
 
   form = this.fb.nonNullable.group({
     logo_url:      [''],
-    font_family:   ['Inter', Validators.required],
-    primary_color: ['#ea580c', [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)]],
-    background_color: ['#0a0908', [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)]],
-    font_color: ['#f2ede7', [Validators.required, Validators.pattern(/^#[0-9a-fA-F]{6}$/)]],
+    font_family: ['Inter', [Validators.required, oneOf(GOOGLE_FONT_OPTIONS)]],
+    theme: this.fb.nonNullable.group({
+      surface: [DEFAULT_SITE_THEME.surface, hexValidators],
+      surface_raised: [DEFAULT_SITE_THEME.surface_raised, hexValidators],
+      text: [DEFAULT_SITE_THEME.text, hexValidators],
+      text_muted: [DEFAULT_SITE_THEME.text_muted, hexValidators],
+      border: [DEFAULT_SITE_THEME.border, hexValidators],
+      accent: [DEFAULT_SITE_THEME.accent, hexValidators],
+      accent_text: [DEFAULT_SITE_THEME.accent_text, hexValidators],
+      radius: this.fb.nonNullable.control<SiteTheme['radius']>('subtle', oneOf(['square', 'subtle', 'rounded'])),
+      density: this.fb.nonNullable.control<SiteTheme['density']>('standard', oneOf(['compact', 'standard', 'spacious'])),
+    }, { validators: themeContrastValidator }),
     contact_email:    ['', [Validators.required, Validators.email]],
     contact_phone:    [''],
     contact_whatsapp: [''],
@@ -75,26 +98,20 @@ export class AdminSiteSettingsComponent implements OnInit, OnDestroy {
     compat_note: [''],
   });
 
-  private savedTheme: ThemeFields = {
-    font_family: 'Inter',
-    primary_color: '#ea580c',
-    background_color: '#0a0908',
-    font_color: '#f2ede7',
-  };
+  private savedTheme = { font_family: 'Inter', theme: { ...DEFAULT_SITE_THEME } };
 
   async ngOnInit(): Promise<void> {
     this.loading.set(true);
     try {
       const s = await this.adminService.getSiteSettings();
       const contact = s.contact || {};
+      const theme = normaliseSiteTheme(s);
       const hasContact = !!(contact.email || contact.phone || contact.location);
       const hasHours = !!(contact.business_hours && contact.business_hours.length);
       this.form.patchValue({
         logo_url: s.logo_url || '',
         font_family: s.font_family || 'Inter',
-        primary_color: s.primary_color || '#ea580c',
-        background_color: s.background_color || '#0a0908',
-        font_color: s.font_color || '#f2ede7',
+        theme,
         contact_email: contact.email || DEFAULT_CONTACT_INFO.email,
         contact_phone: contact.phone || '',
         contact_whatsapp: contact.whatsapp || '',
@@ -103,10 +120,9 @@ export class AdminSiteSettingsComponent implements OnInit, OnDestroy {
       });
       this.savedTheme = {
         font_family: s.font_family || 'Inter',
-        primary_color: s.primary_color || '#ea580c',
-        background_color: s.background_color || '#0a0908',
-        font_color: s.font_color || '#f2ede7',
+        theme,
       };
+      this.siteSettingsService.commit({ ...s, theme });
       this.businessHours.set(hasHours ? contact.business_hours : DEFAULT_CONTACT_INFO.business_hours.map(x => ({ ...x })));
       this.usingDefaultContact.set(!hasContact);
 
@@ -119,8 +135,8 @@ export class AdminSiteSettingsComponent implements OnInit, OnDestroy {
       this.usingDefaultSlides.set(!hasSlides);
       this.usingDefaultBrands.set(!hasBrands);
       this.usingDefaultTrustBar.set(!hasTrustBar);
-    } catch (e: any) {
-      this.error.set(e.message || 'Failed to load site settings');
+    } catch (e: unknown) {
+      this.error.set((e instanceof Error ? e.message : '') || 'Failed to load site settings');
     } finally {
       this.loading.set(false);
     }
@@ -231,19 +247,40 @@ export class AdminSiteSettingsComponent implements OnInit, OnDestroy {
   }
 
   // ── Live preview ───────────────────────────────────────────
+  private buildThemePayload(): SiteTheme {
+    const theme = this.form.controls.theme.getRawValue();
+    // Focus is a safe derived colour; preview and save use this exact payload.
+    return normaliseSiteTheme({ theme: { ...theme, version: 1, focus: '' } });
+  }
+
+  private buildSettingsPayload(): SiteSettings {
+    const fields = this.form.getRawValue();
+    const theme = this.buildThemePayload();
+    return {
+      logo_url: fields.logo_url || null,
+      font_family: fields.font_family,
+      theme,
+      primary_color: theme.accent,
+      background_color: theme.surface,
+      font_color: theme.text,
+      hero_slides: this.heroSlides().filter(slide => slide.image_url.trim()),
+      brand_logos: this.brandLogos().filter(brand => brand.logo_url.trim() && brand.brand.trim()),
+      trust_bar: this.trustBar().filter(item => item.label.trim()),
+      compat_note: fields.compat_note || DEFAULT_COMPAT_NOTE,
+      contact: {
+        ...this.buildContactPayload(),
+        business_hours: this.businessHours().filter(row => row.label.trim()),
+      },
+    };
+  }
+
   previewTheme(): void {
-    this.siteSettingsService.preview({
-      logo_url: this.form.value.logo_url || null,
-      font_family: this.form.value.font_family || 'Inter',
-      primary_color: this.form.value.primary_color || '#ea580c',
-      background_color: this.form.value.background_color || '#0a0908',
-      font_color: this.form.value.font_color || '#f2ede7',
-      hero_slides: this.heroSlides(),
-      brand_logos: this.brandLogos(),
-      trust_bar: this.trustBar(),
-      compat_note: this.form.value.compat_note || DEFAULT_COMPAT_NOTE,
-      contact: this.buildContactPayload(),
-    });
+    if (this.form.controls.theme.invalid || this.form.controls.font_family.invalid) {
+      this.form.controls.theme.markAllAsTouched();
+      this.form.controls.font_family.markAsTouched();
+      return;
+    }
+    this.siteSettingsService.preview(this.buildSettingsPayload());
     this.previewingTheme.set(true);
   }
 
@@ -262,37 +299,21 @@ export class AdminSiteSettingsComponent implements OnInit, OnDestroy {
     this.saving.set(true);
     this.error.set('');
     try {
-      const payload = {
-        logo_url: this.form.value.logo_url || null,
-        font_family: this.form.value.font_family!,
-        primary_color: this.form.value.primary_color!,
-        background_color: this.form.value.background_color!,
-        font_color: this.form.value.font_color!,
-        hero_slides: this.heroSlides().filter(s => s.image_url.trim()),
-        brand_logos: this.brandLogos().filter(b => b.logo_url.trim() && b.brand.trim()),
-        trust_bar: this.trustBar().filter(t => t.label.trim()),
-        compat_note: this.form.value.compat_note || DEFAULT_COMPAT_NOTE,
-        contact: {
-          ...this.buildContactPayload(),
-          business_hours: this.businessHours().filter(r => r.label.trim()),
-        },
-      };
-      const updated = await this.adminService.updateSiteSettings(payload as any);
+      const updated: SiteSettings = await this.adminService.updateSiteSettings(this.buildSettingsPayload());
+      const theme = normaliseSiteTheme(updated);
+      const font_family = updated.font_family || 'Inter';
+      this.form.patchValue({ font_family, theme });
       this.heroSlides.set(updated.hero_slides || []);
       this.brandLogos.set(updated.brand_logos || []);
       this.trustBar.set(updated.trust_bar || []);
       this.businessHours.set(updated.contact?.business_hours || []);
-      this.savedTheme = {
-        font_family: updated.font_family || 'Inter',
-        primary_color: updated.primary_color || '#ea580c',
-        background_color: updated.background_color || '#0a0908',
-        font_color: updated.font_color || '#f2ede7',
-      };
+      this.savedTheme = { font_family, theme };
       this.previewingTheme.set(false);
       this.siteSettingsService.commit(updated);
       await this.modal.alert({ title: 'Saved', message: 'Site settings updated — changes are live on the storefront now.' });
-    } catch (e: any) {
-      await this.modal.alert({ title: 'Save Failed', message: e.error?.error || e.message || 'Unknown error', variant: 'danger' });
+    } catch (e: unknown) {
+      const failure = e as { error?: { error?: string }; message?: string };
+      await this.modal.alert({ title: 'Save Failed', message: failure?.error?.error || failure?.message || 'Unknown error', variant: 'danger' });
     } finally {
       this.saving.set(false);
     }

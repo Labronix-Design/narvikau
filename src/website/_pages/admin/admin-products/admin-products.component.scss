@@ -8,7 +8,7 @@
 }
 
 .specifications {
-  border: 1px solid rgba(255, 255, 255, .2);
+  border: 1px solid color-mix(in srgb, var(--admin-border) 20%, transparent);
   padding: 16px;
   min-width: 0;
 
@@ -26,8 +26,8 @@
   > button { margin-top: 24px; }
 }
 
-.adm-field small { color: #bbb; }
-.adm-field .field-error, .field-error { color: #fca5a5; }
+.adm-field small { color: var(--admin-text-muted); }
+.adm-field .field-error, .field-error { color: var(--admin-danger); }
 
 @media (max-width: 640px) {
   .specification-row { grid-template-columns: minmax(0, 1fr); }
@@ -43,7 +43,7 @@
 }
 
 .gallery-help {
-  color: var(--nv-text-muted, #bbb);
+  color: var(--nv-text-muted);
   font-size: .85rem;
   margin: 0 0 12px;
 }
@@ -62,8 +62,8 @@
   align-items: center;
   gap: 10px;
   padding: 8px;
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--admin-border) 8%, transparent);
+  border-radius: var(--ui-radius);
 
   .adm-btn { margin-left: auto; }
 }
@@ -73,8 +73,8 @@
   flex-direction: column;
   gap: 3px;
   font-weight: 600;
-  color: #ddd;
-  .slug-tag { font-size: 0.68rem; color: #444; font-family: 'Courier New', monospace; }
+  color: var(--admin-text);
+  .slug-tag { font-size: 0.68rem; color: var(--admin-text-muted); font-family: 'Courier New', monospace; }
 }
 
 .type-badge {
@@ -84,10 +84,10 @@
   text-transform: uppercase;
   letter-spacing: 0.08em;
   padding: 2px 7px;
-  border-radius: 2px;
-  &.standard { background: rgba(100,116,139,.2); color: #94a3b8; }
-  &.premium  { background: rgba(var(--nv-orange-rgb, 234, 88, 12),.15);  color: #fb923c; }
-  &.canopy   { background: rgba(59,130,246,.12); color: #60a5fa; }
+  border-radius: var(--ui-radius);
+  &.standard { background: color-mix(in srgb, var(--admin-neutral) 20%, transparent); color: var(--admin-text-muted); }
+  &.premium  { background: color-mix(in srgb, var(--nv-orange) 15%, transparent);  color: var(--admin-brand); }
+  &.canopy   { background: color-mix(in srgb, var(--admin-neutral) 12%, transparent); color: var(--admin-neutral); }
 }
 
 .bool-dot {
@@ -95,8 +95,8 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #2d2d2d;
-  &.on { background: #22c55e; box-shadow: 0 0 6px rgba(34,197,94,.4); }
+  background: var(--admin-surface-raised);
+  &.on { background: var(--admin-success); box-shadow: 0 0 6px color-mix(in srgb, var(--admin-success) 40%, transparent); }
 }
 
 .row-actions {
@@ -106,24 +106,24 @@
 }
 
 .row-expanded td {
-  background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.03) !important;
+  background: color-mix(in srgb, var(--nv-orange) 3%, transparent) !important;
 }
 
 .active-variants-btn {
-  border-color: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.4) !important;
-  color: var(--nv-orange, #ea580c) !important;
+  border-color: color-mix(in srgb, var(--nv-orange) 40%, transparent) !important;
+  color: var(--nv-orange) !important;
 }
 
 // ── VARIANTS PANEL ───────────────────────────────────────────────
 .variants-row td {
   padding: 0 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--admin-border) 6%, transparent) !important;
 }
 
 .variants-panel {
   padding: 20px 24px;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(var(--nv-orange-rgb, 234, 88, 12), 0.15);
+  background: color-mix(in srgb, var(--nv-shadow-color) 20%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--nv-orange) 15%, transparent);
 }
 
 .variants-header {
@@ -138,38 +138,38 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--nv-orange, #ea580c);
+  color: var(--nv-orange);
 }
 
 .variants-loading {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #555;
+  color: var(--admin-text-muted);
   font-size: 0.78rem;
   padding: 12px 0;
 
   .spin {
     width: 18px;
     height: 18px;
-    border: 2px solid rgba(255,255,255,0.06);
-    border-top-color: var(--nv-orange, #ea580c);
+    border: 2px solid color-mix(in srgb, var(--admin-border) 6%, transparent);
+    border-top-color: var(--nv-orange);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
   }
 }
 
 .variants-empty {
-  color: #333;
+  color: var(--admin-text-muted);
   font-size: 0.8rem;
   padding: 12px 0;
 }
 
 .variant-form {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-left: 2px solid rgba(var(--nv-orange-rgb, 234, 88, 12), 0.5);
-  border-radius: 0 2px 2px 0;
+  background: color-mix(in srgb, var(--admin-highlight) 2%, transparent);
+  border: 1px solid color-mix(in srgb, var(--admin-border) 6%, transparent);
+  border-left: 2px solid color-mix(in srgb, var(--nv-orange) 50%, transparent);
+  border-radius: var(--ui-radius);
   padding: 16px;
   margin-bottom: 16px;
 }
@@ -192,7 +192,7 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #444;
+  color: var(--admin-text-muted);
   margin-bottom: 6px;
 }
 
@@ -207,9 +207,9 @@
   align-items: center;
   gap: 12px;
   padding: 7px 12px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 2px;
+  background: color-mix(in srgb, var(--admin-highlight) 2%, transparent);
+  border: 1px solid color-mix(in srgb, var(--admin-border) 5%, transparent);
+  border-radius: var(--ui-radius);
 
   &.inactive {
     opacity: 0.45;
@@ -219,13 +219,13 @@
 .variant-label {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #ccc;
+  color: var(--admin-text);
   min-width: 80px;
 }
 
 .variant-value {
   font-size: 0.7rem;
-  color: #444;
+  color: var(--admin-text-muted);
   min-width: 90px;
 }
 
@@ -233,14 +233,18 @@
   font-size: 0.72rem;
   font-weight: 700;
   min-width: 70px;
-  color: #555;
+  color: var(--admin-text-muted);
 
-  &.positive { color: #22c55e; }
-  &.negative { color: #f87171; }
+  &.positive { color: var(--admin-success); }
+  &.negative { color: var(--admin-danger); }
 }
 
 .variant-actions {
   margin-left: auto;
   display: flex;
   gap: 4px;
+}
+
+:where(.panel, .register, .health-line, .setup-note, .comparison, .opportunities, .website-analytics, .specifications, .manual-form) {
+  border-radius: var(--ui-radius);
 }

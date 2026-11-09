@@ -9,15 +9,15 @@
 
 .category-description {
   margin-top: 4px;
-  color: var(--admin-text-muted, #888);
+  color: var(--admin-text-muted);
   font-size: .75rem;
 }
 
 .adm-table th[scope='row'] {
   padding: 11px 14px;
   background: transparent;
-  border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.04));
-  color: var(--admin-text, #ddd);
+  border-bottom: 1px solid var(--admin-border);
+  color: var(--admin-text);
   font-size: .82rem;
   font-weight: 600;
   letter-spacing: normal;
@@ -33,4 +33,8 @@
   gap: 6px;
 }
 
-.field-error { color: #fca5a5; }
+.field-error { color: var(--admin-danger); }
+
+:where(.panel, .register, .health-line, .setup-note, .comparison, .opportunities, .website-analytics, .specifications, .manual-form) {
+  border-radius: var(--ui-radius);
+}

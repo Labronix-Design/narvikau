@@ -47,41 +47,56 @@
             </select>
           </div>
 
-          <div class="adm-field">
-            <label>Primary / Accent Colour</label>
-            <div class="color-field-row">
-              <input type="color" [formControl]="form.controls.primary_color">
-              <input type="text" [formControl]="form.controls.primary_color" placeholder="#ea580c">
+          <fieldset class="theme-controls span-full" aria-describedby="theme-help theme-contrast-help">
+            <legend>Theme</legend>
+            <p id="theme-help" class="field-hint">One palette for the public site and admin workspace. Your saved colours apply regardless of the device's light or dark setting.</p>
+            <div class="adm-form-grid">
+              @for (colour of themeColours; track colour.key) {
+                <div class="adm-field">
+                  <label [for]="'theme-' + colour.key">{{ colour.label }}</label>
+                  <div class="color-field-row">
+                    <input type="color" [formControl]="form.controls.theme.controls[colour.key]" [attr.aria-label]="colour.label + ' picker'" [attr.aria-describedby]="'theme-' + colour.key + '-help'">
+                    <input type="text" [id]="'theme-' + colour.key" [formControl]="form.controls.theme.controls[colour.key]" placeholder="#000000" maxlength="7" spellcheck="false" [attr.aria-describedby]="'theme-' + colour.key + '-help'" [attr.aria-invalid]="form.controls.theme.controls[colour.key].touched && form.controls.theme.controls[colour.key].invalid">
+                  </div>
+                  <span class="field-hint" [id]="'theme-' + colour.key + '-help'">{{ colour.help }}</span>
+                  @if (form.controls.theme.controls[colour.key].touched && form.controls.theme.controls[colour.key].invalid) {
+                    <span class="field-err" role="alert">Enter a six-digit hex colour, such as #112233.</span>
+                  }
+                </div>
+              }
+              <div class="adm-field">
+                <label for="theme-radius">Interface style</label>
+                <select id="theme-radius" [formControl]="form.controls.theme.controls.radius" aria-describedby="theme-radius-help">
+                  <option value="square">Square corners</option>
+                  <option value="subtle">Subtle corners</option>
+                  <option value="rounded">Rounded corners</option>
+                </select>
+                <span class="field-hint" id="theme-radius-help">Corner shape for controls, cards and dialogs.</span>
+                @if (form.controls.theme.controls.radius.touched && form.controls.theme.controls.radius.invalid) {
+                  <span class="field-err" role="alert">Choose square, subtle or rounded corners.</span>
+                }
+              </div>
+              <div class="adm-field">
+                <label for="theme-density">Layout density</label>
+                <select id="theme-density" [formControl]="form.controls.theme.controls.density" aria-describedby="theme-density-help">
+                  <option value="compact">Compact</option>
+                  <option value="standard">Standard</option>
+                  <option value="spacious">Spacious</option>
+                </select>
+                <span class="field-hint" id="theme-density-help">Space around controls and between items.</span>
+                @if (form.controls.theme.controls.density.touched && form.controls.theme.controls.density.invalid) {
+                  <span class="field-err" role="alert">Choose compact, standard or spacious density.</span>
+                }
+              </div>
             </div>
-            @if (form.controls.primary_color.touched && form.controls.primary_color.invalid) {
-              <span class="field-err">Must be a 6-digit hex colour</span>
+            <p id="theme-contrast-help" class="field-hint">Primary text must have at least 4.5:1 contrast on the page and panels. Accent text must have at least 4.5:1 contrast on the accent colour. Focus and status styles follow the palette automatically.</p>
+            @if (form.controls.theme.hasError('contrast')) {
+              <p class="field-err" role="alert">Increase the contrast between primary text and both backgrounds, and between accent text and the accent colour, before previewing or saving.</p>
             }
-          </div>
-
-          <div class="adm-field">
-            <label>Site Background Colour</label>
-            <div class="color-field-row">
-              <input type="color" [formControl]="form.controls.background_color">
-              <input type="text" [formControl]="form.controls.background_color" placeholder="#0a0908">
-            </div>
-            @if (form.controls.background_color.touched && form.controls.background_color.invalid) {
-              <span class="field-err">Must be a 6-digit hex colour</span>
-            }
-          </div>
-
-          <div class="adm-field">
-            <label>Main Font Colour</label>
-            <div class="color-field-row">
-              <input type="color" [formControl]="form.controls.font_color">
-              <input type="text" [formControl]="form.controls.font_color" placeholder="#f2ede7">
-            </div>
-            @if (form.controls.font_color.touched && form.controls.font_color.invalid) {
-              <span class="field-err">Must be a 6-digit hex colour</span>
-            }
-          </div>
+          </fieldset>
         </div>
         <div class="theme-preview-actions">
-          <button type="button" class="adm-btn ghost" (click)="previewTheme()" [disabled]="form.controls.font_family.invalid || form.controls.primary_color.invalid || form.controls.background_color.invalid || form.controls.font_color.invalid">
+          <button type="button" class="adm-btn ghost" (click)="previewTheme()" [disabled]="form.controls.font_family.invalid || form.controls.theme.invalid">
             <mat-icon svgIcon="visibility"></mat-icon>
             {{ previewingTheme() ? 'Refresh Preview' : 'Preview Theme' }}
           </button>
@@ -92,7 +107,7 @@
             </button>
           }
         </div>
-        <p class="preview-note">
+        <p class="preview-note" aria-live="polite">
           <mat-icon svgIcon="visibility"></mat-icon>
           Preview colours across the public site and admin workspace before saving. Reset returns the fields and UI to the currently saved theme.
         </p>

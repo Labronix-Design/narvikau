@@ -13,6 +13,92 @@ const headers = {
 
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 
+export const DEFAULT_THEME = Object.freeze({
+  version: 1,
+  surface: '#0a0908',
+  surface_raised: '#171513',
+  text: '#f2ede7',
+  text_muted: '#c4bdb4',
+  border: '#514c46',
+  accent: '#ea580c',
+  accent_text: '#0a0908',
+  focus: '#c1bbb3',
+  radius: 'subtle',
+  density: 'standard',
+});
+
+const THEME_COLOURS = ['surface', 'surface_raised', 'text', 'text_muted', 'border', 'accent', 'accent_text', 'focus'];
+const THEME_KEYS = Object.keys(DEFAULT_THEME);
+const isRecord = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const isColour = (value) => typeof value === 'string' && HEX_COLOR_RE.test(value);
+const log = {
+  error: (msg, d = {}) => console.error(JSON.stringify({ level: 'ERROR', fn: 'admin-site-settings', msg, ...d, ts: new Date().toISOString() })),
+};
+
+function hasThemeShape(theme) {
+  return isRecord(theme)
+    && Object.keys(theme).length === THEME_KEYS.length
+    && THEME_KEYS.every((key) => Object.hasOwn(theme, key))
+    && theme.version === 1
+    && THEME_COLOURS.every((key) => isColour(theme[key]))
+    && ['square', 'subtle', 'rounded'].includes(theme.radius)
+    && ['compact', 'standard', 'spacious'].includes(theme.density);
+}
+
+function luminance(colour) {
+  const channels = [1, 3, 5].map((offset) => {
+    const value = parseInt(colour.slice(offset, offset + 2), 16) / 255;
+    return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return channels[0] * 0.2126 + channels[1] * 0.7152 + channels[2] * 0.0722;
+}
+
+export function themeContrast(first, second) {
+  const a = luminance(first);
+  const b = luminance(second);
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+function mixColour(surface, text, weight) {
+  return '#' + [1, 3, 5].map((offset) => Math.round(
+    parseInt(surface.slice(offset, offset + 2), 16) * (1 - weight)
+    + parseInt(text.slice(offset, offset + 2), 16) * weight,
+  ).toString(16).padStart(2, '0')).join('');
+}
+
+// Legacy brand colours remain authoritative only when no canonical theme exists.
+// Shape validation also keeps unexpected stored data out of CSS consumers.
+export function normaliseTheme(theme, legacy = {}) {
+  if (hasThemeShape(theme)) {
+    return { ...theme, ...Object.fromEntries(THEME_COLOURS.map((key) => [key, theme[key].toLowerCase()])) };
+  }
+  const surface = isColour(legacy.background_color) ? legacy.background_color.toLowerCase() : DEFAULT_THEME.surface;
+  const text = isColour(legacy.font_color) ? legacy.font_color.toLowerCase() : DEFAULT_THEME.text;
+  const accent = isColour(legacy.primary_color) ? legacy.primary_color.toLowerCase() : DEFAULT_THEME.accent;
+  const originalSurfaces = surface === DEFAULT_THEME.surface && text === DEFAULT_THEME.text;
+  return {
+    ...DEFAULT_THEME, surface, text, accent,
+    surface_raised: originalSurfaces ? DEFAULT_THEME.surface_raised : mixColour(surface, text, 0.06),
+    text_muted: originalSurfaces ? DEFAULT_THEME.text_muted : mixColour(surface, text, 0.8),
+    border: originalSurfaces ? DEFAULT_THEME.border : mixColour(surface, text, 0.3),
+    focus: originalSurfaces ? DEFAULT_THEME.focus : mixColour(surface, text, 0.75),
+    accent_text: themeContrast(accent, '#ffffff') > themeContrast(accent, '#0a0908') ? '#ffffff' : '#0a0908',
+  };
+}
+
+export function validateTheme(theme) {
+  if (!hasThemeShape(theme)) return 'theme must contain exactly the supported version, six-digit hex colours, radius and density';
+  const readable = ['surface', 'surface_raised'].every((surface) => ['text', 'text_muted', 'accent'].every((text) => themeContrast(theme[surface], theme[text]) >= 4.5));
+  if (!readable || themeContrast(theme.accent, theme.accent_text) < 4.5) {
+    return 'theme text contrast must be at least 4.5:1 on page, panel and accent backgrounds';
+  }
+  return null;
+}
+
+export function withCanonicalTheme(settings) {
+  return { ...settings, theme: normaliseTheme(settings?.theme, settings) };
+}
+
 function sanitizeContact(contact) {
   if (!contact || typeof contact !== 'object') return {};
   const out = {};
@@ -66,52 +152,49 @@ export function createAdminSiteSettingsHandler({
   purgeTags,
 } = {}) {
   return async (event, context) => {
-  if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
-
-  const authed = await verifyToken(event);
-  if (!authed) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
-
-  const sql = getSql();
-  try {
-    if (event.httpMethod === 'GET') {
-      const [row] = await sql`SELECT * FROM site_settings WHERE id = 1`;
-      return { statusCode: 200, headers, body: JSON.stringify(row) };
+    if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
+    if (!['GET', 'PUT'].includes(event.httpMethod)) {
+      return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
     }
 
-    if (event.httpMethod === 'PUT') {
-      const body = JSON.parse(event.body || '{}');
-      const {
-        logo_url,
-        font_family,
-        primary_color,
-        background_color,
-        font_color,
-        hero_slides,
-        brand_logos,
-        contact,
-        trust_bar,
-      } = body;
+    try {
+      const authed = await verifyToken(event);
+      if (!authed) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) };
+      if (event.httpMethod === 'GET') {
+        const [row] = await getSql()`SELECT * FROM site_settings WHERE id = 1`;
+        if (!row) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Site settings not found' }) };
+        return { statusCode: 200, headers, body: JSON.stringify(withCanonicalTheme(row)) };
+      }
 
-      if (primary_color && !HEX_COLOR_RE.test(primary_color)) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'primary_color must be a 6-digit hex value, e.g. #ea580c' }) };
+      let body;
+      try { body = JSON.parse(event.body || '{}'); } catch {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Provide a valid settings object' }) };
       }
-      if (background_color && !HEX_COLOR_RE.test(background_color)) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'background_color must be a 6-digit hex value, e.g. #0a0908' }) };
+      if (!isRecord(body)) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Provide a valid settings object' }) };
+      const { logo_url, font_family, primary_color, background_color, font_color, hero_slides, brand_logos, contact, trust_bar } = body;
+      for (const [key, value] of Object.entries({ primary_color, background_color, font_color })) {
+        if (value !== undefined && !isColour(value)) {
+          return { statusCode: 400, headers, body: JSON.stringify({ error: `${key} must be a 6-digit hex value, e.g. #ea580c` }) };
+        }
       }
-      if (font_color && !HEX_COLOR_RE.test(font_color)) {
-        return { statusCode: 400, headers, body: JSON.stringify({ error: 'font_color must be a 6-digit hex value, e.g. #f2ede7' }) };
-      }
-      if (!font_family || typeof font_family !== 'string') {
+      if (typeof font_family !== 'string' || !font_family.trim()) {
         return { statusCode: 400, headers, body: JSON.stringify({ error: 'font_family is required' }) };
       }
-
-      const [row] = await sql`
+      if (Object.hasOwn(body, 'theme')) {
+        const error = validateTheme(body.theme);
+        if (error) return { statusCode: hasThemeShape(body.theme) ? 422 : 400, headers, body: JSON.stringify({ error }) };
+      }
+      const theme = normaliseTheme(body.theme, body);
+      const contrastError = validateTheme(theme);
+      if (contrastError) return { statusCode: 422, headers, body: JSON.stringify({ error: contrastError }) };
+      const [row] = await getSql()`
         UPDATE site_settings SET
           logo_url      = ${logo_url || null},
           font_family   = ${font_family},
-          primary_color = ${primary_color || '#ea580c'},
-          background_color = ${background_color || '#0a0908'},
-          font_color    = ${font_color || '#f2ede7'},
+          primary_color = ${theme.accent},
+          background_color = ${theme.surface},
+          font_color    = ${theme.text},
+          theme         = ${JSON.stringify(theme)}::jsonb,
           hero_slides   = ${JSON.stringify(sanitizeSlides(hero_slides))}::jsonb,
           brand_logos   = ${JSON.stringify(sanitizeBrandLogos(brand_logos))}::jsonb,
           contact       = ${JSON.stringify(sanitizeContact(contact))}::jsonb,
@@ -122,14 +205,14 @@ export function createAdminSiteSettingsHandler({
       `;
       if (!row) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Site settings not found' }) };
       await purgeMutationCache('siteSettings', purgeTags, context);
-      return { statusCode: 200, headers, body: JSON.stringify(row) };
+      return { statusCode: 200, headers, body: JSON.stringify(withCanonicalTheme(row)) };
+    } catch (err) {
+      log.error('Settings operation failed', { error: err?.name || 'Error', code: err?.code });
+      if (err?.code === 'CACHE_REFRESH_PENDING') {
+        return { statusCode: 503, headers, body: JSON.stringify({ error: 'Your settings were saved, but the storefront refresh is pending. Please retry shortly.' }) };
+      }
+      return { statusCode: 500, headers, body: JSON.stringify({ error: 'Site settings could not be loaded or saved. Please try again.' }) };
     }
-
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
-  } catch (err) {
-    console.error('admin-site-settings error:', err);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
-  }
   };
 }
 

@@ -280,8 +280,8 @@
   inline-size: 2.75rem;
   block-size: 2.75rem;
   background: rgba(10, 9, 8, 0.62);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #fff;
+  border: 1px solid color-mix(in srgb, var(--nv-border) 20%, transparent);
+  color: var(--nv-text-main);
   cursor: pointer;
   transition: background 0.2s;
 
@@ -312,7 +312,7 @@
   inline-size: 0.375rem;
   block-size: 0.375rem;
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.62);
+  background-color: color-mix(in srgb, var(--nv-text-muted) 62%, transparent);
   transition: background-color 160ms ease-out, transform 160ms ease-out;
 }
 
@@ -424,7 +424,7 @@
   .cat-img-wrap {
     aspect-ratio: 16/10;
     overflow: hidden;
-    background: #111;
+    background: var(--nv-surface-raised);
 
     img {
       width: 100%;
@@ -579,7 +579,7 @@
   padding-inline: 1rem;
   border: 1px solid var(--nv-orange);
   background: var(--nv-carbon);
-  border-radius: 999px;
+  border-radius: var(--ui-radius);
   background: color-mix(in srgb, var(--nv-carbon) 96%, white);
   box-shadow: 0 0.65rem 1.75rem rgba(0, 0, 0, 0.4);
   color: var(--nv-text-main);
@@ -634,7 +634,7 @@
 .brand-logo-wrap {
   width: 100%;
   background: #fff;
-  border-radius: 3px;
+  border-radius: var(--ui-radius);
   padding: 12px 20px;
   height: 88px;
   display: flex;
@@ -682,12 +682,12 @@
   .card-icon {
     width: 64px;
     height: 64px;
-    border-radius: 2px;
+    border-radius: var(--ui-radius);
     margin-bottom: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #000;
+    background: var(--nv-surface-raised);
     border: 2px solid var(--nv-metal);
     mat-icon { font-size: 30px; width: 30px; height: 30px; color: var(--nv-orange); transition: color 0.3s; }
   }
@@ -704,7 +704,7 @@
 .order-box {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-  background: #000;
+  background: var(--nv-surface-raised);
   border: 2px solid var(--nv-aluminum-dark);
   overflow: hidden;
   padding: 0;
@@ -772,7 +772,7 @@
     align-items: center;
     gap: 8px;
     background: var(--nv-orange);
-    color: #000;
+    color: var(--nv-accent-text);
     font-weight: 900;
     font-size: 0.88rem;
     text-decoration: none;
@@ -780,16 +780,16 @@
     letter-spacing: 0.08em;
     padding: 12px 24px;
     margin-top: 8px;
-    box-shadow: 4px 4px 0 #000;
+    box-shadow: 4px 4px 0 var(--nv-shadow-color);
     transition: all 0.2s;
     mat-icon { width: 18px; height: 18px; font-size: 18px; }
-    &:hover { background: var(--nv-orange-hover, #c2410c); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000; }
+    &:hover { background: var(--nv-orange-hover); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--nv-shadow-color); }
   }
 }
 
 .enquiry-referral { display: grid; gap: .5rem; margin-block: 1rem; }
-.enquiry-referral :is(input, select) { width: 100%; box-sizing: border-box; min-height: 3rem; padding: .75rem; font: inherit; border: 2px solid var(--nv-border-strong); background: var(--nv-bg-dark); color: var(--nv-text-main); color-scheme: dark; }
+.enquiry-referral :is(input, select) { width: 100%; box-sizing: border-box; min-height: 3rem; padding: .75rem; font: inherit; border: 2px solid var(--nv-border-strong); background: var(--nv-bg-dark); color: var(--nv-text-main); color-scheme: inherit; }
 .enquiry-referral :is(input, select):focus-visible { outline: 2px solid var(--nv-orange); outline-offset: 2px; }
-.enquiry-referral :is(.field-error, .qm-error) { color: #f87171; margin: 0; font-size: .85rem; }
+.enquiry-referral :is(.field-error, .qm-error) { color: var(--nv-danger); margin: 0; font-size: .85rem; }
 .enquiry-referral p:empty { display: none; }
 website-enquiry-location { margin-block: 1rem; }

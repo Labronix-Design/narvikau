@@ -5,7 +5,7 @@
 .required { color: var(--nv-orange); }
 .hint, .error { margin: 0; font-size: 0.8125rem; line-height: 1.5; }
 .hint { color: var(--nv-text-muted); }
-.error { color: #ef4444; }
+.error { color: var(--nv-danger); }
 .error:empty { display: none; }
 input, select {
   box-sizing: border-box;
@@ -14,11 +14,11 @@ input, select {
   min-block-size: 3rem;
   padding: 0.6875rem 0.875rem;
   border: 2px solid var(--nv-border-strong);
-  border-radius: 0;
+  border-radius: var(--ui-radius);
   background: var(--nv-bg-dark);
   color: var(--nv-text-main);
   font: 1rem/1.5 var(--font-family-base);
-  color-scheme: dark;
+  color-scheme: inherit;
 }
 select {
   cursor: pointer;

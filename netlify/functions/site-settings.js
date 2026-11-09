@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { withCanonicalTheme } from './admin-site-settings.js';
 import { taggedPublicReadHeaders, uncachedResponseHeaders } from './_public-cache.js';
 
 const corsHeaders = {
@@ -49,8 +50,8 @@ export function createSiteSettingsHandler({ getSql = defaultGetSql } = {}) {
 
     try {
       const sql = getSql();
-      const [row] = await sql`SELECT logo_url, font_family, primary_color, background_color, font_color, hero_slides, brand_logos, contact, trust_bar FROM site_settings WHERE id = 1`;
-      return { statusCode: 200, headers, body: JSON.stringify(row || DEFAULTS) };
+      const [row] = await sql`SELECT logo_url, font_family, primary_color, background_color, font_color, theme, hero_slides, brand_logos, contact, trust_bar FROM site_settings WHERE id = 1`;
+      return { statusCode: 200, headers, body: JSON.stringify(withCanonicalTheme(row || DEFAULTS)) };
     } catch (err) {
       log.error('Database read failed', { error: err?.name || 'Error', code: err?.code });
       return { statusCode: 503, headers: uncachedHeaders, body: JSON.stringify({ error: 'Content is temporarily unavailable' }) };

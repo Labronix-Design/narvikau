@@ -1,21 +1,15 @@
 :host {
   display: block;
   width: 100%;
-  
-  /* --- NAVRIK HEAVY-DUTY PALETTE --- */
-  --navrik-bg-dark: #0a0a0a;       /* Deep industrial black */
-  --navrik-bg-panel: #141414;      /* Matte textured black */
-  --navrik-orange: var(--nv-orange, #ea580c);        /* Rugged safety orange */
-  --navrik-metal: #333333;         /* Dark brushed border */
-  --navrik-metal-light: #555555;   /* Lighter metal for focus/hover */
-  
-  /* Status Colors (Adjusted for dark mode contrast) */
-  --status-green: #10b981; 
-  --status-red: #ef4444;   
-  
-  /* Text */
-  --text-main: #ffffff;
-  --text-muted: #888888;
+  --navrik-bg-dark: var(--nv-surface);
+  --navrik-bg-panel: var(--nv-surface-raised);
+  --navrik-orange: var(--nv-orange);
+  --navrik-metal: var(--nv-border);
+  --navrik-metal-light: var(--nv-text-muted);
+  --status-green: var(--nv-success);
+  --status-red: var(--nv-danger);
+  --text-main: var(--nv-text-main);
+  --text-muted: var(--nv-text-muted);
 }
 
 .form-group {
@@ -58,20 +52,22 @@ label {
 
 input {
   width: 100%;
-  height: 52px;
-  padding: 0 45px 0 16px; 
+  min-height: max(2.75rem, var(--ui-density-control-height));
+  height: auto;
+  padding-block: var(--ui-density-padding);
+  padding: 0 45px 0 16px;
   box-sizing: border-box;
   font-family: 'Arial', 'Helvetica Neue', sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-main);
-  
+
   /* Sharp, machined aesthetics */
-  border-radius: 0; 
+  border-radius: var(--ui-radius);
   background: var(--navrik-bg-panel);
   border: 1px solid var(--navrik-metal);
   outline: none;
-  
+
   /* Snappy, rigid transitions */
   transition: all 0.15s ease-out;
 
@@ -86,7 +82,7 @@ input {
 
   &:focus {
     border-color: var(--navrik-orange);
-    background: #1a1a1a;
+    background: var(--nv-surface-raised);
     /* Hard inset shadow matching the button accent */
     box-shadow: inset 4px 0 0 0 var(--navrik-orange);
   }
@@ -98,7 +94,7 @@ input {
 
   &.v-error {
     border-color: var(--status-red) !important;
-    background-color: rgba(239, 68, 68, 0.05);
+    background-color: color-mix(in srgb, var(--nv-danger) 5%, transparent);
     box-shadow: inset 4px 0 0 0 var(--status-red) !important;
     /* Removed the playful shake, added a rigid color snap instead */
   }
@@ -106,10 +102,10 @@ input {
 
 .status-icon {
   position: absolute;
-  right: 16px; 
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  width: 24px; height: 24px; font-size: 24px; 
+  width: 24px; height: 24px; font-size: 24px;
   pointer-events: none; z-index: 10;
   transition: opacity 0.2s ease;
 }
@@ -120,7 +116,6 @@ input {
 .error-wrapper {
   margin-top: 8px;
   overflow: hidden;
-  will-change: transform, opacity;
   /* Sharp, digital slide down */
   animation: slideDownRigid 0.2s ease-out forwards;
 }
@@ -134,15 +129,15 @@ input {
   color: var(--status-red);
   margin: 0;
   display: flex; align-items: center;
-  
+
   &::before {
-    content: "!"; 
+    content: "!";
     display: flex; align-items: center; justify-content: center;
-    width: 14px; height: 14px; 
-    color: var(--navrik-bg-dark); 
+    width: 14px; height: 14px;
+    color: var(--navrik-bg-dark);
     font-size: 10px; font-weight: 900;
     background: var(--status-red);
-    border-radius: 2px; /* Sharp caution badge */
+    border-radius: var(--ui-radius); /* Sharp caution badge */
     margin-right: 8px;
   }
 }
@@ -151,4 +146,8 @@ input {
 @keyframes slideDownRigid {
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .error-wrapper { animation: none; }
+  input, label { transition-duration: 0.01ms; }
 }

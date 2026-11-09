@@ -24,6 +24,7 @@ const endpoints = [
       trust_bar: [],
     }],
     expectedEmptyBody: {
+      theme: { version: 1, surface: '#0a0908', surface_raised: '#171513', text: '#f2ede7', text_muted: '#c4bdb4', border: '#514c46', accent: '#ea580c', accent_text: '#0a0908', focus: '#c1bbb3', radius: 'subtle', density: 'standard' },
       logo_url: null,
       font_family: '',
       primary_color: '',

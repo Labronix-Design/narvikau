@@ -28,7 +28,37 @@ export interface ContactInfo {
   business_hours: BusinessHoursRow[];
 }
 
+export interface SiteTheme {
+  version: 1;
+  surface: string;
+  surface_raised: string;
+  text: string;
+  text_muted: string;
+  border: string;
+  accent: string;
+  accent_text: string;
+  focus: string;
+  radius: 'square' | 'subtle' | 'rounded';
+  density: 'compact' | 'standard' | 'spacious';
+}
+
+export const DEFAULT_SITE_THEME: SiteTheme = {
+  version: 1,
+  surface: '#0a0908',
+  surface_raised: '#171513',
+  text: '#f2ede7',
+  text_muted: '#c4bdb4',
+  border: '#514c46',
+  accent: '#ea580c',
+  accent_text: '#0a0908',
+  focus: '#c1bbb3',
+  radius: 'subtle',
+  density: 'standard',
+};
+
 export interface SiteSettings {
+  /** Optional only while legacy settings responses are still in circulation. */
+  theme?: SiteTheme;
   logo_url: string | null;
   font_family: string;
   primary_color: string;

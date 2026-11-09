@@ -16,7 +16,7 @@
 
   /* LAYOUT & SPACING */
   --padding-unit: 1rem;
-  --border-radius: 2px; /* Machined, sharp edges - not 4px */
+  --border-radius: var(--ui-radius); /* Machined, sharp edges - not 4px */
 
   /* MOTION: Smooth, mechanical easing */
   --system-motion-duration: 0.3s;
@@ -45,6 +45,38 @@
   --nv-text-main: #f2ede7;         /* Off-white — easier on eyes than pure white */
   --nv-text-muted: #c4bdb4;        /* Lifted warm grey — WCAG AA contrast on dark panels */
 
+  /* Runtime settings write these shared tokens on :root. Defaults also cover
+     initial paint and lazy admin routes before settings have loaded. */
+  --nv-surface: var(--nv-ink);
+  --nv-border: var(--nv-aluminum-dark);
+  --nv-accent-text: var(--nv-text-on-accent);
+  --nv-focus: var(--nv-alloy);
+  --ui-radius: 0.25rem;
+  --ui-density-gap: 0.75rem;
+  --ui-density-padding: 0.75rem;
+  --ui-density-control-height: 2.625rem;
+  --nv-shadow-color: #000000;
+  --nv-success: color-mix(in srgb, var(--nv-text-main) 85%, #15803d);
+  --nv-warning: color-mix(in srgb, var(--nv-text-main) 85%, #a16207);
+  --nv-danger: color-mix(in srgb, var(--nv-text-main) 85%, #b91c1c);
+  --admin-page: var(--nv-surface);
+  --admin-surface-sunken: var(--nv-surface);
+  --admin-surface-raised: var(--nv-surface-raised);
+  --admin-surface-hover: color-mix(in srgb, var(--nv-surface-raised) 92%, var(--nv-text-main));
+  --admin-text: var(--nv-text-main);
+  --admin-text-muted: var(--nv-text-muted);
+  --admin-text-subtle: var(--nv-text-muted);
+  --admin-border: var(--nv-border);
+  --admin-brand: var(--nv-orange);
+  --admin-accent-text: var(--nv-accent-text);
+  --admin-focus: var(--nv-focus);
+  --admin-brand-soft: color-mix(in srgb, var(--admin-brand) 12%, transparent);
+  --admin-success: var(--nv-success);
+  --admin-warning: var(--nv-warning);
+  --admin-danger: var(--nv-danger);
+  --admin-neutral: var(--nv-text-muted);
+  --admin-highlight: color-mix(in srgb, var(--nv-text-main) 6%, transparent);
+
   /* SHARED PUBLIC SHELL */
   /* Public layouts use one gutter system. Keep the reading edge at 18–40px,
      but let catalogue grids use the available space on wide desktops. The
@@ -60,8 +92,8 @@
   --nv-space-4: 2rem;
   --nv-space-5: 3rem;
   --nv-surface-raised: var(--nv-carbon);
-  --nv-border-subtle: rgba(193, 187, 179, 0.16);
-  --nv-border-strong: rgba(193, 187, 179, 0.32);
+  --nv-border-subtle: var(--nv-border);
+  --nv-border-strong: var(--nv-border);
   --nv-scrim: rgba(0, 0, 0, 0.72);
   --nv-shell-inset: inset 0 1px 0 rgba(255, 250, 244, 0.055), inset 0 -1px 0 rgba(0, 0, 0, 0.5);
   --nv-shell-elevation: 0 1.25rem 2.75rem rgba(0, 0, 0, 0.44), 0 0.25rem 0.75rem rgba(0, 0, 0, 0.3);
@@ -70,8 +102,8 @@
   /* Never force a configurable orange into small body text. Alloy remains
      legible on matte surfaces; the live orange is used by rails and icons. */
   --nv-accent-readable: var(--nv-alloy);
-  --nv-cta-surface: var(--nv-carbon);
-  --nv-focus-ring: var(--nv-aluminum-light);
+  --nv-cta-surface: var(--nv-orange);
+  --nv-focus-ring: var(--nv-focus);
   --nv-focus-outline: 0 0 0 0.1875rem var(--nv-bg-dark), 0 0 0 0.3125rem var(--nv-focus-ring);
   --nv-link-decoration: color-mix(in srgb, var(--nv-orange) 72%, var(--nv-alloy));
   --nv-link-decoration-muted: color-mix(in srgb, var(--nv-orange) 46%, transparent);
@@ -334,7 +366,7 @@ website-root .main-content.has-settings-alert { display: flow-root; }
   background-color: var(--nv-bg-panel);
   border: 1px solid var(--nv-metal);
   box-shadow: inset 0 1px 0 rgba(255, 250, 244, 0.06);
-  border-radius: 2px;
+  border-radius: var(--ui-radius);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:hover {
@@ -397,14 +429,14 @@ website-root .main-content.has-settings-alert { display: flow-root; }
 .scroll-reveal { opacity: 1; }
 
 .texture-hex {
-  background-color: #0d0d0d;
+  background-color: var(--nv-surface);
   background-image: url("data:image/svg+xml,%3Csvg width='28' height='49' viewBox='0 0 28 49' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23222222' fill-opacity='0.35' fill-rule='evenodd'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/g%3E%3C/svg%3E");
   border-top: 1px solid rgba(81, 76, 70, 0.5);
   border-bottom: 1px solid rgba(81, 76, 70, 0.5);
 }
 
 .texture-sand {
-  background-color: #111;
+  background-color: var(--nv-surface-raised);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
   border-top: 1px solid rgba(81, 76, 70, 0.4);
   border-bottom: 1px solid rgba(81, 76, 70, 0.4);
@@ -467,17 +499,17 @@ mat-icon {
    component's style scope. Give every dashboard tooltip a readable surface
    with a clear edge rather than leaving bare text over live content. */
 .cdk-overlay-container .mat-mdc-tooltip {
-  --mdc-plain-tooltip-container-color: var(--admin-surface-raised, #1b1b1b);
-  --mdc-plain-tooltip-supporting-text-color: var(--admin-text, #f7f5f2);
+  --mdc-plain-tooltip-container-color: var(--admin-surface-raised);
+  --mdc-plain-tooltip-supporting-text-color: var(--admin-text);
   max-width: min(20rem, calc(100vw - 2rem));
 }
 
 .cdk-overlay-container .mat-mdc-tooltip .mdc-tooltip__surface {
-  background: var(--admin-surface-raised, #1b1b1b);
-  border: 1px solid var(--admin-border, rgba(255, 255, 255, .22));
-  border-radius: .35rem;
+  background: var(--admin-surface-raised);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--ui-radius);
   box-shadow: 0 .75rem 1.8rem rgba(0, 0, 0, .35);
-  color: var(--admin-text, #f7f5f2);
+  color: var(--admin-text);
   font-family: var(--font-family-base, Inter, sans-serif);
   font-size: .75rem;
   font-weight: 600;

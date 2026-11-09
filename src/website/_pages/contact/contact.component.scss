@@ -100,9 +100,9 @@ a.contact-item-value:hover,
   gap: var(--nv-space-1);
   margin: 0;
   padding: var(--nv-space-2);
-  border: 1px solid rgba(var(--nv-orange-rgb), 0.25);
+  border: 1px solid color-mix(in srgb, var(--nv-orange) 25%, transparent);
   border-radius: var(--border-radius);
-  background-color: rgba(var(--nv-orange-rgb), 0.06);
+  background-color: color-mix(in srgb, var(--nv-orange) 6%, transparent);
   color: var(--nv-text-muted);
   font-size: var(--font-sm);
   line-height: 1.55;
@@ -150,8 +150,8 @@ a.contact-item-value:hover,
 .field-input::placeholder { color: var(--nv-text-muted); opacity: 0.85; }
 .field-input:focus-visible { border-color: var(--nv-orange); outline: 0.125rem solid var(--nv-focus-ring); outline-offset: 0.125rem; }
 .field-textarea { min-block-size: 8rem; resize: vertical; }
-.has-error .field-input { border-color: #ef4444; background-color: rgba(239, 68, 68, 0.04); }
-.field-error { color: #ef4444; font-size: var(--font-sm); font-weight: 700; }
+.has-error .field-input { border-color: var(--nv-danger); background-color: color-mix(in srgb, var(--nv-danger) 4%, transparent); }
+.field-error { color: var(--nv-danger); font-size: var(--font-sm); font-weight: 700; }
 
 .form-footer { display: grid; gap: var(--nv-space-2); }
 .submit-btn {
@@ -176,7 +176,7 @@ a.contact-item-value:hover,
 .submit-btn:hover:not(:disabled) { border-color: var(--nv-orange-hover); background-color: var(--nv-orange-hover); }
 .submit-btn:focus-visible { outline: 0.125rem solid var(--nv-focus-ring); outline-offset: 0.1875rem; }
 .submit-btn:disabled { cursor: not-allowed; opacity: 0.65; }
-.btn-spinner { inline-size: 1rem; block-size: 1rem; border: 0.125rem solid rgba(5, 5, 5, 0.35); border-block-start-color: var(--nv-text-on-accent); border-radius: 50%; animation: contact-spin 0.7s linear infinite; }
+.btn-spinner { inline-size: 1rem; block-size: 1rem; border: 0.125rem solid color-mix(in srgb, var(--nv-border) 35%, transparent); border-block-start-color: var(--nv-text-on-accent); border-radius: 50%; animation: contact-spin 0.7s linear infinite; }
 @keyframes contact-spin { to { transform: rotate(360deg); } }
 .form-privacy { color: var(--nv-text-muted); font-size: var(--font-sm); line-height: 1.5; text-align: center; }
 .form-privacy a { color: var(--nv-aluminum-light); text-decoration: underline; text-underline-offset: 0.1875rem; }

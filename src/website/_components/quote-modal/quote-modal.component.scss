@@ -1,20 +1,20 @@
 :host {
   display: contents;
 
-  --qm-bg: #111111;
-  --qm-bg-deep: #080808;
-  --qm-border: #2d2d2d;
-  --qm-orange: var(--nv-orange, #ea580c);
-  --qm-text: #ffffff;
-  --qm-muted: #a3a3a3;
-  --qm-error: #ef4444;
+  --qm-bg: var(--nv-surface-raised);
+  --qm-bg-deep: var(--nv-surface);
+  --qm-border: var(--nv-border);
+  --qm-orange: var(--nv-orange);
+  --qm-text: var(--nv-text-main);
+  --qm-muted: var(--nv-text-muted);
+  --qm-error: var(--nv-danger);
 }
 
 .qm-overlay {
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: rgba(0, 0, 0, 0.85);
+  background: color-mix(in srgb, var(--nv-shadow-color) 85%, transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   display: flex;
@@ -25,6 +25,7 @@
 
   @media (max-width: 600px) {
     padding: 0;
+    padding-bottom: env(safe-area-inset-bottom);
     align-items: flex-end;
   }
 }
@@ -32,11 +33,12 @@
 .qm-dialog {
   background: var(--qm-bg);
   border: 2px solid var(--qm-border);
+  border-radius: var(--ui-radius);
   border-top: 4px solid var(--qm-orange);
-  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.95), 0 0 60px rgba(var(--nv-orange-rgb, 234, 88, 12), 0.06);
+  box-shadow: 0 32px 80px color-mix(in srgb, var(--nv-shadow-color) 95%, transparent), 0 0 60px color-mix(in srgb, var(--nv-orange) 6%, transparent);
   width: 100%;
   max-width: 560px;
-  max-height: 90vh;
+  max-height: 90dvh;
   overflow-y: scroll;
   overflow-x: hidden;
   animation: qmSlideUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -71,7 +73,7 @@
     gap: 10px;
 
     mat-icon {
-      color: var(--qm-orange);
+      color: var(--nv-accent-readable);
       width: 20px; height: 20px; font-size: 20px;
       flex-shrink: 0;
     }
@@ -97,21 +99,21 @@
   justify-content: center;
   cursor: pointer;
   transition: all 0.15s ease;
-  border-radius: 2px;
+  border-radius: var(--ui-radius);
   flex-shrink: 0;
 
   mat-icon { width: 18px; height: 18px; font-size: 18px; }
 
   &:hover {
-    background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.12);
-    border-color: var(--qm-orange);
-    color: var(--qm-orange);
+    background: color-mix(in srgb, var(--nv-orange) 12%, transparent);
+    border-color: var(--nv-accent-readable);
+    color: var(--nv-accent-readable);
   }
 }
 
 /* Body */
 .qm-body {
-  padding: 28px 24px;
+  padding: calc(var(--ui-density-padding) * 2);
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -161,6 +163,7 @@
   padding: 10px 18px;
   background: var(--qm-bg-deep);
   border: 2px solid var(--qm-border);
+  border-radius: var(--ui-radius);
   color: var(--qm-muted);
   font-size: 0.82rem;
   font-weight: 700;
@@ -171,16 +174,16 @@
   transition: all 0.15s ease;
 
   &:hover {
-    border-color: #444;
+    border-color: var(--admin-border);
     color: var(--qm-text);
-    background: #1a1a1a;
+    background: var(--admin-surface-raised);
   }
 
   &.active {
-    border-color: var(--qm-orange);
-    background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.12);
-    color: var(--qm-orange);
-    box-shadow: inset 0 0 0 1px rgba(var(--nv-orange-rgb, 234, 88, 12), 0.15);
+    border-color: var(--nv-accent-readable);
+    background: color-mix(in srgb, var(--nv-orange) 12%, transparent);
+    color: var(--nv-accent-readable);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--nv-orange) 15%, transparent);
   }
 }
 
@@ -214,6 +217,7 @@ input,
 textarea {
   background: var(--qm-bg-deep);
   border: 2px solid var(--qm-border);
+  border-radius: var(--ui-radius);
   color: var(--qm-text);
   padding: 11px 14px;
   font-size: 0.9rem;
@@ -223,14 +227,14 @@ textarea {
   transition: border-color 0.15s ease, background 0.15s ease;
   outline: none;
   resize: none;
-  border-radius: 0;
+  border-radius: var(--ui-radius);
   -webkit-appearance: none;
 
-  &::placeholder { color: #444; }
+  &::placeholder { color: var(--admin-text-muted); }
 
   &:focus {
-    border-color: var(--qm-orange);
-    background: #0d0d0d;
+    border-color: var(--nv-accent-readable);
+    background: var(--admin-surface-sunken);
   }
 
   &.has-error {
@@ -255,6 +259,7 @@ textarea {
   display: block;
   margin-top: 4px;
 
+  /* The shared button owns its inner element; scope the layout override to this modal host. */
   ::ng-deep button {
     width: 100%;
     display: flex;
@@ -274,7 +279,7 @@ textarea {
 
   mat-icon {
     width: 48px; height: 48px; font-size: 48px;
-    color: var(--qm-orange);
+    color: var(--nv-accent-readable);
     margin-bottom: 4px;
   }
 
@@ -295,44 +300,44 @@ textarea {
 
   .qm-cs-email {
     display: inline-flex; align-items: center; gap: 8px;
-    background: var(--qm-orange); color: #000;
+    background: var(--qm-orange); color: var(--nv-accent-text);
     font-weight: 900; font-size: 0.88rem;
     text-decoration: none; text-transform: uppercase;
     letter-spacing: 0.08em; padding: 12px 24px;
-    margin-top: 8px; box-shadow: 4px 4px 0 #000;
+    margin-top: 8px; box-shadow: 4px 4px 0 var(--nv-shadow-color);
     transition: all 0.2s;
     mat-icon { width: 18px; height: 18px; font-size: 18px; }
-    &:hover { background: var(--nv-orange-hover, #c2410c); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 #000; }
+    &:hover { background: var(--nv-orange-hover); transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--nv-shadow-color); }
   }
 }
 
 /* Footer */
 .qm-footer {
   padding: 14px 24px;
-  border-top: 1px solid #1a1a1a;
+  border-top: 1px solid var(--admin-border);
   background: var(--qm-bg-deep);
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 0.78rem;
-  color: #555;
+  color: var(--admin-text-muted);
 
   mat-icon {
     width: 14px; height: 14px; font-size: 14px;
-    color: var(--qm-orange);
+    color: var(--nv-accent-readable);
     flex-shrink: 0;
   }
 
   a {
-    color: var(--qm-orange);
+    color: var(--nv-accent-readable);
     text-decoration: none;
     &:hover { text-decoration: underline; }
   }
 }
 
 .enquiry-referral { display: grid; gap: .5rem; margin-block: 1rem; }
-.enquiry-referral :is(input, select) { width: 100%; box-sizing: border-box; min-height: 3rem; padding: .75rem; font: inherit; border: 2px solid var(--nv-border-strong); background: var(--nv-bg-dark); color: var(--nv-text-main); color-scheme: dark; }
+.enquiry-referral :is(input, select) { width: 100%; box-sizing: border-box; min-height: 3rem; padding: .75rem; font: inherit; border: 2px solid var(--nv-border-strong); background: var(--nv-bg-dark); color: var(--nv-text-main); color-scheme: inherit; }
 .enquiry-referral :is(input, select):focus-visible { outline: 2px solid var(--nv-orange); outline-offset: 2px; }
-.enquiry-referral :is(.field-error, .qm-error) { color: #f87171; margin: 0; font-size: .85rem; }
+.enquiry-referral :is(.field-error, .qm-error) { color: var(--admin-danger); margin: 0; font-size: .85rem; }
 .enquiry-referral p:empty { display: none; }
 website-enquiry-location { margin-block: 1rem; }

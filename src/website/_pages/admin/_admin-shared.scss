@@ -52,14 +52,14 @@ website-admin-dialog [adminDialogActions] {
   background-repeat: no-repeat;
   background-size: 0.32rem 0.32rem, 0.32rem 0.32rem;
   color: var(--admin-text, var(--nv-text-main));
-  color-scheme: dark;
+  color-scheme: inherit;
   cursor: pointer;
   font: inherit;
   appearance: none;
 }
 
 .adm-page select:focus-visible {
-  border-color: var(--nv-orange);
+  border-color: var(--admin-text);
   outline: 0.125rem solid var(--nv-focus-ring);
   outline-offset: 0.125rem;
 }
@@ -93,7 +93,7 @@ website-admin-dialog [adminDialogActions] {
     width: 44px;
     height: 44px;
     border: 3px solid var(--nv-metal);
-    border-top-color: var(--nv-orange);
+    border-top-color: var(--admin-text);
     border-radius: 50%;
     animation: spin 0.9s linear infinite;
   }
@@ -119,13 +119,13 @@ website-admin-dialog [adminDialogActions] {
   justify-content: center;
   min-height: 200px;
   gap: 12px;
-  color: #333;
+  color: var(--admin-text-muted);
 
   .empty-icon {
     font-size: 48px;
     width: 48px;
     height: 48px;
-    color: #222;
+    color: var(--admin-text-muted);
   }
 
   .empty-title {
@@ -133,13 +133,13 @@ website-admin-dialog [adminDialogActions] {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: #333;
+    color: var(--admin-text-muted);
     margin: 0;
   }
 
   .empty-desc {
     font-size: 0.78rem;
-    color: #2a2a2a;
+    color: var(--admin-text-muted);
     margin: 0;
     text-align: center;
   }
@@ -150,13 +150,13 @@ website-admin-dialog [adminDialogActions] {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #f87171;
+  color: var(--admin-danger);
   font-size: 0.85rem;
   padding: 20px 24px;
-  background: rgba(239, 68, 68, 0.06);
-  border: 1px solid rgba(239, 68, 68, 0.15);
+  background: color-mix(in srgb, var(--admin-danger) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--admin-danger) 15%, transparent);
   backdrop-filter: blur(8px);
-  border-radius: 4px;
+  border-radius: var(--ui-radius);
   mat-icon { font-size: 18px; width: 18px; height: 18px; }
 }
 
@@ -165,8 +165,8 @@ website-admin-dialog [adminDialogActions] {
   max-width: 100%;
   overflow-x: scroll;
   overscroll-behavior-inline: contain;
-  border: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
-  border-radius: 4px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--ui-radius);
 
   @media (max-width: 600px) {
     .hide-mobile { display: none; }
@@ -180,33 +180,33 @@ website-admin-dialog [adminDialogActions] {
   font-size: 0.82rem;
 
   th {
-    background: var(--admin-surface-hover, rgba(255, 255, 255, 0.02));
-    border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.06));
-    padding: 10px 14px;
+    background: var(--admin-surface-hover);
+    border-bottom: 1px solid var(--admin-border);
+    padding: var(--ui-density-padding);
     text-align: left;
     font-size: 0.68rem;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--admin-text-subtle, #555);
+    color: var(--admin-text-subtle);
     white-space: nowrap;
   }
 
   td {
-    padding: 11px 14px;
-    border-bottom: 1px solid var(--admin-border, rgba(255, 255, 255, 0.04));
-    color: var(--admin-text-muted, #aaa);
+    padding: var(--ui-density-padding);
+    border-bottom: 1px solid var(--admin-border);
+    color: var(--admin-text-muted);
     vertical-align: middle;
     overflow-wrap: anywhere;
   }
 
   th, td { min-width: 0; }
 
-  tr:hover td { background: var(--admin-surface-hover, rgba(255, 255, 255, 0.025)); }
+  tr:hover td { background: var(--admin-surface-hover); }
 
   .empty-row {
     text-align: center;
-    color: #333;
+    color: var(--admin-text-muted);
     padding: 40px;
   }
 }
@@ -220,7 +220,7 @@ website-admin-dialog [adminDialogActions] {
   .adm-table {
     font-size: .76rem;
 
-    th, td { padding: .7rem .65rem; }
+    th, td { padding: var(--ui-density-padding); }
   }
 }
 
@@ -233,11 +233,11 @@ website-admin-dialog [adminDialogActions] {
 .mono {
   font-family: 'Courier New', monospace;
   font-size: 0.8rem;
-  color: #888;
+  color: var(--admin-text-muted);
 }
 
 .quote-only {
-  color: var(--nv-orange);
+  color: var(--admin-text);
   font-family: var(--font-family-base);
   font-size: .72rem;
   font-weight: 800;
@@ -250,7 +250,7 @@ website-admin-dialog [adminDialogActions] {
   background: var(--admin-surface-raised, var(--nv-carbon));
   border: 1px solid var(--admin-border, var(--nv-metal));
   border-left: 3px solid var(--nv-orange);
-  border-radius: 0;
+  border-radius: var(--ui-radius);
   padding: clamp(16px, 3vw, 28px);
   margin-bottom: 32px;
 
@@ -259,15 +259,15 @@ website-admin-dialog [adminDialogActions] {
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    color: var(--nv-orange);
+    color: var(--admin-text);
     margin: 0 0 20px;
   }
 }
 
 .adm-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12.5rem), 1fr));
+  gap: var(--ui-density-gap);
   margin-bottom: 20px;
 
   @media (max-width: 600px) {
@@ -307,19 +307,19 @@ website-admin-dialog [adminDialogActions] {
   input, select, textarea {
     background: var(--admin-surface-sunken, var(--nv-bg-dark));
     border: 1px solid var(--admin-border, var(--nv-metal));
-    border-radius: 0;
+    border-radius: var(--ui-radius);
     color: var(--admin-text, var(--nv-text-main));
     font-family: inherit;
-    font-size: 0.82rem;
+    font-size: 1rem;
     min-block-size: 2.75rem;
-    padding: 9px 12px;
-    min-height: 42px;
+    padding: var(--ui-density-padding);
+    min-height: max(2.75rem, var(--ui-density-control-height));
     outline: none;
     transition: border-color 0.15s, background 0.15s;
 
     &:focus {
-      border-color: var(--nv-orange);
-      background: rgba(var(--nv-orange-rgb, 234, 88, 12), 0.04);
+      border-color: var(--admin-text);
+      background: color-mix(in srgb, var(--nv-orange) 4%, transparent);
     }
   }
 
@@ -332,13 +332,13 @@ website-admin-dialog [adminDialogActions] {
     align-items: center;
     gap: 10px;
     padding-top: 4px;
-    input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--nv-orange); cursor: pointer; flex-shrink: 0; }
-    span { font-size: 0.82rem; color: #888; }
+    input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--admin-text); cursor: pointer; flex-shrink: 0; }
+    span { font-size: 0.82rem; color: var(--admin-text-muted); }
   }
 
   .field-err {
     font-size: 0.68rem;
-    color: #f87171;
+    color: var(--admin-danger);
     font-weight: 600;
   }
 }
@@ -353,31 +353,32 @@ website-admin-dialog [adminDialogActions] {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 9px 20px;
+  padding: var(--ui-density-padding) calc(var(--ui-density-padding) * 1.5);
+  min-height: max(2.75rem, var(--ui-density-control-height));
   font-family: inherit;
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s ease-out, background-color 0.15s ease-out, border-color 0.15s ease-out;
   border: 1px solid;
-  border-radius: 2px;
+  border-radius: var(--ui-radius);
   text-decoration: none;
   mat-icon { font-size: 15px; width: 15px; height: 15px; }
 
   &.primary {
     background: var(--nv-orange);
-    border-color: var(--nv-orange);
-    color: #000;
-    box-shadow: 0 0 0 0 rgba(var(--nv-orange-rgb, 234, 88, 12), 0);
+    border-color: var(--admin-text);
+    color: var(--admin-accent-text);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--nv-orange) 0%, transparent);
     &:hover {
-      background: var(--nv-orange-hover, #c2410c);
-      box-shadow: 0 4px 20px rgba(var(--nv-orange-rgb, 234, 88, 12), 0.3);
+      background: var(--nv-orange-hover);
+      box-shadow: 0 4px 20px color-mix(in srgb, var(--nv-orange) 30%, transparent);
     }
   }
-  &.ghost    { background: transparent; border-color: rgba(255,255,255,0.1); color: #666; &:hover { border-color: #555; color: #aaa; } }
-  &.danger   { background: transparent; border-color: #3f1212; color: #f87171; &:hover { background: rgba(239,68,68,.08); border-color: #ef4444; } }
+  &.ghost    { background: transparent; border-color: color-mix(in srgb, var(--admin-border) 10%, transparent); color: var(--admin-text-muted); &:hover { border-color: var(--admin-border); color: var(--admin-text-muted); } }
+  &.danger   { background: transparent; border-color: var(--admin-danger); color: var(--admin-danger); &:hover { background: color-mix(in srgb, var(--admin-danger) 8%, transparent); border-color: var(--admin-danger); } }
   &.small    { padding: 6px 12px; font-size: 0.7rem; }
   &:disabled { opacity: 0.4; cursor: not-allowed; }
 }

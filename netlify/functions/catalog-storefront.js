@@ -1,4 +1,5 @@
 import { neon } from '@neondatabase/serverless';
+import { withCanonicalTheme } from './admin-site-settings.js';
 import { taggedPublicReadHeaders, uncachedResponseHeaders } from './_public-cache.js';
 import { normaliseCatalogueCategories, normaliseCatalogueProducts } from './_catalogue-cache.js';
 
@@ -54,6 +55,7 @@ export function createCatalogStorefrontHandler({
               'primary_color', primary_color,
               'background_color', background_color,
               'font_color', font_color,
+              'theme', theme,
               'hero_slides', hero_slides,
               'brand_logos', brand_logos,
               'contact', contact,
@@ -68,9 +70,9 @@ export function createCatalogStorefrontHandler({
         body: JSON.stringify({
           products: normaliseCatalogueProducts(model?.products),
           categories: normaliseCatalogueCategories(model?.categories),
-          settings: model?.settings && typeof model.settings === 'object' && !Array.isArray(model.settings)
+          settings: withCanonicalTheme(model?.settings && typeof model.settings === 'object' && !Array.isArray(model.settings)
             ? model.settings
-            : DEFAULT_SETTINGS,
+            : DEFAULT_SETTINGS),
         }),
       };
     } catch (error) {

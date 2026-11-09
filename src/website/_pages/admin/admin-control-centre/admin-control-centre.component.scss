@@ -68,3 +68,7 @@ h2 { font-size: 1.05rem; margin-bottom: 0; }
 @media (max-width: 1080px) { .metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .integration-grid { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .control-page-header, .control-grid, .section-heading { align-items: start; display: grid; grid-template-columns: 1fr; } .header-actions { justify-content: start; } }
 @media (max-width: 480px) { .control-page { padding: 1rem; } .metric-grid { grid-template-columns: 1fr; } .refresh-button { flex: 1; justify-content: center; } .integration-footer { align-items: flex-start; flex-direction: column; } }
+
+:where(.panel, .register, .health-line, .setup-note, .comparison, .opportunities, .website-analytics, .specifications, .manual-form) {
+  border-radius: var(--ui-radius);
+}

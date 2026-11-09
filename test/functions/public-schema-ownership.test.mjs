@@ -33,7 +33,7 @@ test('public site settings reads and returns the fresh AU settings columns', asy
   const response = await handler({ httpMethod: 'GET' });
 
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(JSON.parse(response.body), freshSettings);
+  assert.deepEqual(JSON.parse(response.body), { ...freshSettings, theme: { version: 1, surface: '#0a0908', surface_raised: '#171513', text: '#f2ede7', text_muted: '#c4bdb4', border: '#514c46', accent: '#ea580c', accent_text: '#0a0908', focus: '#c1bbb3', radius: 'subtle', density: 'standard' } });
   assert.equal(queries.length, 1);
   assert.match(queries[0], /^SELECT logo_url/);
   assert.doesNotMatch(queries[0], /compat_note/i);
@@ -67,7 +67,7 @@ test('admin site settings updates the migration-owned AU row without runtime sch
   });
 
   assert.equal(response.statusCode, 200);
-  assert.deepEqual(JSON.parse(response.body), freshSettings);
+  assert.deepEqual(JSON.parse(response.body), { ...freshSettings, theme: { version: 1, surface: '#0a0908', surface_raised: '#171513', text: '#f2ede7', text_muted: '#c4bdb4', border: '#514c46', accent: '#ea580c', accent_text: '#0a0908', focus: '#c1bbb3', radius: 'subtle', density: 'standard' } });
   assert.equal(queries.length, 1);
   assert.match(queries[0], /^\s*UPDATE site_settings SET/);
   assert.doesNotMatch(queries[0], /compat_note/i);

@@ -8,7 +8,7 @@ import { CommonModule } from '@angular/common';
   template: `
     <div class="loader-backdrop" [class.fade-out]="isExiting()">
       <div class="loader-container">
-        
+
         <!-- Brand Stack -->
         <div class="brand-stack">
           <div class="logo-mark">
@@ -34,13 +34,10 @@ import { CommonModule } from '@angular/common';
   `,
   styles: [`
     :host {
-      /* NAVRIK BRAND COLORS */
-      /* --nv-orange intentionally not redefined — inherits the live theme
-         colour from :root instead of shadowing it with a hardcoded value. */
-      --nv-black: #050505;
-      --nv-grey-dark: #1A1A1A;
-      --nv-grey-light: #8E8E8E;
-      --nv-silver: #D1D1D1;
+      --nv-black: var(--nv-surface);
+      --nv-grey-dark: var(--nv-surface-raised);
+      --nv-grey-light: var(--nv-text-muted);
+      --nv-silver: var(--nv-text-main);
     }
 
     /* --- TOUGH DARK BACKGROUND --- */
@@ -72,7 +69,10 @@ import { CommonModule } from '@angular/common';
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 40px;
+      gap: 2.5rem;
+      max-width: 100%;
+      padding: 1rem;
+      text-align: center;
     }
 
     /* --- BRAND TYPOGRAPHY & METALLIC EFFECT --- */
@@ -90,18 +90,14 @@ import { CommonModule } from '@angular/common';
       font-weight: 900;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      
-      /* Metallic Silver Effect */
-      background: linear-gradient(to bottom, #FFFFFF 0%, #A0A0A0 40%, #505050 50%, #909090 60%, #FFFFFF 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.8));
+
+      color: var(--nv-text-main);
     }
 
     .brand-tagline {
       margin: 0;
       font-family: 'Inter', -apple-system, sans-serif;
-      font-size: 0.9rem;
+      font-size: clamp(.65rem, 3vw, .9rem);
       font-weight: 600;
       letter-spacing: 0.3em;
       color: var(--nv-silver);
@@ -121,9 +117,9 @@ import { CommonModule } from '@angular/common';
     .loader-track {
       width: 100%;
       height: 8px;
-      background-color: #000000;
-      border: 1px solid #333;
-      border-radius: 2px;
+      background-color: var(--nv-surface);
+      border: 1px solid var(--nv-border);
+      border-radius: var(--ui-radius);
       overflow: hidden;
       position: relative;
       /* Sharp, angled ends for that mechanical/truck feel */
@@ -134,25 +130,26 @@ import { CommonModule } from '@angular/common';
     .loader-fill {
       position: absolute;
       top: 0;
-      left: -100%;
+      left: 0;
+      transform: translateX(-100%);
       height: 100%;
       width: 50%;
-      background: linear-gradient(90deg, transparent, var(--nv-orange), #FF8C00);
+      background: linear-gradient(90deg, transparent, var(--nv-orange), var(--nv-orange));
       /* Sweeping engine-rev animation */
       animation: revEngine 1.5s cubic-bezier(0.77, 0, 0.175, 1) infinite;
     }
 
     @keyframes revEngine {
-      0% { left: -50%; }
-      50% { left: 100%; }
-      100% { left: 100%; }
+      0% { transform: translateX(-100%); }
+      50% { transform: translateX(200%); }
+      100% { transform: translateX(200%); }
     }
 
     /* --- STATUS INDICATOR --- */
     .status-box {
       text-align: center;
       /* Mimicking the orange highlight strip from the flyer */
-      background: linear-gradient(90deg, transparent, rgba(230, 92, 0, 0.1), transparent);
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--nv-orange) 10%, transparent), transparent);
       padding: 4px 20px;
     }
 
@@ -161,16 +158,21 @@ import { CommonModule } from '@angular/common';
       font-family: 'Inter', -apple-system, sans-serif;
       font-size: 0.85rem;
       letter-spacing: 0.1em;
-      color: var(--nv-orange);
+      color: var(--nv-accent-readable);
       font-weight: 800;
       text-transform: uppercase;
-      text-shadow: 0 0 8px rgba(230, 92, 0, 0.4);
+
       animation: pulseText 2s infinite ease-in-out;
     }
 
     @keyframes pulseText {
       0%, 100% { opacity: 0.7; }
       50% { opacity: 1; filter: brightness(1.2); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .loader-backdrop { transition-duration: 0.01ms; }
+      .loader-fill, .status-indicator { animation: none; }
+      .loader-fill { transform: translateX(50%); }
     }
   `]
 })

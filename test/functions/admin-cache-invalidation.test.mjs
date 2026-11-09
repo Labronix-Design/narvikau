@@ -93,7 +93,7 @@ const publicMutationCases = [
     createHandler: createAdminSiteSettingsHandler,
     event: {
       httpMethod: 'PUT',
-      body: JSON.stringify({ font_family: 'Inter', primary_color: '#112233' }),
+      body: JSON.stringify({ font_family: 'Inter', primary_color: '#f1a16c' }),
     },
     expectedStatus: 200,
     expectedTags: ['site-settings', 'catalogue:storefront'],
@@ -290,7 +290,7 @@ const missingPublicMutationCases = [
   {
     name: 'site settings update',
     createHandler: createAdminSiteSettingsHandler,
-    event: { httpMethod: 'PUT', body: JSON.stringify({ font_family: 'Inter', primary_color: '#112233' }) },
+    event: { httpMethod: 'PUT', body: JSON.stringify({ font_family: 'Inter', primary_color: '#f1a16c' }) },
   },
 ];
 
