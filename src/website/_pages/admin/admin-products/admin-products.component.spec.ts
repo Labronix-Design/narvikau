@@ -40,6 +40,7 @@ async function editor(products = canopies, productsError: unknown = null, manage
       return stored;
     },
     getCategories: async () => managed,
+    getVariants: async () => [{ id: 9, product_id: 1, variant_type: 'cab_type', variant_value: 'double', label: 'Double Cab', is_active: true, sort_order: 1 }],
     createProduct: async (payload: CatalogProduct) => {
       submissions.push(payload);
       stored = [...stored, { ...payload, id: 20 }];
@@ -72,6 +73,32 @@ test('shows the occupied product position, including inactive products, within t
   assert.equal(component.productPositionOccupant()?.name, canopies[3].name);
   component.form.controls.category.setValue('roof-equipment');
   assert.equal(component.productPositionOccupant(), undefined);
+});
+
+test('exposes named product columns and opens create and edit forms in dialog state', async () => {
+  const { component } = await editor();
+  assert.deepEqual(component.tableColumns.map(column => column.id), ['index', 'name', 'slug', 'category', 'position', 'visibility']);
+  component.openCreate();
+  assert.equal(component.showForm(), true);
+  assert.equal(component.editingId(), null);
+  component.openEdit(canopies[0]);
+  assert.equal(component.showForm(), true);
+  assert.equal(component.editingId(), 1);
+  component.cancelForm();
+  assert.equal(component.showForm(), false);
+});
+
+test('keeps expanded variants available when an option editor opens and closes', async () => {
+  const { component } = await editor();
+  await component.toggleVariants(canopies[0]);
+  assert.equal(component.expandedProductId(), 1);
+  assert.equal(component.variants()[0]?.label, 'Double Cab');
+  component.editVariant(component.variants()[0]);
+  assert.equal(component.showVariantForm(), true);
+  assert.equal(component.variantForm.controls.label.value, 'Double Cab');
+  component.cancelVariantForm();
+  assert.equal(component.showVariantForm(), false);
+  assert.equal(component.expandedProductId(), 1);
 });
 
 test('treats a successful empty catalogue as an informational state', async () => {

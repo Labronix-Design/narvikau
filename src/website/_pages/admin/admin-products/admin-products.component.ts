@@ -8,6 +8,9 @@ import { RouterLink } from '@angular/router';
 import { AdminCategory, AdminService, CatalogProduct, ProductVariant } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
 import { ImageUploadComponent } from '../../../_components/image-upload/image-upload.component';
+import { AdminDataTableComponent, AdminTableActionsDirective, AdminTableCellDirective, AdminTableExpandedDirective } from '../../../_components/admin-data-table/admin-data-table.component';
+import { AdminTableColumn } from '../../../_components/admin-data-table/admin-data-table.models';
+import { AdminDialogComponent } from '../../../_components/admin-dialog/admin-dialog.component';
 import { toRenderableSpecifications } from '../../../_models/catalog.models';
 
 type SpecificationRow = FormGroup<{ label: FormControl<string>; value: FormControl<string> }>;
@@ -44,7 +47,7 @@ const EMPTY_PRODUCT: Omit<CatalogProduct, 'id'> = {
   templateUrl: './admin-products.component.html',
   styleUrls: ['./admin-products.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatIconModule, RouterLink, ImageUploadComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatIconModule, RouterLink, ImageUploadComponent, AdminDataTableComponent, AdminTableActionsDirective, AdminTableCellDirective, AdminTableExpandedDirective, AdminDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminProductsComponent {
@@ -56,6 +59,16 @@ export class AdminProductsComponent {
   readonly categories = signal<AdminCategory[]>([]);
   readonly activeCategories = computed(() => this.categories().filter(category => category.is_active));
   readonly categoryNames = computed(() => new Map(this.categories().map(category => [category.slug, category.name])));
+  readonly tableColumns: readonly AdminTableColumn<CatalogProduct>[] = [
+    { id: 'index', label: '#', value: product => product.id, sortValue: product => product.id, mobilePriority: 5 },
+    { id: 'name', label: 'Name', value: product => product.name, sortValue: product => product.name, required: true, mobilePriority: 0 },
+    { id: 'slug', label: 'Slug', value: product => product.slug, sortValue: product => product.slug, mobilePriority: 3 },
+    { id: 'category', label: 'Category', value: product => this.categoryNames().get(product.category) ?? product.category, sortValue: product => this.categoryNames().get(product.category) ?? product.category, mobilePriority: 1 },
+    { id: 'position', label: 'Position', value: product => product.sort_order, sortValue: product => product.sort_order, mobilePriority: 4 },
+    { id: 'visibility', label: 'Visibility', value: product => product.is_active ? 'Visible' : 'Hidden', sortValue: product => product.is_active, mobilePriority: 2 },
+  ];
+  readonly productRowId = (product: CatalogProduct): number => product.id!;
+  readonly isProductExpanded = (product: CatalogProduct): boolean => this.expandedProductId() === product.id;
   readonly loading = signal(true);
   readonly error = signal('');
   readonly sessionExpired = signal(false);
@@ -264,6 +277,7 @@ export class AdminProductsComponent {
     if (this.expandedProductId() === product.id) {
       this.expandedProductId.set(null);
       this.variants.set([]);
+      this.cancelVariantForm();
       return;
     }
     this.expandedProductId.set(product.id);

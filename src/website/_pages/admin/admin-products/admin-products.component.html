@@ -4,11 +4,11 @@
     <p class="adm-sub">Manage catalogue products, specifications and descriptive options. Categories are managed separately.</p>
   </div>
 
-  @if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
+  @if (error() && !showForm() && !showVariantForm()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
 
-  @if (showForm()) {
+  <website-admin-dialog [open]="showForm()" [title]="editingId() ? 'Edit Product' : 'New Product'" [busy]="saving()" (closed)="cancelForm()">
     <div class="adm-form-wrap">
-      <h2>{{ editingId() ? 'Edit Product' : 'New Product' }}</h2>
+      @if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
       <form [formGroup]="form" (ngSubmit)="save()">
         <fieldset class="product-fields" aria-label="Product details" [disabled]="saving()">
         <div class="adm-form-grid">
@@ -98,12 +98,33 @@
         </div>
         <div class="adm-form-actions">
           <button type="submit" class="adm-btn primary" [disabled]="saving() || !activeCategories().length"><mat-icon svgIcon="save"></mat-icon>{{ saving() ? 'Saving…' : 'Save Product' }}</button>
-          <button type="button" class="adm-btn ghost" (click)="cancelForm()"><mat-icon svgIcon="close"></mat-icon>Cancel</button>
+          <button type="button" class="adm-btn ghost" (click)="cancelForm()" [disabled]="saving()"><mat-icon svgIcon="close"></mat-icon>Cancel</button>
         </div>
         </fieldset>
       </form>
     </div>
-  }
+  </website-admin-dialog>
+
+  <website-admin-dialog [open]="showVariantForm()" [title]="editingVariantId() === null ? 'New Product Option' : 'Edit Product Option'" [busy]="variantSaving()" (closed)="cancelVariantForm()">
+    @if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
+    <div class="variant-form">
+      <form [formGroup]="variantForm" (ngSubmit)="saveVariant()">
+        <fieldset class="product-fields" [disabled]="variantSaving()">
+          <div class="variant-form-grid">
+            <div class="adm-field"><label for="variant-type">Type</label><select id="variant-type" formControlName="variant_type" (change)="variantTypeChanged()">@for (type of variantTypes; track type) { <option [value]="type">{{ type }}</option> }</select></div>
+            <div class="adm-field"><label for="variant-value">Value</label><input id="variant-value" formControlName="variant_value"></div>
+            <div class="adm-field"><label for="variant-label">Display Label</label><input id="variant-label" formControlName="label"></div>
+            <div class="adm-field"><label for="variant-sort">Position within this option type</label><input id="variant-sort" type="number" formControlName="sort_order" min="1" max="100000" step="1" aria-describedby="variant-sort-help variant-sort-error" [attr.aria-invalid]="variantForm.controls.sort_order.touched && variantForm.controls.sort_order.invalid"><small id="variant-sort-help" aria-live="polite">Positions include inactive options. @if (variantPositionOccupant(); as occupant) { Position {{ occupant.sort_order }} is currently {{ occupant.label }}{{ occupant.is_active ? '' : ' (inactive)' }}. Saving shifts the affected options and closes any gap. } @else { 1 appears first; a position beyond the end places it last. }</small><small id="variant-sort-error" class="field-error">@if (variantForm.controls.sort_order.touched && variantForm.controls.sort_order.invalid) { Enter a whole number from 1 to 100000. }</small></div>
+            <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible</label></div>
+          </div>
+          <div class="adm-form-actions">
+            <button type="submit" class="adm-btn primary small" [disabled]="variantSaving()"><mat-icon svgIcon="save"></mat-icon>{{ variantSaving() ? 'Saving…' : 'Save Option' }}</button>
+            <button type="button" class="adm-btn ghost small" (click)="cancelVariantForm()" [disabled]="variantSaving()">Cancel</button>
+          </div>
+        </fieldset>
+      </form>
+    </div>
+  </website-admin-dialog>
 
   @if (loading()) {
     <div class="adm-loading" role="status"><div class="spin"></div><span class="spin-label">Loading Products…</span></div>
@@ -127,64 +148,42 @@
         <p>The catalogue is connected and ready. Add a product when you are ready to publish it.</p>
       </section>
     } @else if (products().length) {
-      <div class="adm-table-wrap">
-        <table class="adm-table">
-          <thead><tr><th scope="col">#</th><th scope="col">Name</th><th scope="col">Category</th><th scope="col" class="hide-mobile">Sort Order</th><th scope="col">Active</th><th scope="col">Actions</th></tr></thead>
-          <tbody>
-            @for (product of products(); track product.id) {
-              <tr [class.row-expanded]="expandedProductId() === product.id">
-                <td class="mono">{{ product.id }}</td>
-                <td><div class="product-name-cell"><span>{{ product.name }}</span><span class="slug-tag">{{ product.slug }}</span></div></td>
-                <td>{{ categoryNames().get(product.category) ?? product.category }}</td>
-                <td class="hide-mobile">{{ product.sort_order }}</td>
-                <td><span class="bool-dot" [class.on]="product.is_active" aria-hidden="true"></span> {{ product.is_active ? 'Yes' : 'No' }}</td>
-                <td><div class="row-actions">
-                  <button class="adm-btn ghost small" (click)="openEdit(product)" [disabled]="saving()"><mat-icon svgIcon="edit"></mat-icon>Edit</button>
-                  <button class="adm-btn ghost small" (click)="toggleVariants(product)"><mat-icon svgIcon="tune"></mat-icon>Options</button>
-                  <button class="adm-btn danger small" (click)="remove(product)" [disabled]="saving()" [attr.aria-label]="'Delete ' + product.name"><mat-icon svgIcon="delete"></mat-icon></button>
-                </div></td>
-              </tr>
-              @if (expandedProductId() === product.id) {
-                <tr class="variants-row"><td colspan="6"><div class="variants-panel">
-                  <div class="variants-header"><span class="variants-title">Options — {{ product.name }}</span><button class="adm-btn ghost small" (click)="openNewVariantForm()"><mat-icon svgIcon="add"></mat-icon>Add Option</button></div>
-                  @if (variantLoading()) { <div class="variants-loading"><div class="spin"></div><span>Loading…</span></div> }
-                  @else {
-                    @if (showVariantForm()) {
-                      <div class="variant-form"><form [formGroup]="variantForm"><div class="variant-form-grid">
-                        <div class="adm-field"><label for="variant-type">Type</label><select id="variant-type" formControlName="variant_type" (change)="variantTypeChanged()">@for (type of variantTypes; track type) { <option [value]="type">{{ type }}</option> }</select></div>
-                        <div class="adm-field"><label for="variant-value">Value</label><input id="variant-value" formControlName="variant_value"></div>
-                        <div class="adm-field"><label for="variant-label">Display Label</label><input id="variant-label" formControlName="label"></div>
-                        <div class="adm-field"><label for="variant-sort">Position within this option type</label><input id="variant-sort" type="number" formControlName="sort_order" min="1" max="100000" step="1" aria-describedby="variant-sort-help variant-sort-error" [attr.aria-invalid]="variantForm.controls.sort_order.touched && variantForm.controls.sort_order.invalid"><small id="variant-sort-help" aria-live="polite">Positions include inactive options. @if (variantPositionOccupant(); as occupant) { Position {{ occupant.sort_order }} is currently {{ occupant.label }}{{ occupant.is_active ? '' : ' (inactive)' }}. Saving shifts the affected options and closes any gap. } @else { 1 appears first; a position beyond the end places it last. }</small><small id="variant-sort-error" class="field-error">@if (variantForm.controls.sort_order.touched && variantForm.controls.sort_order.invalid) { Enter a whole number from 1 to 100000. }</small></div>
-                        <div class="adm-field"><label><input type="checkbox" formControlName="is_active"> Visible</label></div>
-                      </div><div class="adm-form-actions">
-                        <button type="button" class="adm-btn primary small" (click)="saveVariant()" [disabled]="variantSaving()"><mat-icon svgIcon="save"></mat-icon>{{ variantSaving() ? 'Saving…' : 'Save Option' }}</button>
-                        <button type="button" class="adm-btn ghost small" (click)="cancelVariantForm()">Cancel</button>
-                      </div></form></div>
+      <website-admin-data-table tableId="products" caption="Products" [rows]="products()" [columns]="tableColumns" [rowId]="productRowId" [rowExpanded]="isProductExpanded">
+        <ng-template adminTableCell="name" let-product><span class="product-name-cell">{{ product.name }}</span></ng-template>
+        <ng-template adminTableCell="visibility" let-product><span class="bool-dot" [class.on]="product.is_active" aria-hidden="true"></span> {{ product.is_active ? 'Visible' : 'Hidden' }}</ng-template>
+        <ng-template adminTableActions let-product>
+          <div class="row-actions">
+            <button type="button" class="adm-btn ghost small" (click)="openEdit(product)" [disabled]="saving()" [attr.aria-label]="'Edit ' + product.name"><mat-icon svgIcon="edit"></mat-icon>Edit</button>
+            <button type="button" class="adm-btn ghost small" (click)="toggleVariants(product)" [attr.aria-expanded]="expandedProductId() === product.id" [attr.aria-label]="'Options for ' + product.name"><mat-icon svgIcon="tune"></mat-icon>Options</button>
+            <button type="button" class="adm-btn danger small" (click)="remove(product)" [disabled]="saving()" [attr.aria-label]="'Delete ' + product.name"><mat-icon svgIcon="delete"></mat-icon></button>
+          </div>
+        </ng-template>
+        <ng-template adminTableExpanded let-product>
+          <div class="variants-panel">
+            <div class="variants-header"><span class="variants-title">Options — {{ product.name }}</span><button type="button" class="adm-btn ghost small" (click)="openNewVariantForm()"><mat-icon svgIcon="add"></mat-icon>Add Option</button></div>
+            @if (variantLoading()) { <div class="variants-loading"><div class="spin"></div><span>Loading…</span></div> }
+            @else {
+              @if (variants().length === 0) { <div class="variants-empty">No descriptive options defined for this product.</div> }
+              @else {
+                @for (type of variantTypeLabels(); track type) {
+                  <div class="variant-group"><div class="variant-group-label">{{ type }}</div><div class="variant-rows">
+                    @for (variant of variantsByType(type); track variant.id) {
+                      <div class="variant-item" [class.inactive]="!variant.is_active">
+                        <span class="variant-label">{{ variant.sort_order }}. {{ variant.label }}</span><span class="variant-value mono">{{ variant.variant_value }}</span>
+                        <div class="variant-actions">
+                          <button type="button" class="adm-btn ghost small" (click)="toggleVariantActive(variant)" [attr.aria-label]="(variant.is_active ? 'Hide ' : 'Show ') + variant.label"><mat-icon [svgIcon]="variant.is_active ? 'pause_circle' : 'play_circle'"></mat-icon></button>
+                          <button type="button" class="adm-btn ghost small" (click)="editVariant(variant)" [attr.aria-label]="'Edit ' + variant.label"><mat-icon svgIcon="edit"></mat-icon></button>
+                          <button type="button" class="adm-btn danger small" (click)="deleteVariant(variant)" [attr.aria-label]="'Delete ' + variant.label"><mat-icon svgIcon="delete"></mat-icon></button>
+                        </div>
+                      </div>
                     }
-                    @if (variants().length === 0) { <div class="variants-empty">No descriptive options defined for this product.</div> }
-                    @else {
-                      @for (type of variantTypeLabels(); track type) {
-                        <div class="variant-group"><div class="variant-group-label">{{ type }}</div><div class="variant-rows">
-                          @for (variant of variantsByType(type); track variant.id) {
-                            <div class="variant-item" [class.inactive]="!variant.is_active">
-                              <span class="variant-label">{{ variant.sort_order }}. {{ variant.label }}</span><span class="variant-value mono">{{ variant.variant_value }}</span>
-                              <div class="variant-actions">
-                                <button class="adm-btn ghost small" (click)="toggleVariantActive(variant)" [attr.aria-label]="(variant.is_active ? 'Hide ' : 'Show ') + variant.label"><mat-icon [svgIcon]="variant.is_active ? 'pause_circle' : 'play_circle'"></mat-icon></button>
-                                <button class="adm-btn ghost small" (click)="editVariant(variant)" [attr.aria-label]="'Edit ' + variant.label"><mat-icon svgIcon="edit"></mat-icon></button>
-                                <button class="adm-btn danger small" (click)="deleteVariant(variant)" [attr.aria-label]="'Delete ' + variant.label"><mat-icon svgIcon="delete"></mat-icon></button>
-                              </div>
-                            </div>
-                          }
-                        </div></div>
-                      }
-                    }
-                  }
-                </div></td></tr>
+                  </div></div>
+                }
               }
             }
-          </tbody>
-        </table>
-      </div>
+          </div>
+        </ng-template>
+      </website-admin-data-table>
     }
   }
 </div>

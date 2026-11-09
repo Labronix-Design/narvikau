@@ -41,15 +41,29 @@ describe('AdminCategoriesComponent', () => {
     fixture.componentInstance.openCreate();
     fixture.componentInstance.form.patchValue({ slug: 'roof-equipment', name: 'Roof Equipment', sort_order: 1 });
     await fixture.componentInstance.save();
-    expect(service.createCategory).toHaveBeenCalledWith(jasmine.objectContaining({ slug: 'roof-equipment', name: 'Roof Equipment' }));
+    expect(service.createCategory).toHaveBeenCalledWith({
+      slug: 'roof-equipment', name: 'Roof Equipment', description: null, sort_order: 1, is_active: true,
+    });
     expect(fixture.componentInstance.categories().map(category => category.name)).toContain('Roof Equipment');
+  });
+
+  it('provides named category columns and opens the create and edit dialogs', () => {
+    expect(fixture.componentInstance.tableColumns.map(column => column.id)).toEqual(['name', 'slug', 'position', 'status']);
+    fixture.componentInstance.openCreate();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')?.textContent).toContain('New Category');
+    fixture.componentInstance.openEdit(categories[0]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')?.textContent).toContain('Edit Category');
   });
 
   it('edits a category and toggles its active status', async () => {
     fixture.componentInstance.openEdit(categories[0]);
     fixture.componentInstance.form.controls.name.setValue('Canopy Systems');
     await fixture.componentInstance.save();
-    expect(service.updateCategory).toHaveBeenCalledWith(jasmine.objectContaining({ id: 1, name: 'Canopy Systems' }));
+    expect(service.updateCategory).toHaveBeenCalledWith({
+      id: 1, slug: 'canopy', name: 'Canopy Systems', description: null, sort_order: 0, is_active: true,
+    });
     await fixture.componentInstance.toggleActive(categories[0]);
     expect(service.updateCategory).toHaveBeenCalledWith(jasmine.objectContaining({ id: 1, is_active: false }));
   });

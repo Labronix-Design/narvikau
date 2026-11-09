@@ -6,6 +6,9 @@ import { MatIconModule } from '@angular/material/icon';
 import { RouterLink } from '@angular/router';
 import { AdminCategory, AdminService, CategoryInput } from '../../../_services/admin.service';
 import { ModalService } from '../../../_services/modal.service';
+import { AdminDataTableComponent, AdminTableActionsDirective, AdminTableCellDirective } from '../../../_components/admin-data-table/admin-data-table.component';
+import { AdminTableColumn } from '../../../_components/admin-data-table/admin-data-table.models';
+import { AdminDialogComponent } from '../../../_components/admin-dialog/admin-dialog.component';
 
 const categorySlug: ValidatorFn = control => typeof control.value === 'string'
   && control.value.length <= 120 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(control.value)
@@ -25,7 +28,7 @@ const categoryDescription: ValidatorFn = control => typeof control.value === 'st
   templateUrl: './admin-categories.component.html',
   styleUrls: ['./admin-categories.component.scss'],
   standalone: true,
-  imports: [ReactiveFormsModule, MatIconModule, RouterLink],
+  imports: [ReactiveFormsModule, MatIconModule, RouterLink, AdminDataTableComponent, AdminTableActionsDirective, AdminTableCellDirective, AdminDialogComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminCategoriesComponent {
@@ -34,6 +37,13 @@ export class AdminCategoriesComponent {
   private readonly fb = inject(FormBuilder);
 
   readonly categories = signal<AdminCategory[]>([]);
+  readonly tableColumns: readonly AdminTableColumn<AdminCategory>[] = [
+    { id: 'name', label: 'Name', value: category => category.name, sortValue: category => category.name, required: true, mobilePriority: 0 },
+    { id: 'slug', label: 'Slug', value: category => category.slug, sortValue: category => category.slug, mobilePriority: 2 },
+    { id: 'position', label: 'Position', value: category => category.sort_order, sortValue: category => category.sort_order, mobilePriority: 1 },
+    { id: 'status', label: 'Status', value: category => category.is_active ? 'Active' : 'Inactive', sortValue: category => category.is_active, mobilePriority: 3 },
+  ];
+  readonly categoryRowId = (category: AdminCategory): number => category.id;
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');

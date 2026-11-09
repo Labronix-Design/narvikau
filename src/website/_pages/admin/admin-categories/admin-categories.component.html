@@ -4,11 +4,11 @@
     <p class="adm-sub">Organise products into named catalogue sections. Only active categories appear publicly and can be chosen for products.</p>
   </header>
 
-  @if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
+  @if (error() && !showForm()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
 
-  @if (showForm()) {
+  <website-admin-dialog [open]="showForm()" [title]="editingId() === null ? 'New Category' : 'Edit Category'" [busy]="saving()" (closed)="cancelForm()">
     <div class="adm-form-wrap">
-      <h2>{{ editingId() === null ? 'New Category' : 'Edit Category' }}</h2>
+      @if (error()) { <div class="adm-error" role="alert"><mat-icon svgIcon="error"></mat-icon>{{ error() }}</div> }
       <form [formGroup]="form" (ngSubmit)="save()">
         <fieldset class="category-fields" [disabled]="saving()">
           <div class="adm-form-grid">
@@ -38,12 +38,12 @@
           </div>
           <div class="adm-form-actions">
             <button type="submit" class="adm-btn primary" [disabled]="saving()"><mat-icon svgIcon="save"></mat-icon>{{ saving() ? 'Saving…' : 'Save Category' }}</button>
-            <button type="button" class="adm-btn ghost" (click)="cancelForm()">Cancel</button>
+            <button type="button" class="adm-btn ghost" (click)="cancelForm()" [disabled]="saving()">Cancel</button>
           </div>
         </fieldset>
       </form>
     </div>
-  }
+  </website-admin-dialog>
 
   @if (loading()) {
     <div class="adm-loading" role="status"><div class="spin"></div><span class="spin-label">Loading Categories…</span></div>
@@ -55,26 +55,18 @@
       @if (!showForm()) { <button type="button" class="adm-btn primary" (click)="openCreate()"><mat-icon svgIcon="add"></mat-icon>Add Category</button> }
     </div>
     @if (categories().length) {
-      <div class="adm-table-wrap">
-        <table class="adm-table">
-          <thead><tr><th scope="col">Name</th><th scope="col">Slug</th><th scope="col">Sort Order</th><th scope="col">Status</th><th scope="col">Actions</th></tr></thead>
-          <tbody>
-            @for (category of categories(); track category.id) {
-              <tr>
-                <th scope="row">{{ category.name }}@if (category.description) { <div class="category-description">{{ category.description }}</div> }</th>
-                <td class="mono">{{ category.slug }}</td>
-                <td>{{ category.sort_order }}</td>
-                <td>{{ category.is_active ? 'Active' : 'Inactive' }}</td>
-                <td><div class="category-actions">
-                  <button type="button" class="adm-btn ghost small" [attr.aria-label]="'Edit ' + category.name" (click)="openEdit(category)">Edit</button>
-                  <button type="button" class="adm-btn ghost small" [attr.aria-label]="(category.is_active ? 'Deactivate ' : 'Activate ') + category.name" [disabled]="saving()" (click)="toggleActive(category)">{{ category.is_active ? 'Deactivate' : 'Activate' }}</button>
-                  <button type="button" class="adm-btn danger small" [attr.aria-label]="'Delete ' + category.name" (click)="remove(category)">Delete</button>
-                </div></td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
+      <website-admin-data-table tableId="categories" caption="Categories" [rows]="categories()" [columns]="tableColumns" [rowId]="categoryRowId">
+        <ng-template adminTableCell="name" let-category>
+          {{ category.name }}@if (category.description) { <div class="category-description">{{ category.description }}</div> }
+        </ng-template>
+        <ng-template adminTableActions let-category>
+          <div class="category-actions">
+            <button type="button" class="adm-btn ghost small" [attr.aria-label]="'Edit ' + category.name" (click)="openEdit(category)">Edit</button>
+            <button type="button" class="adm-btn ghost small" [attr.aria-label]="(category.is_active ? 'Deactivate ' : 'Activate ') + category.name" [disabled]="saving()" (click)="toggleActive(category)">{{ category.is_active ? 'Deactivate' : 'Activate' }}</button>
+            <button type="button" class="adm-btn danger small" [attr.aria-label]="'Delete ' + category.name" (click)="remove(category)">Delete</button>
+          </div>
+        </ng-template>
+      </website-admin-data-table>
     } @else if (!error()) {
       <section class="adm-empty" role="status"><p class="empty-title">No categories yet</p><p class="empty-desc">Add a category before creating catalogue products.</p></section>
     }
