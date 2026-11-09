@@ -109,21 +109,19 @@ export class AdminDataTableComponent<T> implements OnChanges {
     if (width) widths[id] = width; else delete widths[id];
     this.save({ ...this.preferences(), columnWidths: widths });
   }
-  beginResize(event: MouseEvent | PointerEvent, id: string): void {
-    if ('pointerType' in event && event.pointerType === 'touch') return;
+  beginResize(event: MouseEvent, id: string): void {
     const header = (event.currentTarget as HTMLElement).parentElement;
     this.resizeStart = { id, x: event.clientX, width: header?.getBoundingClientRect().width ?? 160 };
-    this.document.defaultView?.addEventListener('pointermove', this.resizeColumn);
-    this.document.defaultView?.addEventListener('pointerup', this.endResize, { once: true });
     this.document.defaultView?.addEventListener('mousemove', this.resizeColumn);
     this.document.defaultView?.addEventListener('mouseup', this.endResize, { once: true });
     event.preventDefault();
   }
-  private readonly resizeColumn = (event: MouseEvent | PointerEvent): void => {
+  private readonly resizeColumn = (event: MouseEvent): void => {
     if (!this.resizeStart) return;
     this.setColumnWidth(this.resizeStart.id, String(this.resizeStart.width + event.clientX - this.resizeStart.x));
   };
-  private readonly endResize = (): void => { this.resizeStart = null; this.document.defaultView?.removeEventListener('pointermove', this.resizeColumn); this.document.defaultView?.removeEventListener('mousemove', this.resizeColumn); };
+  private readonly endResize = (): void => { this.resizeStart = null; this.document.defaultView?.removeEventListener('mousemove', this.resizeColumn); };
+  hasManualWidths(): boolean { return Object.keys(this.preferences().columnWidths).length > 0; }
 
   sortBy(id: string): void {
     if (!this.columns().some(column => column.id === id && column.sortValue)) return;

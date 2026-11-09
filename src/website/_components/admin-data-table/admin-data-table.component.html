@@ -18,7 +18,11 @@
   </div>
 </div>
 <div class="adt-table-wrap">
-  <table class="adt-table" role="table">
+  <table class="adt-table" role="table" [class.has-manual-widths]="hasManualWidths()">
+    <colgroup>
+      @for (column of visibleColumns(); track column.id) { <col [style.width]="columnWidth(column.id)" /> }
+      @if (actionsTemplate()) { <col class="adt-actions-col" /> }
+    </colgroup>
     <caption>{{ caption() }}</caption>
     <thead role="rowgroup">
       <tr role="row">
@@ -30,7 +34,7 @@
                 <span aria-hidden="true">{{ ariaSort(column.id) === 'ascending' ? '↑' : ariaSort(column.id) === 'descending' ? '↓' : '↕' }}</span>
               </button>
             } @else { {{ column.label }} }
-            <span class="adt-resize-handle" role="separator" aria-label="Drag to resize {{ column.label }} column" (pointerdown)="beginResize($event, column.id)" (mousedown)="beginResize($event, column.id)"></span>
+            <span class="adt-resize-handle" role="separator" aria-label="Drag to resize {{ column.label }} column" (mousedown)="beginResize($event, column.id)"></span>
           </th>
         }
         @if (actionsTemplate()) { <th scope="col" role="columnheader" class="adt-actions-heading">Actions</th> }

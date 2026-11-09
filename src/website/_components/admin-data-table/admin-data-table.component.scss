@@ -16,11 +16,13 @@
   &[aria-pressed='true'] { font-weight: 800; border-color: var(--admin-text); background: var(--admin-surface-hover); }
 }
 button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--nv-focus-ring); outline-offset: 3px; }
-.adt-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); }
+.adt-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-gutter: stable both-edges; padding-block-end: .5rem; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); }
 .adt-table {
   width: 100%; border-collapse: collapse; font-size: .82rem; background: var(--admin-surface-raised);
+  &.has-manual-widths { table-layout: fixed; width: max-content; min-width: 100%; }
   caption { text-align: start; font-weight: 700; padding: var(--ui-density-padding); color: var(--admin-text); }
   th, td { padding: var(--ui-density-padding); text-align: start; vertical-align: middle; border-block-end: 1px solid var(--admin-border); overflow-wrap: anywhere; min-width: 9rem; }
+  &.has-manual-widths th, &.has-manual-widths td { min-width: 0; }
   thead th { background: var(--admin-surface-hover); color: var(--admin-text-subtle); font-size: .72rem; }
   tbody th, tbody td { font-weight: 400; color: var(--admin-text-muted); }
   tbody .is-bold, tbody .is-bold .adt-cell-content, tbody .is-bold .adt-cell-content * { font-weight: 800 !important; color: var(--admin-text); }
