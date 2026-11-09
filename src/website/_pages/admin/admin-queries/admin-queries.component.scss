@@ -23,8 +23,9 @@
   gap: 2px;
   margin-bottom: 24px;
   border-bottom: 2px solid var(--admin-border);
-  overflow-x: scroll;
+  overflow: visible;
 }
+.status-more { display: inline-flex; align-items: center; gap: .4rem; margin-inline-start: auto; color: var(--admin-text-muted); font-size: .72rem; white-space: nowrap; .status-tabs & select { min-height: 2.5rem; background: var(--admin-surface-raised); color: var(--admin-text); border: 1px solid var(--admin-border); } }
 
 .status-tab {
   display: flex;

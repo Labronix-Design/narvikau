@@ -69,12 +69,13 @@
   <div class="query-filters"><label for="enquiry-type-filter">Enquiry type</label><select id="enquiry-type-filter" class="status-select" [value]="activeType()" (change)="setType($event)"><option value="">All types (including legacy enquiries)</option>@for (type of typeOptions; track type.value) { <option [value]="type.value">{{ type.label }}</option> }</select><p class="adm-sub">Status counts include all enquiry types.</p></div>
 
   <div class="status-tabs">
-    @for (tab of tabs; track tab.value) {
+    @for (tab of tabs.slice(0, 5); track tab.value) {
       <button type="button" class="status-tab" [class.active]="activeTab() === tab.value" [attr.aria-pressed]="activeTab() === tab.value" (click)="setTab(tab.value)">
         {{ tab.label }}
         @if (tabCount(tab.value) > 0) { <span class="tab-badge">{{ tabCount(tab.value) }}</span> }
       </button>
     }
+    <label class="status-more">More statuses <select [value]="activeTab()" (change)="setTab($any($event.target).value)"><option value="" disabled>Select status</option>@for (tab of tabs.slice(5); track tab.value) { <option [value]="tab.value">{{ tab.label }}@if (tabCount(tab.value) > 0) { ({{ tabCount(tab.value) }}) }</option> }</select></label>
   </div>
 
   @if (loading()) {

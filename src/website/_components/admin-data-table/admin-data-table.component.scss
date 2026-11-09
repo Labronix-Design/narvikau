@@ -15,6 +15,7 @@
   background: var(--admin-surface-raised); color: var(--admin-text); font: inherit; cursor: pointer;
   &[aria-pressed='true'] { font-weight: 800; border-color: var(--admin-text); background: var(--admin-surface-hover); }
 }
+.adt-order { display: inline-flex; gap: .2rem; button { min-inline-size: 2rem; min-block-size: 2rem; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); background: var(--admin-surface); color: var(--admin-text); cursor: pointer; } }
 button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--nv-focus-ring); outline-offset: 3px; }
 .adt-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-gutter: stable both-edges; padding-block-end: .5rem; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); }
 .adt-table {
@@ -23,7 +24,11 @@ button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px 
   caption { text-align: start; font-weight: 700; padding: var(--ui-density-padding); color: var(--admin-text); }
   th, td { padding: var(--ui-density-padding); text-align: start; vertical-align: middle; border-block-end: 1px solid var(--admin-border); overflow-wrap: anywhere; min-width: 9rem; }
   &.has-manual-widths th, &.has-manual-widths td { min-width: 0; }
-  thead th { background: var(--admin-surface-hover); color: var(--admin-text-subtle); font-size: .72rem; }
+  &.has-manual-widths .adt-cell-content, &.has-manual-widths .adt-cell-content * { min-width: 0; max-width: none; }
+  thead th { background: var(--admin-surface-hover); color: var(--admin-text-subtle); font-size: .72rem; transition: transform 160ms ease, background-color 160ms ease, opacity 160ms ease; }
+  thead th[draggable='true'] { cursor: grab; }
+  thead th[draggable='true']:active { cursor: grabbing; }
+  thead th.is-dragging { opacity: .48; transform: scale(.98); background: color-mix(in srgb, var(--admin-brand) 16%, var(--admin-surface-hover)); }
   tbody th, tbody td { font-weight: 400; color: var(--admin-text-muted); }
   tbody .is-bold, tbody .is-bold .adt-cell-content, tbody .is-bold .adt-cell-content * { font-weight: 800 !important; color: var(--admin-text); }
   .adt-data-row:hover { background: var(--admin-surface-hover); }

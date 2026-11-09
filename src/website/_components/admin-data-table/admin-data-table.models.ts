@@ -27,4 +27,5 @@ export interface AdminTablePreferences {
   readonly visibleColumnIds: readonly string[];
   readonly boldColumnIds: readonly string[];
   readonly columnWidths: Readonly<Record<string, number>>;
+  readonly columnOrder: readonly string[];
 }
