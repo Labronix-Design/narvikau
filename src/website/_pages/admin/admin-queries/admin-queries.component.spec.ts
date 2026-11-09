@@ -279,6 +279,27 @@ describe('Admin enquiries list', () => {
     expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
   });
 
+  it('submits a valid manual enquiry through the dialog form and closes it', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+    (fixture.nativeElement.querySelector('button.adm-btn.primary') as HTMLButtonElement).click();
+    fixture.componentInstance.manualForm.patchValue({
+      name: 'Jordan Test', email: 'jordan@example.test',
+      Location: { state: 'Victoria', suburb: 'Richmond' },
+      DiscoverySource: 'Google Search',
+    });
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[role="dialog"] button[type="submit"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(service.createQuery).toHaveBeenCalledWith(jasmine.objectContaining({
+      name: 'Jordan Test', email: 'jordan@example.test',
+      location_state: 'Victoria', location_suburb: 'Richmond', discovery_source: 'Google Search',
+    }));
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain('Manual enquiry created');
+  });
+
   it('opens details and notes in a dialog from the row action', async () => {
     fixture.detectChanges();
     await fixture.whenStable();
@@ -303,5 +324,53 @@ describe('Admin enquiries list', () => {
     fixture.detectChanges();
     expect(component.rows()[0].status).toBe('follow_up_later');
     expect(component.followUpId()).toBeNull();
+  });
+
+  it('submits follow-up details through the dialog and closes after the update', async () => {
+    service.updateQuery.and.returnValues(
+      Promise.resolve({ id: 1, status: 'follow_up_later', admin_notes: null, follow_up_date: null, follow_up_note: null }),
+      Promise.resolve({ id: 1, status: 'follow_up_later', admin_notes: null, follow_up_date: '2026-11-20', follow_up_note: 'Call after quote' }),
+    );
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const select = fixture.nativeElement.querySelector('[aria-label="Status for Alex"]') as HTMLSelectElement;
+    select.value = 'follow_up_later';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="dialog"] #follow-up-date')).not.toBeNull();
+    fixture.componentInstance.followUpForm.patchValue({ follow_up_date: '2026-11-20', follow_up_note: 'Call after quote' });
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[role="dialog"] button[type="submit"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(service.updateQuery.calls.count()).toBe(2);
+    expect(service.updateQuery.calls.mostRecent().args).toEqual([1, {
+      status: 'follow_up_later', follow_up_date: '2026-11-20', follow_up_note: 'Call after quote',
+    }]);
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).toBeNull();
+    expect(fixture.componentInstance.followUpId()).toBeNull();
+    expect(fixture.componentInstance.rows()[0].follow_up_date).toBe('2026-11-20');
+    expect(fixture.componentInstance.rows()[0].follow_up_note).toBe('Call after quote');
+  });
+
+  it('saves edited notes through the detail dialog', async () => {
+    service.updateQuery.and.resolveTo({ id: 1, status: 'new', admin_notes: 'Call again' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[aria-label="Details for Alex"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    const notes = fixture.nativeElement.querySelector('[role="dialog"] .notes-input') as HTMLTextAreaElement;
+    notes.value = 'Call again';
+    notes.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[role="dialog"] .expand-section button') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(service.updateQuery).toHaveBeenCalledWith(1, { admin_notes: 'Call again' });
+    expect(fixture.componentInstance.rows()[0].admin_notes).toBe('Call again');
+    expect(fixture.nativeElement.querySelector('[role="dialog"]')).not.toBeNull();
   });
 });
