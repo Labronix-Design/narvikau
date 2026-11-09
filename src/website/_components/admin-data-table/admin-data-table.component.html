@@ -1,0 +1,77 @@
+<div class="adt-toolbar">
+  <ng-content select="[adminTableToolbar]" />
+  <details class="adt-chooser">
+    <summary>Columns</summary>
+    <div class="adt-choices" role="group" aria-label="Table columns">
+      @for (column of columns(); track column.id) {
+        <div class="adt-choice">
+          <label>
+            <input type="checkbox" [checked]="isVisible(column.id)" [disabled]="column.required" (change)="toggleColumn(column.id)" />
+            <span>{{ column.label }}@if (column.required) { <span class="adt-required">(required)</span> }</span>
+          </label>
+          @if (column.allowBold !== false) {
+            <button type="button" class="adt-bold-toggle" [attr.aria-pressed]="isBold(column.id)" [attr.aria-label]="'Bold ' + column.label + ' values'" (click)="toggleBold(column.id)">Bold</button>
+          }
+        </div>
+      }
+    </div>
+  </details>
+</div>
+<div class="adt-table-wrap">
+  <table class="adt-table" role="table">
+    <caption>{{ caption() }}</caption>
+    <thead role="rowgroup">
+      <tr role="row">
+        @for (column of visibleColumns(); track column.id) {
+          <th scope="col" role="columnheader" [attr.data-column]="column.id" [attr.aria-sort]="ariaSort(column.id)">
+            @if (column.sortValue) {
+              <button type="button" class="adt-sort" (click)="sortBy(column.id)">
+                {{ column.label }}
+                <span aria-hidden="true">{{ ariaSort(column.id) === 'ascending' ? '↑' : ariaSort(column.id) === 'descending' ? '↓' : '↕' }}</span>
+              </button>
+            } @else { {{ column.label }} }
+          </th>
+        }
+        @if (actionsTemplate()) { <th scope="col" role="columnheader" class="adt-actions-heading">Actions</th> }
+      </tr>
+    </thead>
+    <tbody role="rowgroup">
+      @for (row of sortedRows(); track rowId()(row); let rowIndex = $index) {
+        <tr class="adt-data-row" role="row">
+          @for (column of visibleColumns(); track column.id; let first = $first) {
+            @if (first) {
+              <th scope="row" role="rowheader" [attr.data-column]="column.id" [attr.data-label]="column.label" [class.is-bold]="isBold(column.id)" [style.--adt-mobile-order]="column.mobilePriority ?? $index">
+                <div class="adt-cell-content"><ng-container [ngTemplateOutlet]="cellContent" [ngTemplateOutletContext]="{ $implicit: row, row: row, column: column, index: rowIndex }" /></div>
+              </th>
+            } @else {
+              <td role="cell" [attr.data-column]="column.id" [attr.data-label]="column.label" [class.is-bold]="isBold(column.id)" [style.--adt-mobile-order]="column.mobilePriority ?? $index">
+                <div class="adt-cell-content"><ng-container [ngTemplateOutlet]="cellContent" [ngTemplateOutletContext]="{ $implicit: row, row: row, column: column, index: rowIndex }" /></div>
+              </td>
+            }
+          }
+          @if (actionsTemplate(); as actions) {
+            <td role="cell" class="adt-actions" data-label="Actions">
+              <div class="adt-action-content"><ng-container [ngTemplateOutlet]="actions.template" [ngTemplateOutletContext]="{ $implicit: row, row: row, index: rowIndex }" /></div>
+            </td>
+          }
+        </tr>
+        @if (expandedTemplate(); as expanded) {
+          @if (rowExpanded()(row)) {
+            <tr class="adt-expanded-row" role="row">
+              <td role="cell" [attr.colspan]="visibleColumns().length + (actionsTemplate() ? 1 : 0)">
+                <ng-container [ngTemplateOutlet]="expanded.template" [ngTemplateOutletContext]="{ $implicit: row, row: row, index: rowIndex }" />
+              </td>
+            </tr>
+          }
+        }
+      } @empty {
+        <tr role="row"><td role="cell" class="adt-empty" [attr.colspan]="visibleColumns().length + (actionsTemplate() ? 1 : 0)"><ng-content select="[adminTableEmpty]">{{ emptyMessage() }}</ng-content></td></tr>
+      }
+    </tbody>
+  </table>
+</div>
+<ng-template #cellContent let-row let-column="column" let-index="index">
+  @if (cellTemplate(column.id); as template) {
+    <ng-container [ngTemplateOutlet]="template" [ngTemplateOutletContext]="{ $implicit: row, row: row, column: column, index: index }" />
+  } @else { <span class="adt-value">{{ column.value(row) ?? '—' }}</span> }
+</ng-template>

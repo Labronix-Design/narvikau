@@ -1,0 +1,65 @@
+:host { display: block; min-width: 0; color: var(--admin-text); }
+
+.adt-toolbar { display: flex; align-items: start; justify-content: flex-end; flex-wrap: wrap; gap: var(--ui-density-gap); margin-block-end: 1rem; }
+.adt-chooser {
+  max-width: 100%;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--ui-radius);
+  background: var(--admin-surface-raised);
+  font-size: .82rem;
+  summary { min-height: 2.75rem; padding: var(--ui-density-padding); cursor: pointer; font-weight: 700; }
+}
+.adt-choices { padding: var(--ui-density-padding); border-top: 1px solid var(--admin-border); }
+.adt-choice {
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  label { display: flex; align-items: center; gap: .5rem; min-height: 2.75rem; cursor: pointer; }
+  input { inline-size: 1.125rem; block-size: 1.125rem; accent-color: var(--nv-orange); }
+}
+.adt-required { color: var(--admin-text-muted); font-size: .75rem; }
+.adt-bold-toggle {
+  min-height: 2.75rem; padding-inline: .75rem; border: 1px solid var(--admin-border); border-radius: var(--ui-radius);
+  background: var(--admin-surface-raised); color: var(--admin-text); font: inherit; cursor: pointer;
+  &[aria-pressed='true'] { font-weight: 800; border-color: var(--admin-text); background: var(--admin-surface-hover); }
+}
+button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--nv-focus-ring); outline-offset: 3px; }
+.adt-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); }
+.adt-table {
+  width: 100%; border-collapse: collapse; font-size: .82rem; background: var(--admin-surface-raised);
+  caption { text-align: start; font-weight: 700; padding: var(--ui-density-padding); color: var(--admin-text); }
+  th, td { padding: var(--ui-density-padding); text-align: start; vertical-align: middle; border-block-end: 1px solid var(--admin-border); overflow-wrap: anywhere; }
+  thead th { background: var(--admin-surface-hover); color: var(--admin-text-subtle); font-size: .72rem; }
+  tbody th, tbody td { font-weight: 400; color: var(--admin-text-muted); }
+  tbody .is-bold { font-weight: 800; color: var(--admin-text); }
+  .adt-data-row:hover { background: var(--admin-surface-hover); }
+}
+.adt-sort { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; text-align: start; }
+.adt-action-content { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; min-width: max-content; }
+.adt-expanded-row > td { padding: 0; }
+.adt-empty { text-align: center !important; padding: 2.5rem !important; }
+
+@media (max-width: 600px) {
+  .adt-toolbar { align-items: stretch; }
+  .adt-chooser { width: 100%; }
+  .adt-table-wrap { overflow: visible; border: 0; }
+  .adt-table {
+    display: block; background: transparent;
+    caption { display: block; }
+    thead { display: block; margin-block-end: .75rem; }
+    thead tr { display: flex; flex-wrap: wrap; gap: .5rem; }
+    thead th { display: block; padding-block: 0; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); }
+    .adt-actions-heading { display: none; }
+    tbody { display: grid; gap: var(--ui-density-gap); }
+    .adt-data-row { display: flex; flex-direction: column; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); background: var(--admin-surface-raised); }
+    .adt-data-row > th, .adt-data-row > td {
+      display: grid; grid-template-columns: minmax(5rem, 35%) minmax(0, 1fr); gap: .75rem; align-items: center;
+      order: var(--adt-mobile-order, 0); min-width: 0;
+      &::before { content: attr(data-label); font-size: .72rem; font-weight: 700; color: var(--admin-text-subtle); }
+      > * { min-width: 0; }
+    }
+    .adt-data-row > .adt-actions { order: 2147483647; border: 0; }
+    .adt-action-content { min-width: 0; }
+    .adt-expanded-row, .adt-expanded-row > td { display: block; min-width: 0; }
+    .adt-expanded-row { border: 1px solid var(--admin-border); border-radius: var(--ui-radius); background: var(--admin-surface-raised); }
+    .adt-empty { display: block; }
+  }
+}

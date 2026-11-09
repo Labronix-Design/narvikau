@@ -375,3 +375,11 @@
   gap: 12px;
   margin-bottom: 16px;
 }
+
+// Custom elements must be allowed to shrink inside admin grid/flex layouts so
+// responsive table cards and their projected actions stay within the page.
+.adm-page website-admin-data-table {
+  display: block;
+  min-inline-size: 0;
+  inline-size: 100%;
+}
