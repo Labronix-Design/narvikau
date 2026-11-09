@@ -23,7 +23,8 @@ export interface AdminTableCellContext<T> extends AdminTableRowContext<T> {
 }
 
 export interface AdminTablePreferences {
-  readonly version: 1;
+  readonly version: number;
   readonly visibleColumnIds: readonly string[];
   readonly boldColumnIds: readonly string[];
+  readonly columnWidths: Readonly<Record<string, number>>;
 }

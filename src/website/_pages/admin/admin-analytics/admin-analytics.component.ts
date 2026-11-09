@@ -21,6 +21,7 @@ export class AdminAnalyticsComponent {
 
   readonly model = signal<ControlCentreResponse | null>(null);
   readonly loading = signal(true);
+  readonly refreshing = signal(false);
   readonly error = signal('');
   readonly snapshot = computed<EnquiriesSnapshot | null>(() => {
     const enquiries = this.model()?.data.enquiries;
@@ -52,10 +53,19 @@ export class AdminAnalyticsComponent {
     this.loading.set(true);
     this.error.set('');
     try {
-      this.model.set(await this.adminService.getControlCentre());
+      const model = await this.adminService.getControlCentre();
+      this.model.set(model);
+      // An empty/stale read model should not leave the admin with a dead-end
+      // setup state. Refresh it once on arrival, then show the fresh snapshot.
+      if (model.data.enquiries?.status !== 'ready') {
+        this.refreshing.set(true);
+        await this.adminService.refreshControlCentre('enquiries');
+        this.model.set(await this.adminService.getControlCentre());
+      }
     } catch {
       this.error.set('Enquiry analytics could not be loaded. Please try again.');
     } finally {
+      this.refreshing.set(false);
       this.loading.set(false);
     }
   }

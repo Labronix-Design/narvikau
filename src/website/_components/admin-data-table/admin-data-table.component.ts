@@ -41,8 +41,9 @@ export class AdminDataTableComponent<T> implements OnChanges {
   readonly actionsTemplate = contentChild<AdminTableActionsDirective<T>>(AdminTableActionsDirective);
   readonly expandedTemplate = contentChild<AdminTableExpandedDirective<T>>(AdminTableExpandedDirective);
   readonly sort = signal<{ id: string; direction: 'ascending' | 'descending' } | null>(null);
+  readonly optionsOpen = signal(false);
   private readonly document = inject(DOCUMENT);
-  private readonly preferences = signal<AdminTablePreferences>({ version: 1, visibleColumnIds: [], boldColumnIds: [] });
+  private readonly preferences = signal<AdminTablePreferences>({ version: 2, visibleColumnIds: [], boldColumnIds: [], columnWidths: {} });
   private loadedTableId: string | null = null;
 
   readonly visibleColumns = computed(() => {
@@ -100,6 +101,15 @@ export class AdminDataTableComponent<T> implements OnChanges {
     this.save({ ...this.preferences(), boldColumnIds: this.columns().filter(column => column.allowBold !== false && selected.has(column.id)).map(column => column.id) });
   }
 
+  columnWidth(id: string): string | null { const width = this.preferences().columnWidths[id]; return width ? `${width}px` : null; }
+  columnWidthValue(id: string): number | '' { return this.preferences().columnWidths[id] ?? ''; }
+  setColumnWidth(id: string, value: string): void {
+    const width = Math.max(120, Math.min(640, Number(value) || 0));
+    const widths = { ...this.preferences().columnWidths };
+    if (width) widths[id] = width; else delete widths[id];
+    this.save({ ...this.preferences(), columnWidths: widths });
+  }
+
   sortBy(id: string): void {
     if (!this.columns().some(column => column.id === id && column.sortValue)) return;
     this.sort.update(sort => ({ id, direction: sort?.id === id && sort.direction === 'ascending' ? 'descending' : 'ascending' }));
@@ -120,22 +130,24 @@ export class AdminDataTableComponent<T> implements OnChanges {
 
   private sanitise(value: unknown): AdminTablePreferences {
     const defaults: AdminTablePreferences = {
-      version: 1,
+      version: 2,
       visibleColumnIds: this.columns().filter(column => !column.required && column.defaultVisible !== false).map(column => column.id),
       boldColumnIds: [],
+      columnWidths: {},
     };
     if (!value || typeof value !== 'object') return defaults;
     const saved = value as Partial<AdminTablePreferences>;
-    if (saved.version !== 1 || !Array.isArray(saved.visibleColumnIds) || !Array.isArray(saved.boldColumnIds)
+    if ((saved.version !== 1 && saved.version !== 2) || !Array.isArray(saved.visibleColumnIds) || !Array.isArray(saved.boldColumnIds)
       || !saved.visibleColumnIds.every(id => typeof id === 'string') || !saved.boldColumnIds.every(id => typeof id === 'string')) return defaults;
     const optional = this.columns().filter(column => !column.required);
     const known = saved.visibleColumnIds.filter(id => optional.some(column => column.id === id));
     // A nonempty list containing only obsolete IDs is a stale schema, not an intentional empty selection.
     if (saved.visibleColumnIds.length && !known.length) return defaults;
     return {
-      version: 1,
+      version: 2,
       visibleColumnIds: optional.filter(column => known.includes(column.id)).map(column => column.id),
       boldColumnIds: this.columns().filter(column => column.allowBold !== false && saved.boldColumnIds!.includes(column.id)).map(column => column.id),
+      columnWidths: Object.fromEntries(Object.entries((saved as any).columnWidths ?? {}).filter(([id, width]) => this.columns().some(column => column.id === id) && typeof width === 'number' && width >= 120 && width <= 640)) as Record<string, number>,
     };
   }
 

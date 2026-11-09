@@ -1,8 +1,8 @@
 <div class="adt-toolbar">
   <ng-content select="[adminTableToolbar]" />
-  <details class="adt-chooser">
-    <summary>Columns</summary>
-    <div class="adt-choices" role="group" aria-label="Table columns">
+  <div class="adt-chooser">
+    <button type="button" class="adt-options-trigger" (click)="optionsOpen.set(!optionsOpen())" [attr.aria-expanded]="optionsOpen()" aria-controls="table-options">Table options</button>
+    @if (optionsOpen()) { <div id="table-options" class="adt-choices" role="dialog" aria-label="Table options">
       @for (column of columns(); track column.id) {
         <div class="adt-choice">
           <label>
@@ -12,10 +12,11 @@
           @if (column.allowBold !== false) {
             <button type="button" class="adt-bold-toggle" [attr.aria-pressed]="isBold(column.id)" [attr.aria-label]="'Bold ' + column.label + ' values'" (click)="toggleBold(column.id)">Bold</button>
           }
+          <label class="adt-width">Width <input type="number" min="120" max="640" step="10" [value]="columnWidthValue(column.id)" (change)="setColumnWidth(column.id, $any($event.target).value)" /> px</label>
         </div>
       }
-    </div>
-  </details>
+    </div> }
+  </div>
 </div>
 <div class="adt-table-wrap">
   <table class="adt-table" role="table">
@@ -23,7 +24,7 @@
     <thead role="rowgroup">
       <tr role="row">
         @for (column of visibleColumns(); track column.id) {
-          <th scope="col" role="columnheader" [attr.data-column]="column.id" [attr.aria-sort]="ariaSort(column.id)">
+          <th scope="col" role="columnheader" [attr.data-column]="column.id" [attr.aria-sort]="ariaSort(column.id)" [style.width]="columnWidth(column.id)">
             @if (column.sortValue) {
               <button type="button" class="adt-sort" (click)="sortBy(column.id)">
                 {{ column.label }}
