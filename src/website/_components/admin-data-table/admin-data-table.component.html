@@ -12,7 +12,6 @@
           @if (column.allowBold !== false) {
             <button type="button" class="adt-bold-toggle" [attr.aria-pressed]="isBold(column.id)" [attr.aria-label]="'Bold ' + column.label + ' values'" (click)="toggleBold(column.id)">Bold</button>
           }
-          <label class="adt-width">Width <input type="number" min="120" max="640" step="10" [value]="columnWidthValue(column.id)" (change)="setColumnWidth(column.id, $any($event.target).value)" /> px</label>
         </div>
       }
     </div> }
@@ -31,7 +30,7 @@
                 <span aria-hidden="true">{{ ariaSort(column.id) === 'ascending' ? '↑' : ariaSort(column.id) === 'descending' ? '↓' : '↕' }}</span>
               </button>
             } @else { {{ column.label }} }
-            <span class="adt-resize-handle" role="separator" aria-label="Resize {{ column.label }} column" (pointerdown)="beginResize($event, column.id)"></span>
+            <span class="adt-resize-handle" role="separator" aria-label="Drag to resize {{ column.label }} column" (pointerdown)="beginResize($event, column.id)" (mousedown)="beginResize($event, column.id)"></span>
           </th>
         }
         @if (actionsTemplate()) { <th scope="col" role="columnheader" class="adt-actions-heading">Actions</th> }

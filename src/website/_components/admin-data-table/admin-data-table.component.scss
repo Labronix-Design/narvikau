@@ -15,7 +15,6 @@
   background: var(--admin-surface-raised); color: var(--admin-text); font: inherit; cursor: pointer;
   &[aria-pressed='true'] { font-weight: 800; border-color: var(--admin-text); background: var(--admin-surface-hover); }
 }
-.adt-width { display: flex; align-items: center; gap: .35rem; color: var(--admin-text-muted); font-size: .75rem; input { width: 4.5rem; min-height: 2.25rem; border: 1px solid var(--admin-border); border-radius: calc(var(--ui-radius) / 2); background: var(--admin-surface); color: var(--admin-text); padding-inline: .4rem; } }
 button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--nv-focus-ring); outline-offset: 3px; }
 .adt-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); }
 .adt-table {
@@ -27,7 +26,8 @@ button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px 
   tbody .is-bold, tbody .is-bold .adt-cell-content, tbody .is-bold .adt-cell-content * { font-weight: 800 !important; color: var(--admin-text); }
   .adt-data-row:hover { background: var(--admin-surface-hover); }
 }
-.adt-resize-handle { position: absolute; inset-inline-end: -4px; inset-block: 0; inline-size: 8px; cursor: col-resize; touch-action: none; z-index: 2; }
+.adt-resize-handle { position: absolute; inset-inline-end: -5px; inset-block: 0; inline-size: 10px; cursor: col-resize; touch-action: none; z-index: 3; border-inline-end: 1px dashed color-mix(in srgb, var(--admin-text-muted) 42%, transparent); }
+.adt-resize-handle:hover, .adt-resize-handle:focus-visible { border-inline-end: 2px solid var(--admin-brand); background: color-mix(in srgb, var(--admin-brand) 12%, transparent); outline: 0; }
 .adt-table thead th { position: relative; }
 .adt-sort { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; border: 0; padding: 0; background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; text-align: start; }
 .adt-action-content { display: flex; align-items: center; flex-wrap: wrap; gap: .5rem; min-width: max-content; }

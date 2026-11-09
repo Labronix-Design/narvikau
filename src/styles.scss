@@ -531,6 +531,14 @@ mat-icon {
   p { margin: .75rem 0 0; color: var(--nv-text-muted, #c7c5c2); }
 }
 
+/* Browser-default link blue conflicts with the admin-selected theme. Email
+   addresses should read as content unless their component deliberately styles
+   them as an action. */
+a[href^='mailto:'] {
+  color: inherit;
+  text-decoration-color: currentColor;
+}
+
 /* Data Saver and reduced-motion visitors get the same content without the
    paint-heavy texture filters and perpetual skeleton motion. This applies to
    every customer page, not only the landing page. */
