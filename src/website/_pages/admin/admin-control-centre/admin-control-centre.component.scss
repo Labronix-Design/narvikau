@@ -40,6 +40,7 @@ h2 { font-size: 1.05rem; margin-bottom: 0; }
 .integration-grid { display: grid; gap: .75rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .integration-card { background: var(--admin-surface-sunken); border: 1px solid var(--control-line); border-left: 3px solid var(--admin-neutral); color: inherit; column-gap: .7rem; display: grid; grid-template-columns: auto minmax(0, 1fr); min-width: 0; padding: .9rem; row-gap: .75rem; text-decoration: none; transition: border-color .16s ease, background .16s ease, transform .16s ease; }
 .integration-card:hover { background: var(--admin-surface-hover); border-color: var(--control-accent); transform: translateY(-2px); }
+@media (hover: none) { .integration-card:hover { transform: none; background: var(--admin-surface-sunken); border-color: var(--control-line); } }
 .integration-card.is-connected { border-left-color: var(--control-success); }
 .integration-card.is-setup, .integration-card.is-stale { border-left-color: var(--control-warning); }
 .integration-icon { background: var(--admin-surface-raised); border: 1px solid var(--control-line); color: var(--control-accent); display: grid; height: 31px; place-items: center; width: 31px; }

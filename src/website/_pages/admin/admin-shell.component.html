@@ -70,6 +70,12 @@
     </div>
     <router-outlet></router-outlet>
   </main>
+  <nav class="admin-mobile-bar" aria-label="Admin quick navigation">
+    <a routerLink="/admin/overview" [class.active]="isActive('/admin/overview')"><mat-icon svgIcon="space_dashboard"></mat-icon><span>Overview</span></a>
+    <a routerLink="/admin/queries" [class.active]="isActive('/admin/queries')"><mat-icon svgIcon="forum"></mat-icon><span>Enquiries</span></a>
+    <a routerLink="/admin/products" [class.active]="isActive('/admin/products')"><mat-icon svgIcon="inventory_2"></mat-icon><span>Catalogue</span></a>
+    <button type="button" (click)="toggleSidebar()"><mat-icon svgIcon="menu"></mat-icon><span>More</span></button>
+  </nav>
 
   <website-confirm-modal></website-confirm-modal>
 </div>

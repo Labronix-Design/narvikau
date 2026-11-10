@@ -37,3 +37,9 @@
     <div class="nv-drawer-backdrop" (click)="closeNavbar()" aria-hidden="true"></div>
   }
 </nav>
+<nav class="nv-mobile-bar" aria-label="Quick navigation">
+  <a routerLink="/" [class.active]="router.url === '/'">Home</a>
+  <a routerLink="/products" [class.active]="router.url.startsWith('/products')">Products</a>
+  <a routerLink="/contact" [queryParams]="{quote: '1'}">Get a quote</a>
+  <a routerLink="/contact" [class.active]="router.url.startsWith('/contact')">Contact</a>
+</nav>

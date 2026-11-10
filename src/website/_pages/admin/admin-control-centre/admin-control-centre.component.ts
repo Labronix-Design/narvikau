@@ -70,9 +70,17 @@ export class AdminControlCentreComponent {
   async load(): Promise<void> {
     this.loading.set(true);
     this.error.set('');
-    try { this.model.set(await this.adminService.getControlCentre()); }
+    try {
+      const model = await this.adminService.getControlCentre();
+      this.model.set(model);
+      if (model.data.business_overview?.status !== 'ready') {
+        this.refreshing.set(true);
+        await this.adminService.refreshControlCentre('business_overview');
+        this.model.set(await this.adminService.getControlCentre());
+      }
+    }
     catch { this.error.set('Your business overview could not be loaded. Please try again.'); }
-    finally { this.loading.set(false); }
+    finally { this.refreshing.set(false); this.loading.set(false); }
   }
 
   async refresh(): Promise<void> {

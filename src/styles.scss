@@ -538,6 +538,7 @@ a[href^='mailto:'] {
   color: inherit;
   text-decoration-color: currentColor;
 }
+@media (max-width: 700px) { .main-content { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); } }
 
 /* Data Saver and reduced-motion visitors get the same content without the
    paint-heavy texture filters and perpetual skeleton motion. This applies to

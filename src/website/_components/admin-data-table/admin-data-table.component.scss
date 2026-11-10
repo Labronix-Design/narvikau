@@ -43,7 +43,7 @@ button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px 
 
 @media (max-width: 600px) {
   .adt-toolbar { align-items: stretch; }
-  .adt-chooser { width: 100%; } .adt-options-trigger { width: 100%; } .adt-choices { inset-inline: 0; width: auto; }
+  .adt-chooser { width: 100%; } .adt-options-trigger { width: 100%; } .adt-choices { position: fixed; z-index: 2200; inset: auto 0 0; width: auto; max-block-size: min(72dvh, 34rem); overflow-y: auto; margin: 0; padding: 1.25rem max(1rem, env(safe-area-inset-right)) calc(1.25rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); border-radius: var(--ui-radius) var(--ui-radius) 0 0; box-shadow: 0 -1rem 2.5rem var(--nv-shadow-color); }
   .adt-table-wrap { overflow: visible; border: 0; }
   .adt-table {
     display: block; background: transparent;
