@@ -18,7 +18,7 @@
 .adlg-dialog {
   display: flex;
   flex-direction: column;
-  inline-size: min(100%, 56rem);
+  inline-size: min(80vw, 78rem);
   max-block-size: calc(100dvh - clamp(1.5rem, 6vw, 4rem));
   min-inline-size: 0;
   overflow-y: auto;
@@ -93,6 +93,6 @@
 }
 
 @media (max-width: 600px) {
-  .adlg-overlay { padding: 0.5rem; }
-  .adlg-dialog { max-block-size: calc(100dvh - 1rem); }
+  .adlg-overlay { padding: 0; }
+  .adlg-dialog { inline-size: 100vw; max-block-size: 100dvh; min-block-size: 100dvh; border-radius: 0; }
 }

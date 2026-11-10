@@ -10,6 +10,7 @@ import { ModalService } from '../../../_services/modal.service';
 import { AdminDataTableComponent, AdminTableActionsDirective, AdminTableCellDirective } from '../../../_components/admin-data-table/admin-data-table.component';
 import { AdminTableColumn } from '../../../_components/admin-data-table/admin-data-table.models';
 import { AdminDialogComponent } from '../../../_components/admin-dialog/admin-dialog.component';
+import { ToastService } from '../../../_services/toast.service';
 
 @Component({
   selector: 'website-admin-queries',
@@ -22,10 +23,17 @@ import { AdminDialogComponent } from '../../../_components/admin-dialog/admin-di
 export class AdminQueriesComponent implements OnInit {
   private adminService = inject(AdminService);
   private modal = inject(ModalService);
+  private readonly toast = inject(ToastService);
   private readonly fb = inject(FormBuilder).nonNullable;
   private loadSequence = 0;
   private readonly dirtyNoteIds = new Set<number>();
   readonly activeType = signal('');
+
+  async copyValue(label: string, value: string | null | undefined): Promise<void> {
+    if (!value) return;
+    try { await navigator.clipboard.writeText(value); this.toast.showToast({ message: `${label} copied`, type: 'success' }); }
+    catch { this.toast.showToast({ message: `Could not copy ${label.toLowerCase()}`, type: 'error' }); }
+  }
   readonly showManualForm = signal(false);
   readonly savingManual = signal(false);
   readonly manualSubmitted = signal(false);

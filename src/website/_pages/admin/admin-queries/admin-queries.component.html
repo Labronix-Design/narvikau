@@ -121,13 +121,13 @@
     @if (detailRow(); as row) {
       <div class="detail-body">
         <dl class="enquiry-details">
-          <dt>Email</dt><dd><a [href]="'mailto:' + row.email">{{ row.email }}</a></dd>
-          <dt>Phone</dt><dd>{{ row.phone || '—' }}</dd>
-          <dt>Business</dt><dd>{{ row.company || '—' }}</dd>
+          <dt>Email</dt><dd><a [href]="'mailto:' + row.email">{{ row.email }}</a><button type="button" class="copy-btn" (click)="copyValue('Email', row.email)">Copy</button></dd>
+          <dt>Phone</dt><dd>{{ row.phone || '—' }} @if (row.phone) { <button type="button" class="copy-btn" (click)="copyValue('Phone number', row.phone)">Copy</button> }</dd>
+          <dt>Business</dt><dd>{{ row.company || '—' }} @if (row.company) { <button type="button" class="copy-btn" (click)="copyValue('Business name', row.company)">Copy</button> }</dd>
           <dt>Type</dt><dd>{{ typeLabel(row.enquiry_type) }}</dd>
-          <dt>Product</dt><dd>{{ row.product || '—' }}</dd>
-          <dt>Location</dt><dd>{{ locationLabel(row) }}</dd>
-          <dt>Referral source</dt><dd>{{ row.discovery_source || 'Not recorded' }}</dd>
+          <dt>Product</dt><dd>{{ row.product || '—' }} @if (row.product) { <button type="button" class="copy-btn" (click)="copyValue('Product', row.product)">Copy</button> }</dd>
+          <dt>Location</dt><dd>{{ locationLabel(row) }}<button type="button" class="copy-btn" (click)="copyValue('Location', locationLabel(row))">Copy</button></dd>
+          <dt>Referral source</dt><dd>{{ row.discovery_source || 'Not recorded' }} @if (row.discovery_source) { <button type="button" class="copy-btn" (click)="copyValue('Referral source', row.discovery_source)">Copy</button> }</dd>
           @if (row.discovery_source_detail) { <dt>Referral details</dt><dd>{{ row.discovery_source_detail }}</dd> }
           <dt>Captured via</dt><dd>{{ row.source }}</dd>
           @if (row.follow_up_date) { <dt>Follow-up date</dt><dd>{{ row.follow_up_date | date:'d MMM yyyy' }}</dd> }

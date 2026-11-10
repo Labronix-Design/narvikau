@@ -15,6 +15,7 @@
 .query-filters { display: flex; flex-wrap: wrap; gap: .75rem; align-items: center; margin-block: 1.5rem; }
 .enquiry-details { display: grid; grid-template-columns: auto 1fr; gap: .6rem 1rem; margin: 0; }
 .enquiry-details dd { margin: 0; overflow-wrap: anywhere; }
+.copy-btn { margin-inline-start: .5rem; min-block-size: 2rem; padding-inline: .55rem; border: 1px solid var(--admin-border); border-radius: var(--ui-radius); background: var(--admin-surface); color: var(--admin-text); font: inherit; font-size: .7rem; font-weight: 700; cursor: pointer; &:hover { border-color: var(--nv-orange); } }
 @media (max-width: 600px) { .manual-grid { grid-template-columns: minmax(0, 1fr); } }
 
 // ── STATUS TABS ───────────────────────────────────────────────

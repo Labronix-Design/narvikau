@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { AdminService } from '../../../_services/admin.service';
 import { SiteSettingsService } from '../../../_services/site-settings.service';
@@ -19,6 +19,7 @@ import { adminLoginErrorMessage } from './admin-login-error';
 export class AdminLoginComponent {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private adminService = inject(AdminService);
   readonly siteSettings = inject(SiteSettingsService);
 
@@ -29,6 +30,12 @@ export class AdminLoginComponent {
   error = signal('');
   loading = signal(false);
   showPassword = signal(false);
+
+  constructor() {
+    if (this.route.snapshot.queryParamMap.get('reason') === 'expired') {
+      this.error.set('Your admin session expired. Please sign in again.');
+    }
+  }
 
   async onSubmit(): Promise<void> {
     if (this.form.invalid || this.loading()) return;
